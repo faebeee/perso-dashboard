@@ -31,8 +31,10 @@ export function SafeHtmlFrame({
 	const [height, setHeight] = useState(80);
 	const openExternal = useOpenExternal();
 
+	const theme = frameTheme(appearance);
 	const srcDoc = buildDocument(html, {
-		appearance,
+		theme,
+		padded: appearance === "paper",
 		allowRemoteImages,
 		baseUrl,
 	});
@@ -73,7 +75,11 @@ export function SafeHtmlFrame({
 			srcDoc={srcDoc}
 			onLoad={onLoad}
 			className="block w-full rounded-md border-0"
-			style={{ height }}
+			style={{
+				height,
+				colorScheme: theme.scheme,
+				backgroundColor: theme.background,
+			}}
 		/>
 	);
 }
@@ -92,43 +98,69 @@ const escapeAttribute = (value: string) =>
 	value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
 /** Pure apart from reading theme colours; exported for tests. */
+export interface FrameTheme {
+	/**
+	 * Must match between the frame document and the <iframe> element: when
+	 * they differ, the webview paints the frame with an opaque canvas
+	 * (white for "light"), whatever the document's own background says.
+	 */
+	scheme: "light" | "dark";
+	background: string;
+	text: string;
+	muted: string;
+	link: string;
+	border: string;
+}
+
+/** Paper = how mail clients show email; themed = follows the app (light/dark). */
+export function frameTheme(appearance: "paper" | "themed"): FrameTheme {
+	if (appearance === "paper") {
+		return {
+			scheme: "light",
+			background: "#ffffff",
+			text: "#1f1f1f",
+			muted: "#5f6368",
+			link: "#1a73e8",
+			border: "#dadce0",
+		};
+	}
+	const dark = document.documentElement.classList.contains("dark");
+	return {
+		scheme: dark ? "dark" : "light",
+		background: cssVar("--background") || (dark ? "#09090b" : "#ffffff"),
+		text: cssVar("--foreground") || (dark ? "#fafafa" : "#09090b"),
+		muted: cssVar("--muted-foreground") || "gray",
+		link: cssVar("--primary") || "#2563eb",
+		border: cssVar("--border") || "#ddd",
+	};
+}
+
+/** Pure; exported for tests. */
 export function buildDocument(
 	html: string,
 	options: {
-		appearance: "paper" | "themed";
+		theme: FrameTheme;
+		/** Paper adds page padding like a mail client. */
+		padded: boolean;
 		allowRemoteImages: boolean;
 		baseUrl?: string;
-		colors?: { text: string; muted: string; link: string; border: string };
 	},
 ): string {
+	const { theme } = options;
 	const imgSrc = options.allowRemoteImages ? "data: https:" : "data:";
-	const colors =
-		options.colors ??
-		(options.appearance === "paper"
-			? {
-					text: "#1f1f1f",
-					muted: "#5f6368",
-					link: "#1a73e8",
-					border: "#dadce0",
-				}
-			: {
-					text: cssVar("--foreground") || "inherit",
-					muted: cssVar("--muted-foreground") || "gray",
-					link: cssVar("--primary") || "#2563eb",
-					border: cssVar("--border") || "#ddd",
-				});
-	const background = options.appearance === "paper" ? "#ffffff" : "transparent";
 
 	return `<!doctype html><html><head><meta charset="utf-8">
+<meta name="color-scheme" content="${theme.scheme}">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${imgSrc}; style-src 'unsafe-inline'; font-src data:">
 ${options.baseUrl ? `<base href="${escapeAttribute(options.baseUrl)}">` : ""}
 <style>
-html,body{margin:0;background:${background};color:${colors.text};}
-body{padding:${options.appearance === "paper" ? "16px" : "0"};font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-wrap:anywhere;}
-a{color:${colors.link};}
+:root{color-scheme:${theme.scheme};}
+html,body{margin:0;background:${theme.background};color:${theme.text};}
+body{padding:${options.padded ? "16px" : "0"};font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-wrap:anywhere;}
+a{color:${theme.link};}
 img{max-width:100%;height:auto;}
 pre,code{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;}
-blockquote{margin:0 0 0 8px;padding-left:12px;border-left:3px solid ${colors.border};color:${colors.muted};}
+blockquote{margin:0 0 0 8px;padding-left:12px;border-left:3px solid ${theme.border};color:${theme.muted};}
 table{max-width:100%;border-collapse:collapse;}
 p:first-child{margin-top:0}p:last-child{margin-bottom:0}
 </style></head><body>${stripMetaRefresh(html)}</body></html>`;
