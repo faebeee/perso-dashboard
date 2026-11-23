@@ -2,7 +2,7 @@ import type { CalendarEvent } from "#/core/calendar-event";
 import type { ActivityItem, ActivityKind } from "#/core/insights";
 import type { TodayItem } from "#/core/today";
 import type { WaitingItem } from "#/core/waiting";
-import { groupActivity } from "#/features/insights/summary";
+import { groupActivity, summarizeCommits } from "#/features/insights/summary";
 import type { StandupSection } from "#/lib/standup";
 import { formatDuration, localDayKey } from "#/lib/time";
 
@@ -37,6 +37,7 @@ const ACTIVITY_LABELS: Record<ActivityKind, string> = {
 	pr_merged: "Merged",
 	pr_opened: "Opened",
 	pr_reviewed: "Reviewed",
+	commit: "Committed",
 	issue_resolved: "Resolved",
 	issue_worked: "Worked on",
 	meeting: "Meeting",
@@ -133,9 +134,11 @@ export function buildDailyReview(input: {
 							? `${group.items.length} meeting${group.items.length === 1 ? "" : "s"}`
 							: `${group.items.length} email${group.items.length === 1 ? "" : "s"} sent`,
 					]
-				: group.items.map(
-						(i) => `${group.label}: ${withContext(i.title, i.context)}`,
-					),
+				: group.kind === "commit"
+					? summarizeCommits(group.items).map((line) => `Committed ${line}`)
+					: group.items.map(
+							(i) => `${group.label}: ${withContext(i.title, i.context)}`,
+						),
 		),
 		...input.completed
 			.filter((t) => !t.ref || !activityUrls.has(t.ref.url))

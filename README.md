@@ -69,7 +69,7 @@ Pinned items that also show up as activity (e.g. a pinned PR that got merged) ar
 
 **Insights** (sidebar) has two parts:
 
-- **Summary:** what you did *since your last workday* (Friday on Mondays), *this week* or *last week*. It covers merged, opened and reviewed PRs, resolved and worked-on Jira issues, meetings and sent mail. **Copy as Markdown** gives a paste-ready standup or weekly update.
+- **Summary:** what you did *since your last workday* (Friday on Mondays), *this week* or *last week*. It covers commits you pushed to any repo and branch, merged, opened and reviewed PRs, resolved and worked-on Jira issues, meetings and sent mail. **Copy as Markdown** gives a paste-ready standup or weekly update.
 - **Trends:** six weeks of weekly charts:
   - time in meetings
   - PRs merged
@@ -81,6 +81,12 @@ Pinned items that also show up as activity (e.g. a pinned PR that got merged) ar
   Each chart compares last week with the average of the weeks before. The current week is hatched ("so far"). A **Table** view shows every value. Values marked ≈ are estimates (Gmail's counts; reviews counted by the PR's last activity).
 
 Integrations contribute through `getActivity` and `getMetrics`.
+
+## Commits
+
+Your pushed commits appear on the GitHub page ("Your commits", last 7 days, grouped by repo and branch), in Insights' Summary and in the Daily review. Standups condense them per branch: "5 commits to acme/web (feature/cart): Fix rounding".
+
+They come from your GitHub activity events, which cover all repos and branches you pushed to, private ones included. Since October 2025 those events no longer list commits, so each push is expanded with the compare API: the 25 most recent pushes, cached for a day since commits never change. Commits of other people that arrive in your pushes (e.g. merging main) are left out. GitHub keeps events for 90 days (300 at most).
 
 ## Sync & rate limits
 

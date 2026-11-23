@@ -149,3 +149,29 @@ describe("formatStandup", () => {
 		);
 	});
 });
+
+describe("commits in the daily review", () => {
+	it("lists commits in the timeline and condenses them in the standup", () => {
+		const review = buildDailyReview({
+			activity: [
+				activity("commit", "Add cart", at(13, 10), {
+					context: "acme/web (feature/cart)",
+				}),
+				activity("commit", "Fix rounding", at(13, 15), {
+					context: "acme/web (feature/cart)",
+				}),
+			],
+			completed: [],
+			openToday: [],
+			agenda: [],
+			waiting: [],
+			now: NOW,
+		});
+		expect(
+			review.timeline[0]?.entries.map((e) => `${e.label} ${e.title}`),
+		).toEqual(["Committed Fix rounding", "Committed Add cart"]);
+		expect(review.done.lines).toEqual([
+			"Committed 2 commits to acme/web (feature/cart): Fix rounding",
+		]);
+	});
+});

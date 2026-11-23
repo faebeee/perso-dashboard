@@ -1,8 +1,14 @@
-import { type IntegrationBackend, rulesOf } from "#/core/integration";
+import {
+	type IntegrationBackend,
+	type IntegrationContext,
+	rulesOf,
+} from "#/core/integration";
 import { createGitHubApi } from "./api/client";
 import { prSignalsToAttention, reviewRequestsToAttention } from "./attention";
+import { type CommitInfo, createGitHubCommitService } from "./commits";
 import { GITHUB_ID } from "./constants";
 import {
+	commitActivity,
 	INSIGHTS_PAGE_SIZE,
 	insightQueries,
 	prActivity,
@@ -15,6 +21,25 @@ import { awaitingReviewToWaiting } from "./waiting";
 
 export const githubService = (accessToken: string) =>
 	createGitHubService(createGitHubApi(accessToken));
+
+/** Your login: stored at connect time, looked up for older connections. */
+async function githubLogin(ctx: IntegrationContext): Promise<string> {
+	if (typeof ctx.meta.login === "string") return ctx.meta.login;
+	return (await createGitHubApi(ctx.accessToken).viewer()).login;
+}
+
+/** Commits you pushed in [since, until), on any repo and branch. */
+export async function githubCommits(
+	ctx: IntegrationContext,
+	since: Date,
+	until?: Date,
+): Promise<CommitInfo[]> {
+	return createGitHubCommitService(createGitHubApi(ctx.accessToken)).recent(
+		await githubLogin(ctx),
+		since,
+		until,
+	);
+}
 
 export const githubReleaseService = (accessToken: string) =>
 	createGitHubReleaseService(createGitHubApi(accessToken));
@@ -52,16 +77,21 @@ export const githubBackend: IntegrationBackend = {
 		];
 	},
 
-	async getActivity({ accessToken }, { from, to }) {
-		const api = createGitHubApi(accessToken);
+	async getActivity(ctx, { from, to }) {
+		const api = createGitHubApi(ctx.accessToken);
 		const search = async (q: string) =>
 			(await api.searchIssues(q, INSIGHTS_PAGE_SIZE)).items;
-		const [merged, opened, reviewed] = await Promise.all([
+		const [merged, opened, reviewed, commits] = await Promise.all([
 			search(insightQueries.merged(from, to)),
 			search(insightQueries.opened(from, to)),
 			search(insightQueries.reviewed(from, to)),
+			// Commits are a bonus: if events are unavailable, PRs still count.
+			githubCommits(ctx, from, to).catch(() => []),
 		]);
-		return prActivity({ merged, opened, reviewed }, from, to);
+		return [
+			...prActivity({ merged, opened, reviewed }, from, to),
+			...commitActivity(commits),
+		];
 	},
 
 	async getMetrics({ accessToken }, weeks, now) {

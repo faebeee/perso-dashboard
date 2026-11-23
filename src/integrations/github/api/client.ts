@@ -4,6 +4,9 @@ import { GITHUB_ID, SEARCH_PAGE_SIZE } from "../constants";
 import {
 	githubCheckRunsSchema,
 	githubCombinedStatusSchema,
+	githubCommitSchema,
+	githubCompareSchema,
+	githubEventListSchema,
 	githubPullFileListSchema,
 	githubPullSchema,
 	githubReleaseListSchema,
@@ -29,6 +32,8 @@ export function createGitHubApi(accessToken: string, fetch?: FetchFn) {
 		ttl: ttlByPath(
 			[
 				[/^\/user$/, TTL.stable],
+				// A commit never changes once pushed.
+				[/\/compare\/|\/commits\/[0-9a-f]{7,}$/, TTL.stable],
 				[/\/releases$/, TTL.slow],
 			],
 			TTL.list,
@@ -48,6 +53,27 @@ export function createGitHubApi(accessToken: string, fetch?: FetchFn) {
 				order: "desc",
 				per_page: perPage,
 			}),
+
+		/** Your recent activity (all repos and branches, incl. private ones). */
+		userEvents: (login: string, page = 1) =>
+			http.get(
+				`/users/${encodeURIComponent(login)}/events`,
+				githubEventListSchema,
+				{ per_page: 100, page },
+			),
+
+		/** Commits between two SHAs (what a push added). */
+		compare: (repoFullName: string, base: string, head: string) =>
+			http.get(
+				`${repoPath(repoFullName)}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`,
+				githubCompareSchema,
+			),
+
+		commit: (repoFullName: string, sha: string) =>
+			http.get(
+				`${repoPath(repoFullName)}/commits/${encodeURIComponent(sha)}`,
+				githubCommitSchema,
+			),
 
 		/** One PR with its description rendered to HTML. */
 		pull: (repoFullName: string, number: number) =>

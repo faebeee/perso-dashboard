@@ -3,6 +3,7 @@ import {
 	CalendarDays,
 	CalendarPlus,
 	CircleDot,
+	GitCommitHorizontal,
 	GitPullRequest,
 	GitPullRequestArrow,
 	Mail,
@@ -21,7 +22,8 @@ export type ItemKind =
 	| "event"
 	| "invitation"
 	| "meeting"
-	| "release";
+	| "release"
+	| "commit";
 
 export const ITEM_KINDS: Record<
 	ItemKind,
@@ -37,6 +39,7 @@ export const ITEM_KINDS: Record<
 	invitation: { label: "Invitation", icon: CalendarPlus },
 	meeting: { label: "Meeting", icon: Video },
 	release: { label: "Release", icon: Tag },
+	commit: { label: "Commit", icon: GitCommitHorizontal },
 };
 
 interface ItemIconProps {

@@ -5,6 +5,7 @@ import {
 	formatMetric,
 	formatSummaryMarkdown,
 	groupActivity,
+	summarizeCommits,
 } from "./summary";
 
 const activity = (
@@ -91,5 +92,50 @@ describe("formatMetric", () => {
 		[null, { unit: "count" as const }, "—"],
 	])("%s → %s", (value, series, expected) => {
 		expect(formatMetric(value, series)).toBe(expected);
+	});
+});
+
+describe("summarizeCommits", () => {
+	const commit = (
+		title: string,
+		context: string,
+		at: string,
+	): ActivityItem => ({
+		id: `c:${title}`,
+		source: "github",
+		kind: "commit",
+		title,
+		url: "#",
+		at,
+		context,
+	});
+
+	it("condenses commits per repo and branch, busiest first, with the latest message", () => {
+		expect(
+			summarizeCommits([
+				commit("Add cart", "acme/web (feature/cart)", "2026-01-13T09:00:00Z"),
+				commit(
+					"Fix rounding",
+					"acme/web (feature/cart)",
+					"2026-01-13T15:00:00Z",
+				),
+				commit("Bump deps", "acme/api (main)", "2026-01-13T10:00:00Z"),
+			]),
+		).toEqual([
+			"2 commits to acme/web (feature/cart): Fix rounding",
+			"1 commit to acme/api (main): Bump deps",
+		]);
+	});
+
+	it("is used for the commit group in Markdown", () => {
+		const md = formatSummaryMarkdown(
+			"Since yesterday",
+			groupActivity([
+				commit("Fix rounding", "acme/web (main)", "2026-01-13T15:00:00Z"),
+			]),
+		);
+		expect(md).toBe(
+			"**Since yesterday**\n\n**Committed (1)**\n- 1 commit to acme/web (main): Fix rounding",
+		);
 	});
 });

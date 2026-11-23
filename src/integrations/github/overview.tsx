@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
 	FolderGit2,
+	GitCommitHorizontal,
 	GitPullRequest,
 	GitPullRequestDraft,
 	Rocket,
@@ -21,7 +22,9 @@ import type { WorkItem } from "#/core/work-item";
 import { tally } from "#/lib/tally";
 import { formatRelative } from "#/lib/time";
 import { SEARCH_PAGE_SIZE } from "./constants";
+import { RECENT_COMMIT_DAYS } from "./fetchers";
 import { githubQueries } from "./queries";
+import { RecentCommits } from "./recent-commits";
 import { PR_SIGNAL_LABELS } from "./service";
 
 const upcoming = (releases: Release[]) =>
@@ -50,6 +53,7 @@ export function GitHubOverview() {
 	const reviews = useQuery(githubQueries.reviewRequests());
 	const mine = useQuery(githubQueries.myPullRequests(scope));
 	const releases = useQuery(githubQueries.releases());
+	const commits = useQuery(githubQueries.recentCommits());
 
 	return (
 		<div className="space-y-6">
@@ -131,6 +135,17 @@ export function GitHubOverview() {
 					emptyMessage={`No drafts and nothing shipped in the last ${RECENT_RELEASE_DAYS} days.`}
 				>
 					{(r) => <ReleaseList releases={r} />}
+				</OverviewSection>
+				<OverviewSection
+					title={`Your commits (last ${RECENT_COMMIT_DAYS} days)`}
+					icon={GitCommitHorizontal}
+					query={commits}
+					count={(c) => c.length}
+					isEmpty={(c) => c.length === 0}
+					emptyMessage="No commits pushed in the last week."
+					className="xl:col-span-2"
+				>
+					{(c) => <RecentCommits commits={c} />}
 				</OverviewSection>
 			</div>
 		</div>

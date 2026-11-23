@@ -117,3 +117,51 @@ export type GitHubReviewList = z.infer<typeof githubReviewListSchema>;
 export type GitHubPullFileList = z.infer<typeof githubPullFileListSchema>;
 export type GitHubCheckRuns = z.infer<typeof githubCheckRunsSchema>;
 export type GitHubCombinedStatus = z.infer<typeof githubCombinedStatusSchema>;
+
+/** GET /users/{login}/events: your activity across all repos and branches. */
+export const githubEventListSchema = z.array(
+	z.object({
+		id: z.string(),
+		type: z.string(),
+		created_at: z.string(),
+		repo: z.object({ name: z.string() }),
+		payload: z.record(z.string(), z.unknown()).default({}),
+	}),
+);
+
+/**
+ * A PushEvent's payload. Since Oct 2025 GitHub omits the commit list here;
+ * `before`/`head` are what's left, and the commits come from the compare API.
+ */
+export const githubPushPayloadSchema = z.object({
+	ref: z.string(),
+	head: z.string(),
+	before: z.string(),
+	commits: z
+		.array(
+			z.object({
+				sha: z.string(),
+				message: z.string(),
+				distinct: z.boolean().optional(),
+			}),
+		)
+		.optional(),
+});
+
+export const githubCommitSchema = z.object({
+	sha: z.string(),
+	html_url: z.string(),
+	commit: z.object({
+		message: z.string(),
+		author: z.object({ date: z.string() }).nullable().optional(),
+	}),
+	/** null when the commit email isn't linked to a GitHub account. */
+	author: githubUserSchema.nullable().optional(),
+});
+
+export const githubCompareSchema = z.object({
+	commits: z.array(githubCommitSchema).default([]),
+});
+
+export type GitHubEventList = z.infer<typeof githubEventListSchema>;
+export type GitHubCommit = z.infer<typeof githubCommitSchema>;

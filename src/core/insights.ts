@@ -4,6 +4,7 @@ export type ActivityKind =
 	| "pr_merged"
 	| "pr_opened"
 	| "pr_reviewed"
+	| "commit"
 	| "issue_resolved"
 	| "issue_worked"
 	| "meeting"

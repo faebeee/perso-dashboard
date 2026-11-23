@@ -7,6 +7,7 @@ import {
 	type WeekRange,
 } from "#/core/insights";
 import type { GitHubSearchItem } from "./api/schemas";
+import type { CommitInfo } from "./commits";
 import { GITHUB_ID } from "./constants";
 import { prDetailRef } from "./detail";
 import { repoFullName } from "./mapper";
@@ -73,6 +74,19 @@ export function prActivity(
 			.filter((pr) => within(pr.updated_at, from, to))
 			.map((pr) => item(pr, "pr_reviewed", pr.updated_at)),
 	];
+}
+
+/** Pure: commits → activity ("repo (branch)" as context, for grouping). */
+export function commitActivity(commits: readonly CommitInfo[]): ActivityItem[] {
+	return commits.map((c) => ({
+		id: `${GITHUB_ID}:commit:${c.sha}`,
+		source: GITHUB_ID,
+		kind: "commit",
+		title: c.message,
+		url: c.url,
+		at: c.at,
+		context: `${c.repo} (${c.branch})`,
+	}));
 }
 
 /** Pure: weekly PR metrics. */

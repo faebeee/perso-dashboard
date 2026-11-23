@@ -7,6 +7,7 @@ export const ACTIVITY_ITEM_KIND: Record<ActivityKind, ItemKind> = {
 	pr_merged: "pull_request",
 	pr_opened: "pull_request",
 	pr_reviewed: "review_request",
+	commit: "commit",
 	issue_resolved: "issue",
 	issue_worked: "issue",
 	meeting: "meeting",
@@ -22,6 +23,7 @@ export const ACTIVITY_GROUPS: {
 }[] = [
 	{ kind: "pr_merged", label: "Merged" },
 	{ kind: "issue_resolved", label: "Resolved" },
+	{ kind: "commit", label: "Committed" },
 	{ kind: "pr_opened", label: "Opened" },
 	{ kind: "pr_reviewed", label: "Reviewed" },
 	{ kind: "issue_worked", label: "Worked on" },
@@ -52,6 +54,27 @@ const countLine = (group: ActivityGroup) =>
 		? `${group.items.length} meeting${group.items.length === 1 ? "" : "s"}`
 		: `${group.items.length} sent`;
 
+/**
+ * Pure: commits condensed per repo and branch (their `context`), busiest
+ * first: "5 commits to acme/web (feature/cart): Fix rounding".
+ */
+export function summarizeCommits(items: readonly ActivityItem[]): string[] {
+	const byPlace = new Map<string, ActivityItem[]>();
+	for (const item of items) {
+		const place = item.context ?? "unknown";
+		byPlace.set(place, [...(byPlace.get(place) ?? []), item]);
+	}
+	return [...byPlace.entries()]
+		.sort((a, b) => b[1].length - a[1].length)
+		.map(([place, commits]) => {
+			const latest = [...commits].sort(
+				(a, b) => Date.parse(b.at) - Date.parse(a.at),
+			)[0];
+			const count = `${commits.length} commit${commits.length === 1 ? "" : "s"}`;
+			return `${count} to ${place}${latest ? `: ${latest.title}` : ""}`;
+		});
+}
+
 /** Pure: Markdown for a standup / weekly update, ready to paste. */
 export function formatSummaryMarkdown(
 	title: string,
@@ -60,6 +83,10 @@ export function formatSummaryMarkdown(
 	if (groups.length === 0) return `**${title}**\n\nNothing recorded.`;
 	const sections = groups.map((group) => {
 		if (group.countOnly) return `**${group.label}:** ${countLine(group)}`;
+		if (group.kind === "commit") {
+			const lines = summarizeCommits(group.items).map((l) => `- ${l}`);
+			return `**${group.label} (${group.items.length})**\n${lines.join("\n")}`;
+		}
 		const lines = group.items.map(
 			(i) => `- ${i.title}${i.context ? ` (${i.context})` : ""}`,
 		);

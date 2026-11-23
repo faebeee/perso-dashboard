@@ -4,6 +4,7 @@ import type { WorkScope } from "#/core/work-scope";
 import { integrationQueryKey } from "#/lib/query-keys";
 import { GITHUB_ID } from "./constants";
 import {
+	fetchGitHubCommits,
 	fetchGitHubMyPullRequests,
 	fetchGitHubPullRequest,
 	fetchGitHubReleases,
@@ -23,6 +24,13 @@ export const githubQueries = {
 		queryOptions({
 			queryKey: [...key, "my-pull-requests", scope],
 			queryFn: async () => unwrap(await fetchGitHubMyPullRequests(scope)),
+		}),
+
+	/** Your commits of the last days, on any repo and branch. */
+	recentCommits: () =>
+		queryOptions({
+			queryKey: [...key, "commits"],
+			queryFn: async () => unwrap(await fetchGitHubCommits()),
 		}),
 
 	pullRequest: (ref: string) =>
