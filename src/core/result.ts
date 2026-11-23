@@ -1,14 +1,14 @@
 /**
  * Typed error model shared by every integration.
  *
- * Server functions return `Result<T>` (a plain, serializable object) instead
- * of throwing, so error *kinds* survive the network boundary. The client then
- * calls `unwrap()` inside a queryFn, which re-throws an `IntegrationFailure`
- * that UI components can inspect.
+ * Fetchers return `Result<T>` (a plain object) instead of throwing, so
+ * partial failures can be collected (feed, releases) and error *kinds* stay
+ * explicit. Query functions call `unwrap()`, which re-throws an
+ * `IntegrationFailure` that UI components can inspect.
  */
 
 export type IntegrationErrorKind =
-	| "not_configured" // OAuth client id/secret missing in env
+	| "not_configured" // OAuth client id/secret not entered yet
 	| "not_connected" // user hasn't connected the account yet
 	| "unauthorized" // token revoked/expired and refresh failed
 	| "rate_limited"

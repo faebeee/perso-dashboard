@@ -9,6 +9,15 @@ const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
 
 const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
+/** 150 → "2h 30m", 45 → "45m". */
+export function formatDuration(minutes: number): string {
+	const total = Math.max(0, Math.round(minutes));
+	const hours = Math.floor(total / 60);
+	const rest = total % 60;
+	if (hours === 0) return `${rest}m`;
+	return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
+}
+
 /** "3 hours ago", "yesterday", "just now". */
 export function formatRelative(iso: string, now: number = Date.now()): string {
 	const seconds = Math.round((Date.parse(iso) - now) / 1000);

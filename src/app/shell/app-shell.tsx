@@ -1,46 +1,95 @@
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, ListTodo, PlugZap } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
+import { integrationManifests } from "#/integrations/registry";
 import { ThemeToggle } from "./theme-toggle";
 
-const NAV = [
+const MAIN_NAV = [
 	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
 	{ to: "/feed", label: "My Work", icon: ListTodo },
-	{ to: "/settings/integrations", label: "Integrations", icon: PlugZap },
 ] as const;
+
+/** One entry per integration that ships an overview page. */
+const SOURCES = integrationManifests.filter((m) => m.overview);
+
+const LINK_CLASS =
+	"flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/80 no-underline hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:bg-sidebar-accent data-[status=active]:font-medium data-[status=active]:text-sidebar-accent-foreground";
 
 export function AppShell({ children }: { children: ReactNode }) {
 	return (
 		<div className="flex min-h-dvh flex-col md:flex-row">
-			<aside className="flex shrink-0 items-center gap-1 border-b bg-sidebar px-3 py-2 md:w-56 md:flex-col md:items-stretch md:border-r md:border-b-0 md:px-3 md:py-4">
-				<div className="mr-auto flex items-center gap-2 px-2 font-semibold md:mr-0 md:mb-6">
+			<aside className="flex shrink-0 items-center gap-1 border-b bg-sidebar px-3 py-2 md:sticky md:top-0 md:h-dvh md:w-56 md:flex-col md:items-stretch md:border-r md:border-b-0 md:px-3 md:py-4">
+				<div className="mr-2 flex items-center gap-2 px-2 font-semibold md:mr-0 md:mb-6">
 					<span className="grid size-7 place-items-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
 						PD
 					</span>
-					<span className="hidden sm:inline">Productivity</span>
+					<span className="hidden md:inline">Productivity</span>
 				</div>
 
-				<nav className="flex gap-1 md:flex-col" aria-label="Main">
-					{NAV.map(({ to, label, icon: Icon }) => (
-						<Link
-							key={to}
-							to={to}
-							activeOptions={{ exact: to === "/" }}
-							className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/80 no-underline hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:bg-sidebar-accent data-[status=active]:font-medium data-[status=active]:text-sidebar-accent-foreground"
-						>
-							<Icon className="size-4" />
-							<span className="hidden sm:inline">{label}</span>
-						</Link>
+				<nav
+					className="flex min-w-0 flex-1 gap-1 overflow-x-auto md:flex-none md:flex-col md:overflow-visible"
+					aria-label="Main"
+				>
+					{MAIN_NAV.map(({ to, label, icon }) => (
+						<NavLink key={to} to={to} label={label} icon={icon} />
 					))}
+
+					{SOURCES.length > 0 && (
+						<>
+							<p className="mt-5 mb-1 hidden px-2 text-[11px] font-semibold tracking-wide text-sidebar-foreground/50 uppercase md:block">
+								Sources
+							</p>
+							<span className="mx-1 w-px shrink-0 bg-border md:hidden" />
+							{SOURCES.map(({ id, name, icon: Icon }) => (
+								<Link
+									key={id}
+									to="/apps/$integrationId"
+									params={{ integrationId: id }}
+									className={LINK_CLASS}
+									title={name}
+								>
+									<Icon className="size-4" />
+									<span className="hidden sm:inline">{name}</span>
+								</Link>
+							))}
+						</>
+					)}
 				</nav>
 
-				<div className="md:mt-auto">
+				<div className="flex items-center gap-1 md:mt-auto md:flex-col md:items-stretch">
+					<NavLink
+						to="/settings/integrations"
+						label="Integrations"
+						icon={PlugZap}
+					/>
 					<ThemeToggle />
 				</div>
 			</aside>
 
 			<main className="min-w-0 flex-1 px-4 py-6 md:px-8">{children}</main>
 		</div>
+	);
+}
+
+function NavLink({
+	to,
+	label,
+	icon: Icon,
+}: {
+	to: "/" | "/feed" | "/settings/integrations";
+	label: string;
+	icon: ComponentType<{ className?: string }>;
+}) {
+	return (
+		<Link
+			to={to}
+			activeOptions={{ exact: to === "/" }}
+			className={LINK_CLASS}
+			title={label}
+		>
+			<Icon className="size-4" />
+			<span className="hidden sm:inline">{label}</span>
+		</Link>
 	);
 }
 

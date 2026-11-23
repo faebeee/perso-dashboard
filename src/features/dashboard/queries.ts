@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "#/lib/query-keys";
-import { fetchDashboardLayout } from "./server-fns";
+import { fetchDashboardLayout } from "./fetchers";
 
 export const layoutQueries = {
 	current: () =>

@@ -24,9 +24,16 @@ export function IntegrationErrorNotice({
 	switch (info.kind) {
 		case "not_configured":
 			return (
-				<Notice icon={PlugZap} title="Not configured">
-					Add the OAuth client id and secret to <code>.env</code>, then restart
-					the server.
+				<Notice
+					icon={PlugZap}
+					title="Not configured"
+					action={
+						<Button asChild size="sm" variant="outline">
+							<Link to="/settings/integrations">Set up</Link>
+						</Button>
+					}
+				>
+					{info.message}
 				</Notice>
 			);
 		case "not_connected":

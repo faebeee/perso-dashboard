@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Rocket } from "lucide-react";
+import { ReleaseList } from "#/components/release/release-list";
 import { QueryState } from "#/components/widget-kit/query-state";
 import { SourceErrors } from "#/components/widget-kit/source-errors";
 import type { WorkItemSource } from "#/components/work-item/work-item-list";
 import type { IntegrationManifest } from "#/core/integration";
 import { RECENT_RELEASE_DAYS } from "#/core/release";
 import type { WidgetDefinition } from "#/core/widget";
-import { ReleaseList } from "./components/release-list";
 import { releaseQueries } from "./queries";
 
 /** Built-in widget combining releases from every integration that has them. */

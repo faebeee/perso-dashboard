@@ -12,7 +12,6 @@ dist-ssr
 __unconfig*
 todos.json
 
-# local data (SQLite DB with encrypted OAuth tokens)
+# legacy local data from the web version (SQLite DB with encrypted OAuth tokens)
 data/
 .env.*
-!.env.example

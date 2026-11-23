@@ -8,7 +8,7 @@ interface OAuthSetupHintProps {
 	callbackUrl?: string;
 }
 
-/** Where to create the OAuth app and which redirect URI to register. */
+/** Where to create the OAuth app and which (loopback) redirect URI to register. */
 export function OAuthSetupHint({ setup, callbackUrl }: OAuthSetupHintProps) {
 	const [copied, setCopied] = useState(false);
 
@@ -36,7 +36,7 @@ export function OAuthSetupHint({ setup, callbackUrl }: OAuthSetupHintProps) {
 			</a>
 			{callbackUrl && (
 				<div>
-					<p className="mb-1">Callback / redirect URL:</p>
+					<p className="mb-1">Redirect URI to register:</p>
 					<div className="flex items-center gap-1">
 						<code
 							className="min-w-0 flex-1 truncate select-all"
@@ -49,7 +49,7 @@ export function OAuthSetupHint({ setup, callbackUrl }: OAuthSetupHintProps) {
 							size="icon"
 							className="size-6 shrink-0"
 							onClick={copy}
-							aria-label="Copy callback URL"
+							aria-label="Copy redirect URI"
 						>
 							{copied ? <Check /> : <Copy />}
 						</Button>

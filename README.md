@@ -1,68 +1,101 @@
 # Productivity Dashboard
 
-A personal, local-first dashboard that brings work from **GitHub**, **Jira Cloud**, **Gmail** and **Google Calendar** onto one customizable page, plus a unified **My Work** feed.
+A personal, local-first **desktop app** that brings work from **GitHub**, **Jira Cloud**, **Gmail** and **Google Calendar** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists.
 
-Built with TanStack Start (React, SSR + server functions), TanStack Query, Tailwind v4, shadcn/ui, Drizzle + SQLite.
+Built with Tauri 2 (Rust shell), React, TanStack Router + Query, Tailwind v4, shadcn/ui, Drizzle + SQLite.
 
 ## Quick start
 
+Prerequisites: Node 22+, Rust (stable), and the [Tauri system dependencies](https://tauri.app/start/prerequisites/) for your OS.
+
 ```bash
 npm install
-cp .env.example .env
-# set ENCRYPTION_KEY: openssl rand -base64 32
-npm run dev            # http://127.0.0.1:3100 (bound to localhost only)
+npm run dev        # starts Vite on 127.0.0.1:3100 and opens the app window
 ```
 
-The SQLite DB (`data/dashboard.db`) is created and migrated automatically on first request. Then open **Integrations** and connect your accounts.
+Then open **Integrations**, enter the OAuth client for each provider, and click **Connect**. Login happens in your normal browser. There is no `.env` file.
+
+`npm run build` produces installers under `src-tauri/target/release/bundle/`.
+
+## Where data lives
+
+| What | Where |
+|---|---|
+| SQLite DB (connections, OAuth clients, layout) | App config dir, e.g. `~/Library/Application Support/local.productivity-dashboard/dashboard.db` |
+| Key that encrypts tokens + client secrets (AES-256-GCM) | OS credential store: macOS Keychain, Windows Credential Manager, Linux Secret Service |
+
+Migrations in `drizzle/` are bundled into the app and applied on startup.
 
 ## Setting up the OAuth apps
 
-All callback URLs follow `{APP_URL}/api/oauth/{id}/callback`.
+The app uses the desktop OAuth flow from [RFC 8252](https://www.rfc-editor.org/rfc/rfc8252). It opens your system browser, and the provider redirects to a short-lived listener on **`http://127.0.0.1:47390`**. PKCE is used where the provider supports it. Each integration card shows the exact redirect URI to register, with a copy button.
 
-| Integration | Where | Callback URL | Notes |
+| Integration | Where | Redirect URI | Notes |
 |---|---|---|---|
-| GitHub | Settings → Developer settings → **OAuth Apps** | `http://127.0.0.1:3100/api/oauth/github/callback` | Scopes `repo read:user` are requested at login |
-| Jira Cloud | [developer.atlassian.com](https://developer.atlassian.com/console/myapps/) → OAuth 2.0 (3LO) | `…/api/oauth/jira/callback` | Under *Permissions*, add **Jira API** with `read:jira-work`, `read:jira-user` |
-| Gmail | Google Cloud Console → APIs & Services → enable **Gmail API** → Credentials → OAuth client (*Web application*) | `…/api/oauth/gmail/callback` | Consent screen in *Testing* mode, with yourself as a test user. Scope: `gmail.readonly` |
-| Google Calendar | Same Google OAuth client as Gmail → also enable the **Google Calendar API** | `…/api/oauth/google-calendar/callback` (add it to the same client) | Scope: `calendar.readonly` |
+| GitHub | Settings → Developer settings → **OAuth Apps** | `http://127.0.0.1:47390/oauth/github/callback` | Scopes `repo read:user` are requested at login. |
+| Jira Cloud | [developer.atlassian.com](https://developer.atlassian.com/console/myapps/) → OAuth 2.0 (3LO) | `http://127.0.0.1:47390/oauth/jira/callback` | Must match exactly. Under *Permissions*, add **Jira API** with `read:jira-work` and `read:jira-user`. |
+| Gmail + Google Calendar | Google Cloud Console → APIs & Services → enable **Gmail API** and **Google Calendar API** → Credentials → OAuth client of type **Desktop app** | Nothing to register: Desktop clients accept any loopback port | One client is shared by both integrations. Consent screen in *Testing* mode, with yourself as a test user. |
 
-Put each client id/secret pair in `.env` and restart. Integrations without credentials show as *Not configured*.
+Client secrets are stored encrypted on this device. Desktop apps are "public" OAuth clients, but these three providers still require the secret at the token endpoint.
+
+> The port is fixed in `OAUTH_LOOPBACK_PORT` (`src/platform/services.ts`) because Atlassian matches redirect URIs exactly. If you change it, update the registered URIs.
 
 ## Scripts
 
 | | |
 |---|---|
-| `npm run dev` | Dev server on 127.0.0.1:3100 |
-| `npm test` | Vitest unit tests |
+| `npm run dev` | Desktop app with hot reload (`tauri dev`) |
+| `npm run build` | Release build + installers (`tauri build`) |
+| `npm run dev:ui` / `build:ui` | Vite only (used by Tauri; the UI needs the Tauri runtime to work) |
+| `npm test` | Vitest unit tests (`cd src-tauri && cargo test` for the Rust side) |
 | `npm run check` | Biome lint/format check + `tsc --noEmit` |
 | `npm run format` | Apply Biome fixes |
-| `npm run db:generate` | Generate a migration after editing `src/server/db/schema.ts` |
-| `npm run build` / `npm start` | Production build / run |
+| `npm run db:generate` | Generate a migration after editing `src/platform/db/schema.ts` |
 
 ## Architecture
 
 ```
 src/
   core/          Domain types and contracts. No I/O, no React runtime.
-                 WorkItem, Result/IntegrationFailure, IntegrationServer,
+                 WorkItem, Result/IntegrationFailure, IntegrationBackend,
                  IntegrationManifest, WidgetDefinition, OAuthProvider, layout schema
-  server/        Server-only infrastructure: env, crypto, DB, repositories,
-                 HTTP client, OAuth flow + token manager, composition root
+  platform/      Infrastructure behind the Host port: crypto, DB + migrations,
+                 repositories, HTTP client, OAuth (client, flow, token manager),
+                 composition root (services.ts)
+    host.ts      The Host port: fetch, database, encryption key, browser OAuth, open links
+    tauri/       The Tauri adapter for Host (the only code importing @tauri-apps/*)
   integrations/  One self-contained folder per provider + two registries
-  components/    ui/ (shadcn), work-item/ (shared list), widget-kit/ (query states, widget factory)
-  features/      dashboard/, feed/, connections/: UI + server fns per feature
-  app/           Composition: query client, widget catalog, app shell
+  components/    ui/ (shadcn), work-item/, release/, calendar/ (shared lists),
+                 widget-kit/ (query states, widget factory, scope filter),
+                 overview-kit/ (stat tiles, sections, breakdown bars)
+  features/      dashboard/, feed/, releases/, connections/, integration-overview/
+  app/           Composition: query client, widget catalog, app shell, external links
   routes/        Thin TanStack Router files that only compose features
+  main.tsx       Entry: picks the Host, mounts the router
+src-tauri/       Rust shell: plugins (sql, http, opener), keychain key, OAuth loopback listener
 ```
 
-**Dependency direction:** `routes → app → features → integrations → components/server → core`. Features don't import each other; `app/catalog.ts` wires them together (for example, the feed widget becomes part of the dashboard catalog there).
+**Dependency direction:** `routes → app → features → integrations → components/platform → core`. Features don't import each other; `app/catalog.ts` wires them together.
 
-**Server/client boundary:** server-only modules start with `import "@tanstack/react-start/server-only"` or use the `*.server.ts` suffix. The build fails if client code imports them. The UI reaches providers only through `createServerFn` RPCs, which return a serializable `Result<T>`. On the client, `unwrap()` re-throws it as a typed `IntegrationFailure`, so widgets can show *Connect*, *Reconnect*, *Rate limited* or *Retry*.
+**Runtime model:** there's no server. Fetchers run in the webview and reach the OS only through `Host`:
+
+- `plugin-http` gives provider APIs and token endpoints a fetch without CORS.
+- `plugin-sql` provides SQLite.
+- `src-tauri/src/secrets.rs` provides the encryption key from the OS keychain.
+- `src-tauri/src/oauth_loopback.rs` handles the browser login.
+
+The Rust side stays thin on purpose, so all product logic is TypeScript and unit-testable.
 
 **Data flow (one widget):**
-`widget → useQuery(githubQueries.reviewRequests())` → server fn → `withIntegration()` (checks config, gets a valid token, refreshing it if needed) → `service` → `api/client` (zod-validated HTTP) → `mapper` → `WorkItem[]`
+`widget → useQuery(githubQueries.reviewRequests())` → fetcher → `withIntegration()` (checks the OAuth client exists, gets a valid token, refreshing it if needed) → `service` → `api/client` (zod-validated HTTP via the host fetch) → `mapper` → `WorkItem[]`
 
-**Security:** OAuth tokens are AES-256-GCM encrypted at rest. The OAuth `state` and PKCE verifier live in a short-lived HttpOnly cookie. The dev server binds to 127.0.0.1 only.
+**OAuth flow:** `features/connections` → `platform/oauth/oauth-flow.ts`:
+
+1. Generate `state` and a PKCE verifier.
+2. `Host.authorizeInBrowser`: Rust binds `127.0.0.1:47390`, opens the browser and returns the redirect URL.
+3. Check `state`, exchange the code (`oauth2-client.ts`), then save the encrypted tokens.
+
+**Security:** tokens and client secrets are AES-256-GCM encrypted at rest, with a key held in the OS keychain. The window has a strict CSP. HTTP access is limited to the provider hosts listed in `src-tauri/capabilities/default.json`. The loopback listener binds to 127.0.0.1 only, for one flow at a time, and closes when the flow ends. Links to other sites open in the system browser.
 
 ### Anatomy of an integration
 
@@ -70,30 +103,32 @@ src/
 integrations/github/
   constants.ts            id, scopes, queries
   api/schemas.ts          zod schemas for the raw provider responses
-  api/client.ts           typed HTTP wrapper (server-only, injectable fetch)
+  api/client.ts           typed HTTP wrapper (injectable fetch)
   mapper.ts               pure: provider payload → WorkItem
   service.ts              use-cases on top of the API
-  oauth.ts                arctic → OAuthProvider adapter
-  integration.server.ts   IntegrationServer implementation
-  server-fns.ts           createServerFn RPCs for the UI
+  oauth.ts                OAuth client ref + endpoints (createOAuth2Provider)
+  integration.ts          IntegrationBackend implementation
+  fetchers.ts             entry points for the UI, return Result<T>
   queries.ts              TanStack Query options
-  manifest.ts             client-safe: name, icon, widgets
+  overview.tsx            the source's sidebar page (built from overview-kit)
+  manifest.ts             name, icon, widgets, overview
   *.test.ts               mapper + service tests against fixtures
 ```
 
 ### Adding a new integration (e.g. Linear)
 
 1. Copy `src/integrations/github/` to `src/integrations/linear/` and adapt the files above.
-2. Add `linearManifest` to `integrations/registry.ts` and `linearServer` to `integrations/registry.server.ts`.
-3. Add `LINEAR_CLIENT_ID` / `LINEAR_CLIENT_SECRET` to `.env.example`.
+2. Add `linearManifest` to `integrations/registry.ts` and `linearBackend` to `integrations/runtime-registry.ts`.
+3. Allow its API and token hosts under `http:default` in `src-tauri/capabilities/default.json`.
 
-Nothing else changes. Connection handling, OAuth routes, the feed and the dashboard pick it up through the registries.
+Connection handling, the OAuth flow, the credentials form, the feed, the dashboard and the sidebar pick it up through the registries. To give the source its own sidebar page, set `overview` in its manifest; it's served at `/apps/<id>`.
 
 ### Swapping parts
 
 | Replace | Touch only |
 |---|---|
-| OAuth library (arctic) | `server/oauth/arctic.ts`, each `integrations/*/oauth.ts` |
-| Database (SQLite → Postgres) | `server/db/*`, `server/repositories/*`, `server/services.ts` |
+| Desktop shell (Tauri → something else) | a new `platform/<shell>/host.ts`, `main.tsx` |
+| OAuth details of a provider | that integration's `oauth.ts` |
+| Database (SQLite → other) | `platform/db/*`, `platform/repositories/*`, `platform/services.ts` |
 | Grid engine (react-grid-layout) | `features/dashboard/components/dashboard-grid.tsx` |
-| Token storage / encryption | `server/crypto.ts`, `server/services.ts` |
+| Token storage / encryption | `platform/crypto.ts`, `platform/services.ts`, `src-tauri/src/secrets.rs` |

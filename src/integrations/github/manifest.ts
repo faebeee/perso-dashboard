@@ -2,6 +2,7 @@ import { GitPullRequest, GitPullRequestDraft } from "lucide-react";
 import { createWorkItemWidget } from "#/components/widget-kit/create-work-item-widget";
 import type { IntegrationManifest } from "#/core/integration";
 import { GITHUB_ID } from "./constants";
+import { GitHubOverview } from "./overview";
 import { githubQueries } from "./queries";
 
 export const githubManifest: IntegrationManifest = {
@@ -13,6 +14,7 @@ export const githubManifest: IntegrationManifest = {
 		url: "https://github.com/settings/developers",
 		label: "GitHub → Developer settings → OAuth Apps",
 	},
+	overview: { Component: GitHubOverview, scoped: true },
 	widgets: [
 		createWorkItemWidget({
 			type: "github.review-requests",

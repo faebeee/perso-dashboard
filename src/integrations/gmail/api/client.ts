@@ -1,7 +1,7 @@
-import "@tanstack/react-start/server-only";
-import { createHttpClient, type FetchFn } from "#/server/http";
-import { GMAIL_ID } from "../constants";
+import { createHttpClient, type FetchFn } from "#/platform/http";
+import { GMAIL_ID, MESSAGE_PAGE_SIZE } from "../constants";
 import {
+	gmailLabelSchema,
 	gmailMessageListSchema,
 	gmailMessageSchema,
 	gmailProfileSchema,
@@ -20,7 +20,11 @@ export function createGmailApi(accessToken: string, fetch?: FetchFn) {
 	return {
 		profile: () => http.get(`${base}/profile`, gmailProfileSchema),
 
-		listMessages: (q: string, maxResults = 15) =>
+		/** Exact totals for a label, e.g. "INBOX". */
+		label: (id: string) =>
+			http.get(`${base}/labels/${encodeURIComponent(id)}`, gmailLabelSchema),
+
+		listMessages: (q: string, maxResults = MESSAGE_PAGE_SIZE) =>
 			http.get(`${base}/messages`, gmailMessageListSchema, { q, maxResults }),
 
 		getMessageMetadata: (id: string) =>

@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "#/lib/query-keys";
-import { fetchFeed } from "./server-fns";
+import { fetchFeed } from "./fetchers";
 
 export const feedQueries = {
 	all: () =>

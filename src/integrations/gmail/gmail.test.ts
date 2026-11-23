@@ -94,3 +94,22 @@ describe("gmail service", () => {
 		).resolves.toEqual([]);
 	});
 });
+
+describe("gmail inbox stats", () => {
+	it("reads conversation totals from the INBOX and STARRED labels", async () => {
+		const fetch = fakeFetch({
+			"/gmail/v1/users/me/labels/INBOX": {
+				id: "INBOX",
+				threadsTotal: 120,
+				threadsUnread: 7,
+			},
+			"/gmail/v1/users/me/labels/STARRED": { id: "STARRED", threadsTotal: 4 },
+		});
+		const service = createGmailService(createGmailApi("token", fetch));
+		await expect(service.inboxStats()).resolves.toEqual({
+			unreadThreads: 7,
+			inboxThreads: 120,
+			starredThreads: 4,
+		});
+	});
+});

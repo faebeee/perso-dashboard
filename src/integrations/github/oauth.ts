@@ -1,23 +1,27 @@
-import "@tanstack/react-start/server-only";
-import { GitHub } from "arctic";
-import type { OAuthProvider } from "#/core/oauth";
-import type { OAuthClientCredentials } from "#/server/env";
-import { fromArcticTokens } from "#/server/oauth/arctic";
+import type { OAuthClientCredentials, OAuthProvider } from "#/core/oauth";
+import { createOAuth2Provider } from "#/platform/oauth/oauth2-client";
 import { GITHUB_SCOPES } from "./constants";
 
-/** GitHub OAuth App. No PKCE, and tokens don't expire, so there's no refresh. */
+export const GITHUB_OAUTH_CLIENT = {
+	id: "github",
+	label: "GitHub OAuth App",
+} as const;
+
+/**
+ * GitHub OAuth App with PKCE. GitHub accepts any port for a registered
+ * http://127.0.0.1 callback. OAuth App tokens don't expire, so the token
+ * manager never calls refresh for them.
+ */
 export function createGitHubOAuth(
-	creds: OAuthClientCredentials,
+	credentials: OAuthClientCredentials,
 	redirectUri: string,
 ): OAuthProvider {
-	const client = new GitHub(creds.clientId, creds.clientSecret, redirectUri);
-	return {
-		createAuthorizationUrl: ({ state }) =>
-			client.createAuthorizationURL(state, GITHUB_SCOPES),
-		exchangeCode: async ({ code }) =>
-			fromArcticTokens(
-				await client.validateAuthorizationCode(code),
-				GITHUB_SCOPES,
-			),
-	};
+	return createOAuth2Provider({
+		authorizationEndpoint: "https://github.com/login/oauth/authorize",
+		tokenEndpoint: "https://github.com/login/oauth/access_token",
+		credentials,
+		redirectUri,
+		scopes: GITHUB_SCOPES,
+		pkce: true,
+	});
 }

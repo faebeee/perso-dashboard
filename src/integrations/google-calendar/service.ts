@@ -1,4 +1,3 @@
-import "@tanstack/react-start/server-only";
 import { type CalendarEvent, sortByStart } from "#/core/calendar-event";
 import type { WorkScope } from "#/core/work-scope";
 import type { GoogleCalendarApi } from "./api/client";

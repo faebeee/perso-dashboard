@@ -3,6 +3,7 @@ import { Check, Pencil, RefreshCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { WorkScopeProvider } from "#/components/widget-kit/work-scope-context";
+import { WorkScopeToggle } from "#/components/widget-kit/work-scope-toggle";
 import type { WidgetDefinition } from "#/core/widget";
 import type { WorkScope } from "#/core/work-scope";
 import { queryKeys } from "#/lib/query-keys";
@@ -16,7 +17,6 @@ import { useDashboardLayout } from "../use-dashboard-layout";
 import { AddWidgetMenu } from "./add-widget-menu";
 import { DashboardGrid } from "./dashboard-grid";
 import { WidgetFrame } from "./widget-frame";
-import { WorkScopeToggle } from "./work-scope-toggle";
 
 interface DashboardPageProps {
 	/** Every widget type the user may place. Injected by the app layer. */

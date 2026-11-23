@@ -1,5 +1,4 @@
-import "@tanstack/react-start/server-only";
-import { createHttpClient, type FetchFn } from "#/server/http";
+import { createHttpClient, type FetchFn } from "#/platform/http";
 import { GOOGLE_CALENDAR_ID } from "../constants";
 import { googleCalendarSchema, googleEventListSchema } from "./schemas";
 

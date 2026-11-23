@@ -7,9 +7,9 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { DashboardLayout } from "#/core/layout";
 import type { WidgetDefinition } from "#/core/widget";
 import { queryKeys } from "#/lib/query-keys";
+import { saveDashboardLayout } from "./fetchers";
 import { buildDefaultLayout } from "./model";
 import { layoutQueries } from "./queries";
-import { saveDashboardLayout } from "./server-fns";
 
 const SAVE_DEBOUNCE_MS = 600;
 
@@ -24,7 +24,7 @@ export function useDashboardLayout(catalog: readonly WidgetDefinition[]) {
 	const layout = saved ?? fallback;
 
 	const save = useMutation({
-		mutationFn: (next: DashboardLayout) => saveDashboardLayout({ data: next }),
+		mutationFn: (next: DashboardLayout) => saveDashboardLayout(next),
 	});
 
 	const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);

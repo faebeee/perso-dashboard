@@ -1,0 +1,28 @@
+[package]
+name = "productivity-dashboard"
+version = "0.1.0"
+description = "Personal productivity dashboard"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+# The `_lib` suffix avoids a name clash with the binary on Windows.
+name = "productivity_dashboard_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-http = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
+tokio = { version = "1", features = ["net", "io-util", "time", "sync", "macros"] }
+serde = { version = "1", features = ["derive"] }
+base64 = "0.22"
+getrandom = "0.3"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros", "net", "io-util"] }

@@ -2,6 +2,7 @@ import { Rocket, SquareKanban } from "lucide-react";
 import { createWorkItemWidget } from "#/components/widget-kit/create-work-item-widget";
 import type { IntegrationManifest } from "#/core/integration";
 import { JIRA_ID, JIRA_RELEASE_STATUSES } from "./constants";
+import { JiraOverview } from "./overview";
 import { jiraQueries } from "./queries";
 
 export const jiraManifest: IntegrationManifest = {
@@ -13,6 +14,7 @@ export const jiraManifest: IntegrationManifest = {
 		url: "https://developer.atlassian.com/console/myapps/",
 		label: "Atlassian Developer Console → OAuth 2.0 (3LO)",
 	},
+	overview: { Component: JiraOverview, scoped: true },
 	widgets: [
 		createWorkItemWidget({
 			// Type id kept from v1 so saved layouts keep working.

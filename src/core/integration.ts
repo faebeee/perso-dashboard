@@ -1,21 +1,34 @@
 import type { ComponentType } from "react";
-import type { OAuthProvider } from "./oauth";
+import type {
+	OAuthClientCredentials,
+	OAuthClientRef,
+	OAuthProvider,
+} from "./oauth";
 import type { Release, ReleaseQuery } from "./release";
 import type { WidgetDefinition } from "./widget";
 import type { WorkItem } from "./work-item";
 
 /**
- * Client-safe description of an integration: identity, branding and the
- * widgets it contributes. Must never reference secrets or server modules.
+ * Description of an integration for the UI: identity, branding and the
+ * widgets it contributes. Never references credentials or tokens.
  */
 export interface IntegrationManifest {
 	id: string;
 	name: string;
 	description: string;
 	icon: ComponentType<{ className?: string }>;
-	/** Where the developer creates the OAuth app for this provider. */
+	/** Where the user creates the OAuth app for this provider. */
 	setup: { url: string; label: string };
 	widgets: WidgetDefinition[];
+	/** Full-page overview, listed in the sidebar. Omit for no page. */
+	overview?: IntegrationOverview;
+}
+
+/** A source's own page: headline numbers plus detailed sections. */
+export interface IntegrationOverview {
+	Component: ComponentType;
+	/** True when the page responds to the "All / Assigned / Created" filter. */
+	scoped?: boolean;
 }
 
 /** What a connected integration needs to call its provider API. */
@@ -32,14 +45,17 @@ export interface AccountInfo {
 }
 
 /**
- * Server-side half of an integration. Lives in `integration.server.ts` files
- * and is only ever imported by server code.
+ * Data-access half of an integration: OAuth and provider calls. Lives in
+ * `integration.ts` files; the UI reaches it only through `fetchers.ts`.
  */
-export interface IntegrationServer {
+export interface IntegrationBackend {
 	id: string;
-	/** True when the OAuth client credentials are present in env. */
-	isConfigured(): boolean;
-	createOAuthProvider(redirectUri: string): OAuthProvider;
+	/** The OAuth app this integration authenticates with (may be shared). */
+	oauthClient: OAuthClientRef;
+	createOAuthProvider(
+		credentials: OAuthClientCredentials,
+		redirectUri: string,
+	): OAuthProvider;
 	/** Called once right after OAuth to label the account and capture meta. */
 	describeAccount(ctx: IntegrationContext): Promise<AccountInfo>;
 	/** Items for the unified feed. Omit when the data isn't "work" (e.g. calendar). */

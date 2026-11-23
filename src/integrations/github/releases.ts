@@ -1,4 +1,3 @@
-import "@tanstack/react-start/server-only";
 import { type Release, type ReleaseQuery, releaseDateMs } from "#/core/release";
 import { settleLeniently } from "#/lib/collect-sources";
 import type { GitHubApi } from "./api/client";

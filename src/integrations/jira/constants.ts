@@ -6,6 +6,9 @@ export const JIRA_SCOPES = [
 	"offline_access",
 ];
 
+/** Results per search request: lists are capped at this size. */
+export const SEARCH_PAGE_SIZE = 30;
+
 /** Workflow statuses shown by the "On Release" widget. Must match Jira exactly. */
 export const JIRA_RELEASE_STATUSES = ["On Release", "Bereit für Release"];
 

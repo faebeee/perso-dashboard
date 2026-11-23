@@ -1,43 +1,25 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
-import {
-	createRootRouteWithContext,
-	HeadContent,
-	Scripts,
-} from "@tanstack/react-router";
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import type { ReactNode } from "react";
 import { AppShell } from "#/app/shell/app-shell";
-import { themeInitScript } from "#/app/shell/theme-toggle";
-import appCss from "../styles.css?url";
 
 interface RouterContext {
 	queryClient: QueryClient;
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-	head: () => ({
-		meta: [
-			{ charSet: "utf-8" },
-			{ name: "viewport", content: "width=device-width, initial-scale=1" },
-			{ title: "Productivity Dashboard" },
-		],
-		links: [{ rel: "stylesheet", href: appCss }],
-	}),
-	shellComponent: RootDocument,
+	component: RootLayout,
 });
 
-function RootDocument({ children }: { children: ReactNode }) {
+function RootLayout() {
 	return (
-		<html lang="en" suppressHydrationWarning>
-			<head>
-				{/* biome-ignore lint/security/noDangerouslySetInnerHtml: static theme bootstrap */}
-				<script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-				<HeadContent />
-			</head>
-			<body>
-				<AppShell>{children}</AppShell>
+		<>
+			<AppShell>
+				<Outlet />
+			</AppShell>
+			{import.meta.env.DEV && (
 				<TanStackDevtools
 					config={{ position: "bottom-right" }}
 					plugins={[
@@ -48,8 +30,7 @@ function RootDocument({ children }: { children: ReactNode }) {
 						{ name: "TanStack Query", render: <ReactQueryDevtoolsPanel /> },
 					]}
 				/>
-				<Scripts />
-			</body>
-		</html>
+			)}
+		</>
 	);
 }

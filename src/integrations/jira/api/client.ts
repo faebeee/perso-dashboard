@@ -1,6 +1,5 @@
-import "@tanstack/react-start/server-only";
-import { createHttpClient, type FetchFn } from "#/server/http";
-import { JIRA_ID } from "../constants";
+import { createHttpClient, type FetchFn } from "#/platform/http";
+import { JIRA_ID, SEARCH_PAGE_SIZE } from "../constants";
 import {
 	jiraAccessibleResourcesSchema,
 	jiraSearchResponseSchema,
@@ -34,7 +33,11 @@ export function createJiraApi(accessToken: string, fetch?: FetchFn) {
 				jiraAccessibleResourcesSchema,
 			),
 
-		searchIssues: (cloudId: string, jql: string, maxResults = 30) =>
+		searchIssues: (
+			cloudId: string,
+			jql: string,
+			maxResults = SEARCH_PAGE_SIZE,
+		) =>
 			http.get(
 				`/ex/jira/${encodeURIComponent(cloudId)}/rest/api/3/search/jql`,
 				jiraSearchResponseSchema,

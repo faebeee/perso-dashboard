@@ -1,6 +1,5 @@
-import "@tanstack/react-start/server-only";
-import { createHttpClient, type FetchFn } from "#/server/http";
-import { GITHUB_ID } from "../constants";
+import { createHttpClient, type FetchFn } from "#/platform/http";
+import { GITHUB_ID, SEARCH_PAGE_SIZE } from "../constants";
 import {
 	githubReleaseListSchema,
 	githubSearchResponseSchema,
@@ -20,7 +19,7 @@ export function createGitHubApi(accessToken: string, fetch?: FetchFn) {
 	return {
 		viewer: () => http.get("/user", githubUserSchema),
 
-		searchIssues: (q: string, perPage = 30) =>
+		searchIssues: (q: string, perPage = SEARCH_PAGE_SIZE) =>
 			http.get("/search/issues", githubSearchResponseSchema, {
 				q,
 				sort: "updated",

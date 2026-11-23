@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "#/lib/query-keys";
-import { fetchReleases } from "./server-fns";
+import { fetchReleases } from "./fetchers";
 
 export const releaseQueries = {
 	all: () =>

@@ -22,6 +22,8 @@ export const workItemSchema = z.object({
 	updatedAt: z.string(),
 	/** Short secondary text: repo name, issue key, email snippet… */
 	context: z.string().optional(),
+	/** Repository or project the item belongs to, for grouping. */
+	project: z.string().optional(),
 	status: z.string().optional(),
 	/** Who created/sent it (author, reporter, sender). */
 	actor: personSchema.optional(),

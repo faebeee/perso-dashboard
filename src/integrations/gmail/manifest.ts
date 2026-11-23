@@ -2,6 +2,7 @@ import { Mail } from "lucide-react";
 import { createWorkItemWidget } from "#/components/widget-kit/create-work-item-widget";
 import type { IntegrationManifest } from "#/core/integration";
 import { GMAIL_ID } from "./constants";
+import { GmailOverview } from "./overview";
 import { gmailQueries } from "./queries";
 
 export const gmailManifest: IntegrationManifest = {
@@ -13,6 +14,7 @@ export const gmailManifest: IntegrationManifest = {
 		url: "https://console.cloud.google.com/apis/credentials",
 		label: "Google Cloud Console → Credentials (enable the Gmail API)",
 	},
+	overview: { Component: GmailOverview },
 	widgets: [
 		createWorkItemWidget({
 			type: "gmail.unread",

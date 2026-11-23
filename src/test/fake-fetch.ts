@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { FetchFn } from "#/server/http";
+import type { FetchFn } from "#/platform/http";
 
 /**
  * A fetch stub that answers by URL pathname. Use a function value to

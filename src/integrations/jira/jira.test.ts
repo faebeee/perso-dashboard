@@ -50,6 +50,7 @@ describe("jira mapper", () => {
 			url: "https://acme.atlassian.net/browse/WEB-12",
 			updatedAt: "2026-01-02T09:00:00.000Z",
 			context: "WEB-12 · Website",
+			project: "Website",
 			status: "In Progress",
 			actor: { name: "Ada Lovelace", avatarUrl: "https://avatar/ada.png" },
 			assignee: {

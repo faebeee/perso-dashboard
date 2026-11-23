@@ -2,6 +2,9 @@ export const GITHUB_ID = "github";
 
 export const GITHUB_SCOPES = ["repo", "read:user"];
 
+/** Results per search request: lists are capped at this size. */
+export const SEARCH_PAGE_SIZE = 30;
+
 const OPEN_PRS = "is:open is:pr archived:false";
 
 /** Max repos whose releases are fetched (one API call each). */

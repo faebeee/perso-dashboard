@@ -17,6 +17,7 @@ export function toWorkItem(
 		url: item.html_url,
 		updatedAt: item.updated_at,
 		context: `${repo} #${item.number}`,
+		project: repo,
 		status: item.draft ? "Draft" : undefined,
 		actor: item.user
 			? { name: item.user.login, avatarUrl: item.user.avatar_url }

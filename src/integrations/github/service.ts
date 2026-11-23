@@ -1,4 +1,3 @@
-import "@tanstack/react-start/server-only";
 import { sortByUpdatedDesc, type WorkItem } from "#/core/work-item";
 import type { WorkScope } from "#/core/work-scope";
 import type { GitHubApi } from "./api/client";

@@ -6,10 +6,11 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "vite dev --host 127.0.0.1 --port 3100",
-    "build": "vite build",
-    "start": "node dist/server/server.js",
-    "preview": "vite preview --host 127.0.0.1",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "dev:ui": "vite",
+    "build:ui": "vite build",
+    "tauri": "tauri",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
@@ -25,10 +26,10 @@
     "@tanstack/react-query-devtools": "5.108.3",
     "@tanstack/react-router": "1.170.46",
     "@tanstack/react-router-devtools": "1.167.4",
-    "@tanstack/react-router-ssr-query": "1.167.3",
-    "@tanstack/react-start": "1.169.7",
-    "arctic": "^3.7.0",
-    "better-sqlite3": "^13.2.0",
+    "@tauri-apps/api": "^2.12.5",
+    "@tauri-apps/plugin-http": "^2.9.0",
+    "@tauri-apps/plugin-opener": "^2.7.3",
+    "@tauri-apps/plugin-sql": "^2.6.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cn": "^0.5.2",
@@ -46,7 +47,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.5",
     "@tanstack/devtools-vite": "0.8.7",
-    "@types/better-sqlite3": "^9.6.0",
+    "@tanstack/router-plugin": "^1.169.0",
+    "@tauri-apps/cli": "^2.12.6",
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
@@ -55,5 +57,6 @@
     "typescript": "^6.0.2",
     "vite": "^8.0.0",
     "vitest": "^5.1.1"
-  }
+  },
+  "version": "0.1.0"
 }

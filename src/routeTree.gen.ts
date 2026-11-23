@@ -11,9 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FeedRouteImport } from './routes/feed'
+import { Route as AppsIntegrationIdRouteImport } from './routes/apps/$integrationId'
 import { Route as SettingsIntegrationsRouteImport } from './routes/settings/integrations'
-import { Route as ApiOauthProviderCallbackRouteImport } from './routes/api/oauth/$provider/callback'
-import { Route as ApiOauthProviderStartRouteImport } from './routes/api/oauth/$provider/start'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -25,75 +24,54 @@ const FeedRoute = FeedRouteImport.update({
   path: '/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppsIntegrationIdRoute = AppsIntegrationIdRouteImport.update({
+  id: '/apps/$integrationId',
+  path: '/apps/$integrationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsIntegrationsRoute = SettingsIntegrationsRouteImport.update({
   id: '/settings/integrations',
   path: '/settings/integrations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiOauthProviderCallbackRoute =
-  ApiOauthProviderCallbackRouteImport.update({
-    id: '/api/oauth/$provider/callback',
-    path: '/api/oauth/$provider/callback',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiOauthProviderStartRoute = ApiOauthProviderStartRouteImport.update({
-  id: '/api/oauth/$provider/start',
-  path: '/api/oauth/$provider/start',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
+  '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
-  '/api/oauth/$provider/callback': typeof ApiOauthProviderCallbackRoute
-  '/api/oauth/$provider/start': typeof ApiOauthProviderStartRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
+  '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
-  '/api/oauth/$provider/callback': typeof ApiOauthProviderCallbackRoute
-  '/api/oauth/$provider/start': typeof ApiOauthProviderStartRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
+  '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
-  '/api/oauth/$provider/callback': typeof ApiOauthProviderCallbackRoute
-  '/api/oauth/$provider/start': typeof ApiOauthProviderStartRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/feed'
-    | '/settings/integrations'
-    | '/api/oauth/$provider/callback'
-    | '/api/oauth/$provider/start'
+  fullPaths: '/' | '/feed' | '/apps/$integrationId' | '/settings/integrations'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/feed'
-    | '/settings/integrations'
-    | '/api/oauth/$provider/callback'
-    | '/api/oauth/$provider/start'
+  to: '/' | '/feed' | '/apps/$integrationId' | '/settings/integrations'
   id:
     | '__root__'
     | '/'
     | '/feed'
+    | '/apps/$integrationId'
     | '/settings/integrations'
-    | '/api/oauth/$provider/callback'
-    | '/api/oauth/$provider/start'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FeedRoute: typeof FeedRoute
+  AppsIntegrationIdRoute: typeof AppsIntegrationIdRoute
   SettingsIntegrationsRoute: typeof SettingsIntegrationsRoute
-  ApiOauthProviderCallbackRoute: typeof ApiOauthProviderCallbackRoute
-  ApiOauthProviderStartRoute: typeof ApiOauthProviderStartRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -112,25 +90,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FeedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/apps/$integrationId': {
+      id: '/apps/$integrationId'
+      path: '/apps/$integrationId'
+      fullPath: '/apps/$integrationId'
+      preLoaderRoute: typeof AppsIntegrationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings/integrations': {
       id: '/settings/integrations'
       path: '/settings/integrations'
       fullPath: '/settings/integrations'
       preLoaderRoute: typeof SettingsIntegrationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/oauth/$provider/callback': {
-      id: '/api/oauth/$provider/callback'
-      path: '/api/oauth/$provider/callback'
-      fullPath: '/api/oauth/$provider/callback'
-      preLoaderRoute: typeof ApiOauthProviderCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/oauth/$provider/start': {
-      id: '/api/oauth/$provider/start'
-      path: '/api/oauth/$provider/start'
-      fullPath: '/api/oauth/$provider/start'
-      preLoaderRoute: typeof ApiOauthProviderStartRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -139,19 +110,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FeedRoute: FeedRoute,
+  AppsIntegrationIdRoute: AppsIntegrationIdRoute,
   SettingsIntegrationsRoute: SettingsIntegrationsRoute,
-  ApiOauthProviderCallbackRoute: ApiOauthProviderCallbackRoute,
-  ApiOauthProviderStartRoute: ApiOauthProviderStartRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

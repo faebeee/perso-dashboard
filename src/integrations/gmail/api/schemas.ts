@@ -24,4 +24,13 @@ export const gmailMessageSchema = z.object({
 	}),
 });
 
+/** Totals of a system label (INBOX, STARRED…). */
+export const gmailLabelSchema = z.object({
+	id: z.string(),
+	messagesTotal: z.number().default(0),
+	messagesUnread: z.number().default(0),
+	threadsTotal: z.number().default(0),
+	threadsUnread: z.number().default(0),
+});
+
 export type GmailMessage = z.infer<typeof gmailMessageSchema>;

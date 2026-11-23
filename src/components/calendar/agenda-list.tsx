@@ -105,7 +105,8 @@ const dayFormat = new Intl.DateTimeFormat(undefined, {
 
 const formatTime = (iso: string) => timeFormat.format(new Date(iso));
 
-function localDayKey(ms: number): string {
+/** "YYYY-MM-DD" in the viewer's time zone. */
+export function localDayKey(ms: number): string {
 	const d = new Date(ms);
 	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }

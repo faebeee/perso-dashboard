@@ -14,5 +14,5 @@ export const WORK_SCOPE_LABELS: Record<WorkScope, string> = {
 	created: "Created by me",
 };
 
-/** Input shape for server functions that accept a scope. */
+/** Input shape for fetchers that accept a scope. */
 export const scopedInputSchema = z.object({ scope: workScopeSchema });

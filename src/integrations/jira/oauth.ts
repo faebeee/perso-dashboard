@@ -1,28 +1,27 @@
-import "@tanstack/react-start/server-only";
-import { Atlassian } from "arctic";
-import type { OAuthProvider } from "#/core/oauth";
-import type { OAuthClientCredentials } from "#/server/env";
-import { fromArcticTokens } from "#/server/oauth/arctic";
+import type { OAuthClientCredentials, OAuthProvider } from "#/core/oauth";
+import { createOAuth2Provider } from "#/platform/oauth/oauth2-client";
 import { JIRA_SCOPES } from "./constants";
 
-/** Atlassian OAuth 2.0 (3LO). Refresh tokens rotate on every refresh. */
+export const ATLASSIAN_OAUTH_CLIENT = {
+	id: "atlassian",
+	label: "Atlassian OAuth 2.0 (3LO) app",
+} as const;
+
+/**
+ * Atlassian OAuth 2.0 (3LO). The redirect URI must match the registered one
+ * exactly (port included). Refresh tokens rotate on every refresh.
+ */
 export function createJiraOAuth(
-	creds: OAuthClientCredentials,
+	credentials: OAuthClientCredentials,
 	redirectUri: string,
 ): OAuthProvider {
-	const client = new Atlassian(creds.clientId, creds.clientSecret, redirectUri);
-	return {
-		createAuthorizationUrl: ({ state }) =>
-			client.createAuthorizationURL(state, JIRA_SCOPES),
-		exchangeCode: async ({ code }) =>
-			fromArcticTokens(
-				await client.validateAuthorizationCode(code),
-				JIRA_SCOPES,
-			),
-		refresh: async (refreshToken) =>
-			fromArcticTokens(
-				await client.refreshAccessToken(refreshToken),
-				JIRA_SCOPES,
-			),
-	};
+	return createOAuth2Provider({
+		authorizationEndpoint: "https://auth.atlassian.com/authorize",
+		tokenEndpoint: "https://auth.atlassian.com/oauth/token",
+		credentials,
+		redirectUri,
+		scopes: JIRA_SCOPES,
+		pkce: false,
+		authorizationParams: { audience: "api.atlassian.com", prompt: "consent" },
+	});
 }

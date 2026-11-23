@@ -26,6 +26,13 @@ export interface ReleaseQuery {
 	releasedSince: Date;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Upcoming releases plus those shipped in the last RECENT_RELEASE_DAYS. */
+export function recentReleaseQuery(now: number = Date.now()): ReleaseQuery {
+	return { releasedSince: new Date(now - RECENT_RELEASE_DAYS * DAY_MS) };
+}
+
 /** Timestamp for a release date; date-only values count from local midnight. */
 export function releaseDateMs(date: string): number {
 	return /^\d{4}-\d{2}-\d{2}$/.test(date)
