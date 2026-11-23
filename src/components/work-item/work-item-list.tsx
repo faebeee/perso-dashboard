@@ -1,4 +1,5 @@
 import { UserRound } from "lucide-react";
+import { useItemClick } from "#/components/item-detail/item-detail-provider";
 import { ItemIcon } from "#/components/source-kit/item-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Badge } from "#/components/ui/badge";
@@ -25,11 +26,13 @@ export function WorkItemList({ items, className }: WorkItemListProps) {
 }
 
 function WorkItemRow({ item }: { item: WorkItem }) {
+	const onClick = useItemClick(item);
 	return (
 		<a
 			href={item.url}
 			target="_blank"
 			rel="noreferrer"
+			onClick={onClick}
 			className="group flex items-start gap-3 rounded-md px-1 py-2.5 text-inherit no-underline transition-colors hover:bg-accent/60"
 		>
 			<ItemIcon source={item.source} kind={item.kind} className="mt-0.5" />

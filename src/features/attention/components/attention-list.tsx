@@ -1,4 +1,5 @@
 import { Video } from "lucide-react";
+import { useItemClick } from "#/components/item-detail/item-detail-provider";
 import { ItemIcon } from "#/components/source-kit/item-icon";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -75,6 +76,7 @@ export function AttentionList({ items, errors, limit }: AttentionListProps) {
 }
 
 function AttentionRow({ item }: { item: AttentionItem }) {
+	const onClick = useItemClick(item);
 	return (
 		<div className="flex items-start gap-3 rounded-md px-1 py-2.5 hover:bg-accent/60">
 			<ItemIcon
@@ -88,6 +90,7 @@ function AttentionRow({ item }: { item: AttentionItem }) {
 					href={item.url}
 					target="_blank"
 					rel="noreferrer"
+					onClick={onClick}
 					className="block truncate text-sm font-medium text-foreground no-underline underline-offset-2 hover:underline"
 				>
 					{item.title}

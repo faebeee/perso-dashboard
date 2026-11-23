@@ -39,6 +39,11 @@ export const workItemSchema = z.object({
 	 * `undefined` = not applicable for this kind of item.
 	 */
 	assignee: personSchema.nullable().optional(),
+	/**
+	 * Opaque reference the source's in-app detail view understands (Jira issue
+	 * key, Gmail message id…). Absent = the item only opens in the browser.
+	 */
+	detailRef: z.string().optional(),
 	/** Free-form labels (priority, draft, issue type…). */
 	tags: z.array(z.string()).optional(),
 });

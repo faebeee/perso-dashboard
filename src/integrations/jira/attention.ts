@@ -73,6 +73,7 @@ export function issuesToAttention(
 				at: due ? new Date(`${due}T00:00:00`).toISOString() : item.updatedAt,
 				context: [item.context, item.status].filter(Boolean).join(" · "),
 				actor: item.actor,
+				detailRef: item.detailRef,
 			},
 		];
 	});

@@ -67,3 +67,57 @@ export type JiraVersion = z.infer<typeof jiraVersionSchema>;
 export type JiraIssue = z.infer<typeof jiraIssueSchema>;
 export type JiraUser = NonNullable<z.infer<typeof jiraUserSchema>>;
 export type JiraSite = z.infer<typeof jiraSiteSchema>;
+
+/** GET /issue/{key}?expand=renderedFields: rendered HTML for description + comments. */
+export const jiraIssueDetailSchema = z.object({
+	id: z.string(),
+	key: z.string(),
+	fields: z.object({
+		summary: z.string(),
+		created: z.string(),
+		updated: z.string(),
+		duedate: z.string().nullable().optional(),
+		status: z.object({ name: z.string() }).nullable().optional(),
+		priority: z.object({ name: z.string() }).nullable().optional(),
+		issuetype: z.object({ name: z.string() }).nullable().optional(),
+		project: z
+			.object({ key: z.string(), name: z.string() })
+			.nullable()
+			.optional(),
+		parent: z
+			.object({ key: z.string(), fields: z.object({ summary: z.string() }) })
+			.nullable()
+			.optional(),
+		labels: z.array(z.string()).default([]),
+		reporter: jiraUserSchema,
+		assignee: jiraUserSchema,
+		comment: z
+			.object({
+				total: z.number().optional(),
+				comments: z
+					.array(
+						z.object({
+							id: z.string(),
+							author: jiraUserSchema,
+							created: z.string(),
+						}),
+					)
+					.default([]),
+			})
+			.optional(),
+	}),
+	renderedFields: z
+		.object({
+			description: z.string().nullable().optional(),
+			comment: z
+				.object({
+					comments: z
+						.array(z.object({ id: z.string(), body: z.string().default("") }))
+						.default([]),
+				})
+				.optional(),
+		})
+		.optional(),
+});
+
+export type JiraIssueDetailResponse = z.infer<typeof jiraIssueDetailSchema>;

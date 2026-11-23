@@ -133,6 +133,7 @@ integrations/github/
   queries.ts              TanStack Query options
   overview.tsx            the source's sidebar page (built from overview-kit)
   attention.ts            pure rules: what from this source is urgent
+  *-detail-view.tsx       optional in-app detail modal (Jira issues, Gmail messages)
   manifest.ts             name, icon, widgets, overview
   *.test.ts               mapper + service tests against fixtures
 ```
@@ -143,7 +144,9 @@ integrations/github/
 2. Add `linearManifest` to `integrations/registry.ts` and `linearBackend` to `integrations/runtime-registry.ts`.
 3. Allow its API and token hosts under `http:default` in `src-tauri/capabilities/default.json`.
 
-Connection handling, the OAuth flow, the credentials form, the feed, the dashboard and the sidebar pick it up through the registries. To give the source its own sidebar page, set `overview` in its manifest; it's served at `/apps/<id>`. To feed the Urgent view, implement `getAttentionItems` on its backend.
+Connection handling, the OAuth flow, the credentials form, the feed, the dashboard and the sidebar pick it up through the registries. To give the source its own sidebar page, set `overview` in its manifest; it's served at `/apps/<id>`. To feed the Urgent view, implement `getAttentionItems` on its backend. To open its items in the detail modal instead of the browser, set `details` in its manifest and a `detailRef` on its items.
+
+**Detail modal:** clicking a Jira issue or an email (in any list, the Urgent view or ⌘K) opens it in the app. ⌘/Ctrl/Shift/middle-click still opens the browser. Untrusted HTML (email bodies, Jira descriptions and comments) renders in a sandboxed iframe: no scripts, forms or navigation, plus a strict CSP. Remote images in email stay hidden until you click *Show images*, so senders can't track opens. See `src/components/item-detail/`.
 
 ### Swapping parts
 

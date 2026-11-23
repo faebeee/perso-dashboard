@@ -25,6 +25,17 @@ export interface IntegrationManifest {
 	widgets: WidgetDefinition[];
 	/** Full-page overview, listed in the sidebar. Omit for no page. */
 	overview?: IntegrationOverview;
+	/** In-app detail view for this source's items. Omit to open in the browser. */
+	details?: ItemDetailView;
+}
+
+/**
+ * Body of the detail modal for one item. The modal frame (title, "Open in…"
+ * button) is shared; this renders everything below it and fetches its own
+ * data from `detailRef`.
+ */
+export interface ItemDetailView {
+	Component: ComponentType<{ detailRef: string }>;
 }
 
 /** A source's own page: headline numbers plus detailed sections. */

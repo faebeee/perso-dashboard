@@ -4,6 +4,7 @@ import type { WorkScope } from "#/core/work-scope";
 import { integrationQueryKey } from "#/lib/query-keys";
 import { JIRA_ID } from "./constants";
 import {
+	fetchJiraIssueDetail,
 	fetchJiraMyIssues,
 	fetchJiraOnRelease,
 	fetchJiraReleases,
@@ -22,6 +23,12 @@ export const jiraQueries = {
 		queryOptions({
 			queryKey: [...key, "on-release", scope],
 			queryFn: async () => unwrap(await fetchJiraOnRelease(scope)),
+		}),
+
+	issueDetail: (issueKey: string) =>
+		queryOptions({
+			queryKey: [...key, "issue", issueKey],
+			queryFn: async () => unwrap(await fetchJiraIssueDetail(issueKey)),
 		}),
 
 	/** Fix versions of your active projects (upcoming + recently released). */

@@ -22,6 +22,7 @@ export function toWorkItem(
 		context: decodeEntities(message.snippet),
 		actor: { name: senderName(header("From") ?? "Unknown sender") },
 		tags: message.labelIds.includes("IMPORTANT") ? ["Important"] : [],
+		detailRef: message.id,
 	};
 }
 

@@ -4,6 +4,7 @@ import { integrationQueryKey } from "#/lib/query-keys";
 import { GMAIL_ID } from "./constants";
 import {
 	fetchGmailInboxStats,
+	fetchGmailMessage,
 	fetchGmailStarred,
 	fetchGmailUnread,
 } from "./fetchers";
@@ -21,6 +22,15 @@ export const gmailQueries = {
 		queryOptions({
 			queryKey: [...key, "starred"],
 			queryFn: async () => unwrap(await fetchGmailStarred()),
+		}),
+
+	/** Message content doesn't change; only labels do. */
+	message: (id: string) =>
+		queryOptions({
+			queryKey: [...key, "message", id],
+			queryFn: async () => unwrap(await fetchGmailMessage(id)),
+			staleTime: 10 * 60_000,
+			refetchInterval: false,
 		}),
 
 	inboxStats: () =>

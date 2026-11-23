@@ -18,5 +18,6 @@ export function importantMailToAttention(
 		label: `Important · ${formatRelative(mail.updatedAt, now.getTime())}`,
 		context: mail.context,
 		actor: mail.actor,
+		detailRef: mail.detailRef,
 	}));
 }

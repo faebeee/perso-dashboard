@@ -42,6 +42,11 @@ export const attentionItemSchema = z.object({
 	actor: z
 		.object({ name: z.string(), avatarUrl: z.string().optional() })
 		.optional(),
+	/**
+	 * Opaque reference the source's in-app detail view understands (Jira issue
+	 * key, Gmail message id…). Absent = the item only opens in the browser.
+	 */
+	detailRef: z.string().optional(),
 	/** Primary action, e.g. joining a video call. */
 	action: z.object({ label: z.string(), url: z.string() }).optional(),
 });

@@ -10,6 +10,7 @@ import {
 	JIRA_ID,
 	JIRA_SCOPE_CLAUSES,
 } from "./constants";
+import { toIssueDetail } from "./detail";
 import { toWorkItem } from "./mapper";
 
 export function createJiraService(api: JiraApi, site: JiraSite) {
@@ -47,6 +48,10 @@ export function createJiraService(api: JiraApi, site: JiraSite) {
 			}
 			return [...byId.values()];
 		},
+
+		/** One issue for the detail view. */
+		issueDetail: async (key: string) =>
+			toIssueDetail(await api.issue(site.cloudId, key), site.siteUrl),
 
 		/** Issues in a release status; "all" = everyone's. */
 		onRelease: (scope: WorkScope) =>

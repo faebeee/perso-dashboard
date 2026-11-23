@@ -51,6 +51,7 @@ describe("jira mapper", () => {
 			updatedAt: "2026-01-02T09:00:00.000Z",
 			context: "WEB-12 · Website",
 			project: "Website",
+			detailRef: "WEB-12",
 			status: "In Progress",
 			actor: { name: "Ada Lovelace", avatarUrl: "https://avatar/ada.png" },
 			assignee: {

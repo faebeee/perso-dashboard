@@ -7,5 +7,8 @@ export const fetchGmailUnread = () =>
 export const fetchGmailStarred = () =>
 	withIntegration(gmailBackend, (ctx) => gmailService(ctx).starred());
 
+export const fetchGmailMessage = (id: string) =>
+	withIntegration(gmailBackend, (ctx) => gmailService(ctx).message(id));
+
 export const fetchGmailInboxStats = () =>
 	withIntegration(gmailBackend, (ctx) => gmailService(ctx).inboxStats());

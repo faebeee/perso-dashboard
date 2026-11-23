@@ -1,8 +1,11 @@
 import { createContext, type ReactNode, useContext } from "react";
 import type { IntegrationManifest } from "#/core/integration";
 
-/** How a data source is presented: name, icon, brand colour. */
-export type SourceInfo = Pick<IntegrationManifest, "name" | "icon" | "accent">;
+/** How a data source is presented: name, icon, colour, optional detail view. */
+export type SourceInfo = Pick<
+	IntegrationManifest,
+	"name" | "icon" | "accent" | "details"
+>;
 
 export type SourceRegistry = Readonly<Record<string, SourceInfo>>;
 

@@ -3,8 +3,8 @@ import { integrationManifests } from "#/integrations/registry";
 
 /** Name, icon and colour per integration id, for labelling rows everywhere. */
 export const sourceRegistry: SourceRegistry = Object.fromEntries(
-	integrationManifests.map(({ id, name, icon, accent }) => [
+	integrationManifests.map(({ id, name, icon, accent, details }) => [
 		id,
-		{ name, icon, accent },
+		{ name, icon, accent, details },
 	]),
 );

@@ -20,6 +20,7 @@ export function toWorkItem(issue: JiraIssue, siteUrl: string): WorkItem {
 			? `${issue.key} · ${fields.project.name}`
 			: issue.key,
 		project: fields.project?.name,
+		detailRef: issue.key,
 		status: fields.status?.name,
 		actor: toPerson(fields.reporter) ?? undefined,
 		assignee: toPerson(fields.assignee),

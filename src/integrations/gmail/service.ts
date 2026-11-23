@@ -2,6 +2,7 @@ import type { WorkItem } from "#/core/work-item";
 import type { GmailApi } from "./api/client";
 import { GMAIL_QUERIES } from "./constants";
 import { toWorkItem } from "./mapper";
+import { toEmailDetail } from "./message";
 
 export interface GmailInboxStats {
 	/** Conversations, as Gmail counts them in its UI. */
@@ -26,6 +27,10 @@ export function createGmailService(api: GmailApi, accountEmail?: string) {
 		starred: () => search(GMAIL_QUERIES.starred),
 
 		importantUnread: () => search(GMAIL_QUERIES.importantUnread),
+
+		/** One message for the detail view. */
+		message: async (id: string) =>
+			toEmailDetail(await api.getMessage(id), accountEmail),
 
 		async inboxStats(): Promise<GmailInboxStats> {
 			const [inbox, starred] = await Promise.all([

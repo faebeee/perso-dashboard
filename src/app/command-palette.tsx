@@ -20,6 +20,10 @@ import {
 	useMemo,
 	useState,
 } from "react";
+import {
+	type OpenableItem,
+	useItemDetail,
+} from "#/components/item-detail/item-detail-context";
 import { ItemIcon } from "#/components/source-kit/item-icon";
 import { useSources } from "#/components/source-kit/source-context";
 import { KIND_FOR_REASON } from "#/features/attention/kinds";
@@ -27,7 +31,6 @@ import { attentionQueries } from "#/features/attention/queries";
 import { feedQueries } from "#/features/feed/queries";
 import { releaseQueries } from "#/features/releases/queries";
 import { integrationManifests } from "#/integrations/registry";
-import { getHost } from "#/platform/host";
 
 /**
  * ⌘K / Ctrl+K: jump to any page or search everything already loaded
@@ -91,6 +94,7 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
 function PaletteContent({ close }: { close: () => void }) {
 	const navigate = useNavigate();
 	const queryClient = useQueryClient();
+	const { openItem, openExternal } = useItemDetail();
 	const sources = useSources();
 	// Usually already cached; only fetched here if the user never opened them.
 	const urgent = useQuery(attentionQueries.all());
@@ -102,11 +106,11 @@ function PaletteContent({ close }: { close: () => void }) {
 		close();
 		action();
 	};
-	const openLink = (url: string) =>
+	const openLink = (url: string) => run(() => openExternal(url));
+	/** Detail modal when the source has one, browser otherwise. */
+	const openAny = (item: OpenableItem) =>
 		run(() => {
-			getHost()
-				.openExternal(url)
-				.catch((cause) => console.error("Could not open link", cause));
+			if (!openItem(item)) openExternal(item.url);
 		});
 
 	const nameOf = (source: string) => sources[source]?.name ?? source;
@@ -163,7 +167,7 @@ function PaletteContent({ close }: { close: () => void }) {
 							<PaletteItem
 								key={item.id}
 								value={`urgent ${item.id} ${item.title} ${item.context ?? ""} ${nameOf(item.source)}`}
-								onSelect={() => openLink(item.url)}
+								onSelect={() => openAny(item)}
 							>
 								<ItemIcon
 									source={item.source}
@@ -187,7 +191,7 @@ function PaletteContent({ close }: { close: () => void }) {
 								<PaletteItem
 									key={item.id}
 									value={`work ${item.id} ${item.title} ${item.context ?? ""} ${item.actor?.name ?? ""} ${nameOf(item.source)}`}
-									onSelect={() => openLink(item.url)}
+									onSelect={() => openAny(item)}
 								>
 									<ItemIcon source={item.source} kind={item.kind} />
 									<Label

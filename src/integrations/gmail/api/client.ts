@@ -1,6 +1,7 @@
 import { createHttpClient, type FetchFn } from "#/platform/http";
 import { GMAIL_ID, MESSAGE_PAGE_SIZE } from "../constants";
 import {
+	gmailFullMessageSchema,
 	gmailLabelSchema,
 	gmailMessageListSchema,
 	gmailMessageSchema,
@@ -26,6 +27,14 @@ export function createGmailApi(accessToken: string, fetch?: FetchFn) {
 
 		listMessages: (q: string, maxResults = MESSAGE_PAGE_SIZE) =>
 			http.get(`${base}/messages`, gmailMessageListSchema, { q, maxResults }),
+
+		/** Headers + full MIME tree with inline bodies (attachments by id only). */
+		getMessage: (id: string) =>
+			http.get(
+				`${base}/messages/${encodeURIComponent(id)}`,
+				gmailFullMessageSchema,
+				{ format: "full" },
+			),
 
 		getMessageMetadata: (id: string) =>
 			http.get(

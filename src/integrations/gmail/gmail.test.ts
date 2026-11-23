@@ -39,6 +39,7 @@ describe("gmail mapper", () => {
 			context: "Let's meet & talk",
 			actor: { name: "Grace Hopper" },
 			tags: ["Important"],
+			detailRef: "m1",
 		});
 	});
 
