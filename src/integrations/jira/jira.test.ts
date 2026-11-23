@@ -128,6 +128,35 @@ describe("jira service", () => {
 		expect(await jqlFor((s) => s.onRelease(scope))).toBe(expected);
 	});
 
+	it("finds old overdue issues with a separate due-date search and dedupes", async () => {
+		const issue = (id: string, extra: Record<string, unknown> = {}) => ({
+			id,
+			key: `WEB-${id}`,
+			fields: {
+				summary: id,
+				updated: "2026-01-02T10:00:00.000+0100",
+				...extra,
+			},
+		});
+		const fetch = fakeFetch({
+			"/ex/jira/cloud-1/rest/api/3/search/jql": (url: URL) =>
+				url.searchParams.get("jql")?.includes("duedate")
+					? { issues: [issue("1", { duedate: "2025-06-01" }), issue("2")] }
+					: { issues: [issue("2"), issue("3")] },
+		});
+		const service = createJiraService(createJiraApi("token", fetch), site);
+
+		const candidates = await service.urgentCandidates();
+
+		expect(candidates.map((i) => i.id)).toEqual(["1", "2", "3"]);
+		const jqls = fetch.mock.calls.map((call) =>
+			new URL(String(call[0])).searchParams.get("jql"),
+		);
+		expect(jqls).toContain(
+			"statusCategory != Done AND assignee = currentUser() AND duedate <= endOfDay() ORDER BY duedate ASC",
+		);
+	});
+
 	it("resolves the first site with Jira access", async () => {
 		const fetch = fakeFetch({
 			"/oauth/token/accessible-resources": [

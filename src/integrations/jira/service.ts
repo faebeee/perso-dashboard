@@ -2,9 +2,10 @@ import { IntegrationFailure } from "#/core/result";
 import type { WorkItem } from "#/core/work-item";
 import type { WorkScope } from "#/core/work-scope";
 import type { JiraApi } from "./api/client";
-import { type JiraSite, jiraSiteSchema } from "./api/schemas";
+import { type JiraIssue, type JiraSite, jiraSiteSchema } from "./api/schemas";
 import {
 	buildJql,
+	JIRA_DUE_ASSIGNED_JQL,
 	JIRA_FILTERS,
 	JIRA_ID,
 	JIRA_SCOPE_CLAUSES,
@@ -27,14 +28,25 @@ export function createJiraService(api: JiraApi, site: JiraSite) {
 				),
 			),
 
-		/** Raw open issues assigned to me (keeps fields like the due date). */
-		openAssignedIssues: async () =>
-			(
-				await api.searchIssues(
+		/**
+		 * Raw issues that may be urgent (keeps fields like the due date): every
+		 * due/overdue issue assigned to me, plus my recently updated open
+		 * issues (for priority). Deduplicated, due ones first.
+		 */
+		async urgentCandidates(): Promise<JiraIssue[]> {
+			const [due, recent] = await Promise.all([
+				api.searchIssues(site.cloudId, JIRA_DUE_ASSIGNED_JQL),
+				api.searchIssues(
 					site.cloudId,
 					buildJql(JIRA_FILTERS.open, JIRA_SCOPE_CLAUSES.assigned),
-				)
-			).issues,
+				),
+			]);
+			const byId = new Map<string, JiraIssue>();
+			for (const issue of [...due.issues, ...recent.issues]) {
+				if (!byId.has(issue.id)) byId.set(issue.id, issue);
+			}
+			return [...byId.values()];
+		},
 
 		/** Issues in a release status; "all" = everyone's. */
 		onRelease: (scope: WorkScope) =>

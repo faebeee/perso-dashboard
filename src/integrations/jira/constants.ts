@@ -32,6 +32,13 @@ export const JIRA_SCOPE_CLAUSES = {
 	mine: "(assignee = currentUser() OR reporter = currentUser())",
 } as const;
 
+/**
+ * Open issues assigned to me that are due today or earlier, oldest due date
+ * first. Searched separately from "my issues" (most recently *updated*
+ * first) so old, untouched overdue issues are never cut off by the page size.
+ */
+export const JIRA_DUE_ASSIGNED_JQL = `${JIRA_FILTERS.open} AND ${JIRA_SCOPE_CLAUSES.assigned} AND duedate <= endOfDay() ORDER BY duedate ASC`;
+
 export function buildJql(...clauses: (string | undefined)[]): string {
 	return `${clauses.filter(Boolean).join(" AND ")} ORDER BY updated DESC`;
 }

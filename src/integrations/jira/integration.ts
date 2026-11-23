@@ -37,7 +37,7 @@ export const jiraBackend: IntegrationBackend = {
 		const site = readJiraSite(ctx.meta);
 		// Issues are essential; overdue versions are a bonus that may fail alone.
 		const [issues, releases] = await Promise.all([
-			jiraService(ctx).openAssignedIssues(),
+			jiraService(ctx).urgentCandidates(),
 			jiraReleaseService(ctx)
 				.releases(recentReleaseQuery(now.getTime()))
 				.catch(() => []),
