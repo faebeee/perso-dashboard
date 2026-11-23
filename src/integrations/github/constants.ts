@@ -1,7 +1,7 @@
 export const GITHUB_ID = "github";
 
-/** security_events: Dependabot alerts on private repos (added later: reconnect). */
-export const GITHUB_SCOPES = ["repo", "read:user", "security_events"];
+/** `repo` includes `security_events`, which Dependabot alerts need (see scopes.ts). */
+export const GITHUB_SCOPES = ["repo", "read:user"];
 
 /** Repos checked for Dependabot alerts (one request each, cached 10 min). */
 export const DEPENDABOT_REPO_LIMIT = 50;

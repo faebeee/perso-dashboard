@@ -3,6 +3,7 @@ import { makeWorkItemId, type WorkItem } from "#/core/work-item";
 import type { GitHubApi } from "./api/client";
 import type { GitHubDependabotAlertList, GitHubRepoList } from "./api/schemas";
 import { DEPENDABOT_REPO_LIMIT, GITHUB_ID } from "./constants";
+import { hasGitHubScope } from "./scopes";
 
 export const SEVERITIES = ["critical", "high", "medium", "low"] as const;
 export type Severity = (typeof SEVERITIES)[number];
@@ -87,13 +88,13 @@ export function createDependabotService(api: GitHubApi) {
 		async openAlerts(
 			scopes: readonly string[] | undefined,
 		): Promise<DependabotResult> {
-			// Older connections were made before this permission was requested.
-			if (scopes && !scopes.includes("security_events")) {
+			// `repo` (or `security_events` itself) is needed; `repo` implies it.
+			if (scopes && !hasGitHubScope(scopes, "security_events")) {
 				throw new IntegrationFailure({
 					kind: "unauthorized",
 					integrationId: GITHUB_ID,
 					message:
-						"Reconnect GitHub to allow reading Dependabot alerts (a new permission).",
+						"Reconnect GitHub with repository access to read Dependabot alerts.",
 				});
 			}
 			const repos = reposToCheck(await api.userRepos());

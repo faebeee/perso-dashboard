@@ -99,15 +99,24 @@ describe("alertsToWorkItems", () => {
 });
 
 describe("Dependabot service", () => {
-	it("asks for a reconnect when the permission is missing", async () => {
+	it("asks for a reconnect only when no granted scope covers security events", async () => {
 		const service = createDependabotService(
 			createGitHubApi("t", fakeFetch({})),
 		);
-		await expect(
-			service.openAlerts(["repo", "read:user"]),
-		).rejects.toMatchObject({
+		await expect(service.openAlerts(["read:user"])).rejects.toMatchObject({
 			error: { kind: "unauthorized" },
 		});
+	});
+
+	it("accepts `repo`, which GitHub reports instead of `security_events`", async () => {
+		// Exactly what GitHub returned for a reconnected, repo-scoped token.
+		const fetch = fakeFetch({ "/user/repos": [] });
+		await expect(
+			createDependabotService(createGitHubApi("t", fetch)).openAlerts([
+				"read:user",
+				"repo",
+			]),
+		).resolves.toMatchObject({ items: [], checkedRepos: 0 });
 	});
 
 	it("reads every repo and counts the ones that can't be read", async () => {
@@ -122,7 +131,7 @@ describe("Dependabot service", () => {
 		}); // acme/disabled → 404 (Dependabot off)
 		const result = await createDependabotService(
 			createGitHubApi("t", fetch),
-		).openAlerts(["repo", "security_events"]);
+		).openAlerts(["repo"]);
 		expect(result.items.map((i) => i.status)).toEqual(["High"]);
 		expect(result).toMatchObject({ checkedRepos: 1, skippedRepos: 1 });
 	});
