@@ -1,5 +1,5 @@
-import { ATTENTION_RULES } from "#/core/attention";
-import { WAITING_RULES } from "#/core/waiting";
+import { DEFAULT_ATTENTION_RULES } from "#/core/attention";
+import { DEFAULT_WAITING_RULES, type WaitingRules } from "#/core/waiting";
 
 export const GMAIL_ID = "gmail";
 
@@ -11,9 +11,12 @@ export const MESSAGE_PAGE_SIZE = 15;
 export const GMAIL_QUERIES = {
 	unreadInbox: "is:unread in:inbox",
 	starred: "is:starred",
-	importantUnread: `is:unread is:important in:inbox newer_than:${ATTENTION_RULES.emailWindowDays}d`,
+	importantUnread: (
+		emailWindowDays = DEFAULT_ATTENTION_RULES.emailWindowDays,
+	) => `is:unread is:important in:inbox newer_than:${emailWindowDays}d`,
 	/** Conversations you wrote in recently that may still lack an answer. */
-	recentlySent: `in:sent newer_than:${WAITING_RULES.noReplyWindowDays}d older_than:${WAITING_RULES.noReplyAfterDays}d -in:chats`,
+	recentlySent: (rules: WaitingRules = DEFAULT_WAITING_RULES) =>
+		`in:sent newer_than:${rules.noReplyWindowDays}d older_than:${rules.noReplyAfterDays}d -in:chats`,
 } as const;
 
 /**

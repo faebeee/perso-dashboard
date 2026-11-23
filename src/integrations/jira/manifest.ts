@@ -1,7 +1,7 @@
 import { Rocket, SquareKanban } from "lucide-react";
 import { createWorkItemWidget } from "#/components/widget-kit/create-work-item-widget";
 import type { IntegrationManifest } from "#/core/integration";
-import { JIRA_ID, JIRA_RELEASE_STATUSES } from "./constants";
+import { JIRA_ID } from "./constants";
 import { JiraIssueDetailView } from "./issue-detail-view";
 import { JiraOverview } from "./overview";
 import { jiraQueries } from "./queries";
@@ -34,7 +34,8 @@ export const jiraManifest: IntegrationManifest = {
 		createWorkItemWidget({
 			type: "jira.on-release",
 			title: "On Release",
-			description: `All Jira issues in: ${JIRA_RELEASE_STATUSES.join(", ")}.`,
+			description:
+				"All Jira issues in your release statuses (set in Preferences).",
 			integrationId: JIRA_ID,
 			icon: Rocket,
 			scoped: true,

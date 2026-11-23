@@ -55,22 +55,47 @@ export const attentionItemSchema = z.object({
 export type AttentionItem = z.infer<typeof attentionItemSchema>;
 export type AttentionReason = AttentionItem["reason"];
 
-/** Thresholds shared by every integration's rules. */
-export const ATTENTION_RULES = {
-	/** A meeting this close (or ongoing) is "now". */
-	meetingNowMinutes: 15,
+const priorityList = z.array(z.string().trim().toLowerCase().min(1));
+
+/**
+ * What counts as urgent. Editable in Preferences; integrations receive the
+ * current values with each request (see `rulesOf`).
+ */
+export const attentionRulesSchema = z.object({
+	/** A meeting this close (or ongoing) is "right now". */
+	meetingNowMinutes: z.number().int().min(1).max(120).default(15),
 	/** Meetings starting within this window show up at all. */
-	meetingSoonMinutes: 120,
-	/** Unanswered invitations for events within this window show up. */
-	invitationWindowHours: 48,
-	/** Review requests older than this are "today" instead of "soon". */
-	reviewStaleHours: 24,
+	meetingSoonMinutes: z
+		.number()
+		.int()
+		.min(5)
+		.max(24 * 60)
+		.default(120),
+	/** Unanswered invitations for events within this window show up (calendars look 7 days ahead). */
+	invitationWindowHours: z
+		.number()
+		.int()
+		.min(1)
+		.max(7 * 24)
+		.default(48),
+	/** Review requests older than this move from "soon" to "today". */
+	reviewStaleHours: z
+		.number()
+		.int()
+		.min(1)
+		.max(30 * 24)
+		.default(24),
 	/** Important unread mail younger than this shows up. */
-	emailWindowDays: 2,
-	/** Lower-cased Jira priority names treated as urgent ("high" → soon). */
-	criticalPriorities: ["highest", "blocker", "critical"],
-	highPriorities: ["high"],
-} as const;
+	emailWindowDays: z.number().int().min(1).max(30).default(2),
+	/** Lower-cased Jira priority names: critical → "today", high → "soon". */
+	criticalPriorities: priorityList.default(["highest", "blocker", "critical"]),
+	highPriorities: priorityList.default(["high"]),
+});
+
+export type AttentionRules = z.infer<typeof attentionRulesSchema>;
+
+export const DEFAULT_ATTENTION_RULES: AttentionRules =
+	attentionRulesSchema.parse({});
 
 const URGENCY_ORDER: Record<Urgency, number> = { now: 0, today: 1, soon: 2 };
 

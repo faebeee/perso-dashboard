@@ -1,4 +1,8 @@
-import { ATTENTION_RULES, type AttentionItem } from "#/core/attention";
+import {
+	type AttentionItem,
+	type AttentionRules,
+	DEFAULT_ATTENTION_RULES,
+} from "#/core/attention";
 import type { WorkItem } from "#/core/work-item";
 import { formatRelative } from "#/lib/time";
 import { PR_SIGNAL_LABELS, type PrNeedingAction } from "./service";
@@ -12,10 +16,11 @@ const HOUR_MS = 60 * 60 * 1000;
 export function reviewRequestsToAttention(
 	reviews: readonly WorkItem[],
 	now: Date,
+	rules: AttentionRules = DEFAULT_ATTENTION_RULES,
 ): AttentionItem[] {
 	return reviews.map((pr) => {
 		const ageMs = now.getTime() - Date.parse(pr.updatedAt);
-		const stale = ageMs > ATTENTION_RULES.reviewStaleHours * HOUR_MS;
+		const stale = ageMs > rules.reviewStaleHours * HOUR_MS;
 		return {
 			id: `${pr.id}:attention`,
 			source: pr.source,

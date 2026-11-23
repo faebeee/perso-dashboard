@@ -5,16 +5,27 @@ import type { JiraApi } from "./api/client";
 import { type JiraIssue, type JiraSite, jiraSiteSchema } from "./api/schemas";
 import {
 	buildJql,
+	DEFAULT_RELEASE_STATUSES,
 	JIRA_DUE_ASSIGNED_JQL,
 	JIRA_FILTERS,
 	JIRA_ID,
 	JIRA_SCOPE_CLAUSES,
 	JIRA_UNASSIGNED_REPORTED_JQL,
+	releaseStatusFilter,
 } from "./constants";
 import { toIssueDetail } from "./detail";
 import { toWorkItem } from "./mapper";
 
-export function createJiraService(api: JiraApi, site: JiraSite) {
+export interface JiraServiceOptions {
+	/** Workflow statuses for "On Release" (Preferences). */
+	releaseStatuses?: readonly string[];
+}
+
+export function createJiraService(
+	api: JiraApi,
+	site: JiraSite,
+	{ releaseStatuses = DEFAULT_RELEASE_STATUSES }: JiraServiceOptions = {},
+) {
 	const search = async (jql: string): Promise<WorkItem[]> => {
 		const res = await api.searchIssues(site.cloudId, jql);
 		return res.issues.map((issue) => toWorkItem(issue, site.siteUrl));
@@ -63,7 +74,7 @@ export function createJiraService(api: JiraApi, site: JiraSite) {
 		onRelease: (scope: WorkScope) =>
 			search(
 				buildJql(
-					JIRA_FILTERS.onRelease,
+					releaseStatusFilter(releaseStatuses),
 					scope === "all" ? undefined : JIRA_SCOPE_CLAUSES[scope],
 				),
 			),

@@ -3,6 +3,7 @@ import type {
 	IntegrationContext,
 } from "#/core/integration";
 import { err, ok, type Result, toIntegrationError } from "#/core/result";
+import { integrationSettingsFor, preferences } from "./preferences";
 import { getServices } from "./services";
 
 /**
@@ -22,7 +23,13 @@ export async function withIntegration<T>(
 				message: `Add your ${integration.oauthClient.label} on the Integrations page.`,
 			});
 		}
-		const ctx = await services.tokenManager.getContext(integration);
+		const prefs = preferences.get();
+		const ctx: IntegrationContext = {
+			...(await services.tokenManager.getContext(integration)),
+			// The user's current rules and settings travel with every request.
+			rules: { attention: prefs.attentionRules, waiting: prefs.waitingRules },
+			settings: integrationSettingsFor(integration, prefs),
+		};
 		return ok(await run(ctx));
 	} catch (cause) {
 		const error = toIntegrationError(cause, integration.id);

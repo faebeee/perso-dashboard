@@ -1,5 +1,4 @@
-import type { IntegrationBackend } from "#/core/integration";
-import { WAITING_RULES } from "#/core/waiting";
+import { type IntegrationBackend, rulesOf } from "#/core/integration";
 import { GOOGLE_OAUTH_CLIENT } from "#/platform/oauth/google";
 import { createGoogleCalendarApi } from "./api/client";
 import { eventsToAttention } from "./attention";
@@ -27,12 +26,13 @@ export const googleCalendarBackend: IntegrationBackend = {
 		return { label: calendar.id, meta: { email: calendar.id } };
 	},
 
-	getWaitingItems: async ({ accessToken }, now) =>
+	getWaitingItems: async (ctx, now) =>
 		pendingRepliesToWaiting(
-			await googleCalendarService(accessToken).between(
+			await googleCalendarService(ctx.accessToken).between(
 				now,
 				new Date(
-					now.getTime() + WAITING_RULES.invitationWindowDays * 86_400_000,
+					now.getTime() +
+						rulesOf(ctx).waiting.invitationWindowDays * 86_400_000,
 				),
 			),
 		),
@@ -58,9 +58,10 @@ export const googleCalendarBackend: IntegrationBackend = {
 	getAgenda: ({ accessToken }, { from, to }) =>
 		googleCalendarService(accessToken).between(from, to),
 
-	getAttentionItems: async ({ accessToken }, now) =>
+	getAttentionItems: async (ctx, now) =>
 		eventsToAttention(
-			await googleCalendarService(accessToken).upcoming("all"),
+			await googleCalendarService(ctx.accessToken).upcoming("all"),
 			now,
+			rulesOf(ctx).attention,
 		),
 };

@@ -1,4 +1,4 @@
-import type { IntegrationBackend } from "#/core/integration";
+import { type IntegrationBackend, rulesOf } from "#/core/integration";
 import { createGitHubApi } from "./api/client";
 import { prSignalsToAttention, reviewRequestsToAttention } from "./attention";
 import { GITHUB_ID } from "./constants";
@@ -40,14 +40,14 @@ export const githubBackend: IntegrationBackend = {
 		return [...reviews, ...mine];
 	},
 
-	async getAttentionItems({ accessToken }, now) {
-		const service = githubService(accessToken);
+	async getAttentionItems(ctx, now) {
+		const service = githubService(ctx.accessToken);
 		const [reviews, mine] = await Promise.all([
 			service.reviewRequests(),
 			service.prsNeedingAction(),
 		]);
 		return [
-			...reviewRequestsToAttention(reviews, now),
+			...reviewRequestsToAttention(reviews, now, rulesOf(ctx).attention),
 			...prSignalsToAttention(mine),
 		];
 	},

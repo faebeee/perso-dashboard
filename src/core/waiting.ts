@@ -28,17 +28,21 @@ export const waitingItemSchema = z.object({
 export type WaitingItem = z.infer<typeof waitingItemSchema>;
 export type WaitingReason = WaitingItem["reason"];
 
-/** Thresholds shared by every integration's rules. */
-export const WAITING_RULES = {
+/** When something counts as "waiting". Editable in Preferences. */
+export const waitingRulesSchema = z.object({
 	/** A sent email counts as unanswered after this long. */
-	noReplyAfterDays: 2,
+	noReplyAfterDays: z.number().int().min(1).max(30).default(2),
 	/** How far back sent emails are checked. */
-	noReplyWindowDays: 14,
+	noReplyWindowDays: z.number().int().min(2).max(60).default(14),
 	/** Meetings you organize, this far ahead, are checked for replies. */
-	invitationWindowDays: 7,
+	invitationWindowDays: z.number().int().min(1).max(60).default(7),
 	/** Meeting prep: recent conversations with attendees, this far back. */
-	relatedWindowDays: 14,
-} as const;
+	relatedWindowDays: z.number().int().min(1).max(90).default(14),
+});
+
+export type WaitingRules = z.infer<typeof waitingRulesSchema>;
+
+export const DEFAULT_WAITING_RULES: WaitingRules = waitingRulesSchema.parse({});
 
 /** "3 days", "5 hours", "under an hour". */
 export function waitedFor(since: string, now: Date): string {

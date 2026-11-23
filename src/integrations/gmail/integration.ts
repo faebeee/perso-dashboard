@@ -1,6 +1,7 @@
-import type {
-	IntegrationBackend,
-	IntegrationContext,
+import {
+	type IntegrationBackend,
+	type IntegrationContext,
+	rulesOf,
 } from "#/core/integration";
 import { GOOGLE_OAUTH_CLIENT } from "#/platform/oauth/google";
 import { createGmailApi } from "./api/client";
@@ -36,9 +37,10 @@ export const gmailBackend: IntegrationBackend = {
 
 	getWaitingItems: async (ctx, now) =>
 		unansweredToWaiting(
-			await gmailService(ctx).recentlySentThreads(),
+			await gmailService(ctx).recentlySentThreads(rulesOf(ctx).waiting),
 			typeof ctx.meta.email === "string" ? ctx.meta.email : undefined,
 			now,
+			rulesOf(ctx).waiting,
 		),
 
 	getActivity: async (ctx, { from, to }) =>
@@ -62,5 +64,10 @@ export const gmailBackend: IntegrationBackend = {
 		gmailService(ctx).withPeople(people, since),
 
 	getAttentionItems: async (ctx, now) =>
-		importantMailToAttention(await gmailService(ctx).importantUnread(), now),
+		importantMailToAttention(
+			await gmailService(ctx).importantUnread(
+				rulesOf(ctx).attention.emailWindowDays,
+			),
+			now,
+		),
 };

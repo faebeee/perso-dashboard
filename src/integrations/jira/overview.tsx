@@ -7,6 +7,7 @@ import {
 	SquareKanban,
 	Tag,
 } from "lucide-react";
+import { useSyncExternalStore } from "react";
 import {
 	BreakdownList,
 	cappedCount,
@@ -17,10 +18,13 @@ import {
 import { ReleaseList } from "#/components/release/release-list";
 import { useWorkScope } from "#/components/widget-kit/work-scope-context";
 import { WorkItemList } from "#/components/work-item/work-item-list";
+import { stringListSetting } from "#/core/integration";
 import { RECENT_RELEASE_DAYS, type Release } from "#/core/release";
 import type { WorkItem } from "#/core/work-item";
 import { tally } from "#/lib/tally";
-import { JIRA_RELEASE_STATUSES, SEARCH_PAGE_SIZE } from "./constants";
+import { integrationSettingsFor, preferences } from "#/platform/preferences";
+import { SEARCH_PAGE_SIZE } from "./constants";
+import { jiraBackend, RELEASE_STATUSES_SETTING } from "./integration";
 import { jiraQueries } from "./queries";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -34,6 +38,11 @@ export function JiraOverview() {
 	const scope = useWorkScope();
 	const issues = useQuery(jiraQueries.myIssues(scope));
 	const onRelease = useQuery(jiraQueries.onRelease(scope));
+	const prefs = useSyncExternalStore(preferences.subscribe, preferences.get);
+	const releaseStatuses = stringListSetting(
+		integrationSettingsFor(jiraBackend, prefs),
+		RELEASE_STATUSES_SETTING,
+	);
 	const releases = useQuery(jiraQueries.releases());
 
 	return (
@@ -51,7 +60,7 @@ export function JiraOverview() {
 					icon={Rocket}
 					query={onRelease}
 					value={count}
-					hint={() => JIRA_RELEASE_STATUSES.join(" / ")}
+					hint={() => releaseStatuses.join(" / ")}
 				/>
 				<StatTile
 					label="Upcoming versions"

@@ -1,5 +1,9 @@
 import type { ComponentType } from "react";
-import type { AttentionItem } from "./attention";
+import {
+	type AttentionItem,
+	type AttentionRules,
+	DEFAULT_ATTENTION_RULES,
+} from "./attention";
 import type { CalendarEvent } from "./calendar-event";
 import type { ActivityItem, MetricSeries, WeekRange } from "./insights";
 import type {
@@ -8,7 +12,11 @@ import type {
 	OAuthProvider,
 } from "./oauth";
 import type { Release, ReleaseQuery } from "./release";
-import type { WaitingItem } from "./waiting";
+import {
+	DEFAULT_WAITING_RULES,
+	type WaitingItem,
+	type WaitingRules,
+} from "./waiting";
 import type { WidgetDefinition } from "./widget";
 import type { WorkItem } from "./work-item";
 
@@ -53,6 +61,45 @@ export interface IntegrationContext {
 	accessToken: string;
 	/** Integration-specific data captured at connect time (e.g. Jira cloudId). */
 	meta: Record<string, unknown>;
+	/** The user's current rules (Preferences); defaults when absent. */
+	rules?: { attention: AttentionRules; waiting: WaitingRules };
+	/** Values of this integration's `settings`, resolved with defaults. */
+	settings?: Record<string, unknown>;
+}
+
+/** The rules to apply for a request (defaults outside the app, e.g. tests). */
+export function rulesOf(ctx: IntegrationContext): {
+	attention: AttentionRules;
+	waiting: WaitingRules;
+} {
+	return (
+		ctx.rules ?? {
+			attention: DEFAULT_ATTENTION_RULES,
+			waiting: DEFAULT_WAITING_RULES,
+		}
+	);
+}
+
+/** A user-editable, integration-specific setting (shown in Preferences). */
+export interface IntegrationSetting {
+	key: string;
+	label: string;
+	description: string;
+	type: "string-list";
+	default: string[];
+}
+
+/** Reads a string-list setting's value, falling back to its default. */
+export function stringListSetting(
+	settings: Record<string, unknown> | undefined,
+	setting: IntegrationSetting,
+): string[] {
+	const value = settings?.[setting.key];
+	return Array.isArray(value) &&
+		value.length > 0 &&
+		value.every((v) => typeof v === "string")
+		? value
+		: setting.default;
 }
 
 export interface AccountInfo {
@@ -67,6 +114,8 @@ export interface AccountInfo {
  */
 export interface IntegrationBackend {
 	id: string;
+	/** User-editable settings for this integration (Preferences). */
+	settings?: IntegrationSetting[];
 	/** The OAuth app this integration authenticates with (may be shared). */
 	oauthClient: OAuthClientRef;
 	createOAuthProvider(

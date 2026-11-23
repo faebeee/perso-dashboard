@@ -1,3 +1,4 @@
+import type { WaitingRules } from "#/core/waiting";
 import type { WorkItem } from "#/core/work-item";
 import type { GmailApi } from "./api/client";
 import { GMAIL_QUERIES, withPeopleQuery } from "./constants";
@@ -27,11 +28,12 @@ export function createGmailService(api: GmailApi, accountEmail?: string) {
 
 		starred: () => search(GMAIL_QUERIES.starred),
 
-		importantUnread: () => search(GMAIL_QUERIES.importantUnread),
+		importantUnread: (emailWindowDays?: number) =>
+			search(GMAIL_QUERIES.importantUnread(emailWindowDays)),
 
 		/** Recent conversations you wrote in, with all their messages' headers. */
-		async recentlySentThreads() {
-			const list = await api.listThreads(GMAIL_QUERIES.recentlySent);
+		async recentlySentThreads(rules?: WaitingRules) {
+			const list = await api.listThreads(GMAIL_QUERIES.recentlySent(rules));
 			return Promise.all(list.threads.map((t) => api.getThreadMetadata(t.id)));
 		},
 

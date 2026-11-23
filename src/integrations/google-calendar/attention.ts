@@ -1,6 +1,7 @@
 import {
-	ATTENTION_RULES,
 	type AttentionItem,
+	type AttentionRules,
+	DEFAULT_ATTENTION_RULES,
 	type Urgency,
 } from "#/core/attention";
 import { type CalendarEvent, eventStartMs } from "#/core/calendar-event";
@@ -15,6 +16,7 @@ const MINUTE_MS = 60_000;
 export function eventsToAttention(
 	events: readonly CalendarEvent[],
 	now: Date,
+	rules: AttentionRules = DEFAULT_ATTENTION_RULES,
 ): AttentionItem[] {
 	const nowMs = now.getTime();
 	return events.flatMap((event): AttentionItem[] => {
@@ -37,12 +39,10 @@ export function eventsToAttention(
 			const ongoing = minutesUntil <= 0 && nowMs < Date.parse(event.end);
 			if (
 				ongoing ||
-				(minutesUntil > 0 && minutesUntil <= ATTENTION_RULES.meetingSoonMinutes)
+				(minutesUntil > 0 && minutesUntil <= rules.meetingSoonMinutes)
 			) {
 				const urgency: Urgency =
-					ongoing || minutesUntil <= ATTENTION_RULES.meetingNowMinutes
-						? "now"
-						: "today";
+					ongoing || minutesUntil <= rules.meetingNowMinutes ? "now" : "today";
 				const when = ongoing
 					? "Happening now"
 					: `Starts in ${formatDuration(Math.ceil(minutesUntil))}`;
@@ -62,7 +62,7 @@ export function eventsToAttention(
 		if (
 			unanswered &&
 			hoursUntil > 0 &&
-			hoursUntil <= ATTENTION_RULES.invitationWindowHours
+			hoursUntil <= rules.invitationWindowHours
 		) {
 			return [
 				{

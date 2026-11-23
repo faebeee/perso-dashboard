@@ -2,11 +2,11 @@ import { type CalendarEvent, sortByStart } from "#/core/calendar-event";
 import type { IntegrationBackend } from "#/core/integration";
 import { unwrap } from "#/core/result";
 import type { WaitingItem } from "#/core/waiting";
-import { WAITING_RULES } from "#/core/waiting";
 import type { WorkItem } from "#/core/work-item";
 import { integrationBackends } from "#/integrations/runtime-registry";
 import { type Collected, collectFromSources } from "#/lib/collect-sources";
 import { withIntegration } from "#/platform/integration-runner";
+import { preferences } from "#/platform/preferences";
 import { getServices } from "#/platform/services";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -80,7 +80,7 @@ export async function fetchMeetingPrep(): Promise<Collected<MeetingPrep>> {
 		.slice(0, PREP_MEETING_LIMIT);
 
 	const since = new Date(
-		now.getTime() - WAITING_RULES.relatedWindowDays * DAY_MS,
+		now.getTime() - preferences.get().waitingRules.relatedWindowDays * DAY_MS,
 	);
 	const relatedSources = backends.flatMap((backend) => {
 		const getRelated = backend.getRelatedToPeople;

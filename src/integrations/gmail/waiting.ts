@@ -1,4 +1,9 @@
-import { WAITING_RULES, type WaitingItem, waitedFor } from "#/core/waiting";
+import {
+	DEFAULT_WAITING_RULES,
+	type WaitingItem,
+	type WaitingRules,
+	waitedFor,
+} from "#/core/waiting";
 import type { GmailThread } from "./api/schemas";
 import { gmailThreadUrl } from "./mapper";
 import { parseAddressList } from "./message";
@@ -13,13 +18,14 @@ export function unansweredToWaiting(
 	threads: readonly GmailThread[],
 	accountEmail: string | undefined,
 	now: Date,
+	rules: WaitingRules = DEFAULT_WAITING_RULES,
 ): WaitingItem[] {
 	return threads
 		.flatMap((thread): WaitingItem[] => {
 			const last = thread.messages.at(-1);
 			if (!last?.labelIds.includes("SENT")) return [];
 			const sentAt = Number(last.internalDate);
-			if (now.getTime() - sentAt < WAITING_RULES.noReplyAfterDays * DAY_MS) {
+			if (now.getTime() - sentAt < rules.noReplyAfterDays * DAY_MS) {
 				return [];
 			}
 			const header = (name: string) =>

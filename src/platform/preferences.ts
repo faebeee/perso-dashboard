@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+	attentionRulesSchema,
+	DEFAULT_ATTENTION_RULES,
+} from "#/core/attention";
+import type { IntegrationBackend } from "#/core/integration";
+import { DEFAULT_WAITING_RULES, waitingRulesSchema } from "#/core/waiting";
 
 /**
  * Per-device app preferences. Settings that belong to the OS (launch at
@@ -16,6 +22,13 @@ const preferencesSchema = z.object({
 	morningBriefing: z.boolean().default(true),
 	/** System-wide quick capture shortcut (QUICK_CAPTURE_SHORTCUT). */
 	quickCaptureShortcut: z.boolean().default(true),
+	/** What counts as urgent / waiting. Invalid stored values fall back to defaults. */
+	attentionRules: attentionRulesSchema.catch(DEFAULT_ATTENTION_RULES),
+	waitingRules: waitingRulesSchema.catch(DEFAULT_WAITING_RULES),
+	/** Per integration: values of its declared `settings`, by key. */
+	integrationSettings: z
+		.record(z.string(), z.record(z.string(), z.unknown()))
+		.catch({}),
 });
 
 export type Preferences = z.infer<typeof preferencesSchema>;
@@ -66,3 +79,30 @@ export function minutesOfDay(time: string): number {
 
 /** Global "add to Today" shortcut: ⌃⌥Space (Ctrl+Alt+Space elsewhere). */
 export const QUICK_CAPTURE_SHORTCUT = "Control+Alt+Space";
+
+/** Resolved values of an integration's declared settings (defaults filled in). */
+export function integrationSettingsFor(
+	backend: Pick<IntegrationBackend, "id" | "settings">,
+	prefs: Preferences = preferences.get(),
+): Record<string, unknown> {
+	const stored = prefs.integrationSettings[backend.id] ?? {};
+	return Object.fromEntries(
+		(backend.settings ?? []).map((setting) => [
+			setting.key,
+			stored[setting.key] ?? setting.default,
+		]),
+	);
+}
+
+/** Stores one integration setting (validated by its declared type). */
+export function setIntegrationSetting(
+	integrationId: string,
+	key: string,
+	value: string[],
+): void {
+	const all = preferences.get().integrationSettings;
+	preferences.set("integrationSettings", {
+		...all,
+		[integrationId]: { ...(all[integrationId] ?? {}), [key]: value },
+	});
+}

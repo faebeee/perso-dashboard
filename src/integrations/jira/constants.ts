@@ -9,8 +9,12 @@ export const JIRA_SCOPES = [
 /** Results per search request: lists are capped at this size. */
 export const SEARCH_PAGE_SIZE = 30;
 
-/** Workflow statuses shown by the "On Release" widget. Must match Jira exactly. */
-export const JIRA_RELEASE_STATUSES = ["On Release", "Bereit für Release"];
+/** Default workflow statuses for "On Release" (editable in Preferences). */
+export const DEFAULT_RELEASE_STATUSES = ["On Release", "Bereit für Release"];
+
+/** JQL: issues in any of these statuses (quotes escaped). */
+export const releaseStatusFilter = (statuses: readonly string[]) =>
+	`status IN (${statuses.map((s) => `"${s.replace(/["\\]/g, "\\$&")}"`).join(", ")})`;
 
 /** Max projects whose versions are fetched (one API call each). */
 export const RELEASE_PROJECT_LIMIT = 10;
@@ -22,7 +26,6 @@ export const involvedIssuesSince = (date: string) =>
 /** Base filters, one per widget. Combined with a scope clause by `buildJql`. */
 export const JIRA_FILTERS = {
 	open: "statusCategory != Done",
-	onRelease: `status IN (${JIRA_RELEASE_STATUSES.map((s) => `"${s}"`).join(", ")})`,
 } as const;
 
 export const JIRA_SCOPE_CLAUSES = {

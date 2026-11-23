@@ -1,6 +1,7 @@
 import {
-	ATTENTION_RULES,
 	type AttentionItem,
+	type AttentionRules,
+	DEFAULT_ATTENTION_RULES,
 	type Urgency,
 } from "#/core/attention";
 import type { Release } from "#/core/release";
@@ -29,6 +30,7 @@ export function issuesToAttention(
 	issues: readonly JiraIssue[],
 	siteUrl: string,
 	now: Date,
+	rules: AttentionRules = DEFAULT_ATTENTION_RULES,
 ): AttentionItem[] {
 	const today = localDayKey(now.getTime());
 	return issues.flatMap((issue): AttentionItem[] => {
@@ -48,13 +50,13 @@ export function issuesToAttention(
 			};
 		} else if (due === today) {
 			rule = { reason: "due_today", urgency: "today", label: "Due today" };
-		} else if (isOneOf(ATTENTION_RULES.criticalPriorities, priority)) {
+		} else if (isOneOf(rules.criticalPriorities, priority)) {
 			rule = {
 				reason: "high_priority",
 				urgency: "today",
 				label: `${priority} priority`,
 			};
-		} else if (isOneOf(ATTENTION_RULES.highPriorities, priority)) {
+		} else if (isOneOf(rules.highPriorities, priority)) {
 			rule = {
 				reason: "high_priority",
 				urgency: "soon",

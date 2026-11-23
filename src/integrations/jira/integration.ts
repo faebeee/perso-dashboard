@@ -1,11 +1,14 @@
-import type {
-	IntegrationBackend,
-	IntegrationContext,
+import {
+	type IntegrationBackend,
+	type IntegrationContext,
+	type IntegrationSetting,
+	rulesOf,
+	stringListSetting,
 } from "#/core/integration";
 import { recentReleaseQuery } from "#/core/release";
 import { createJiraApi } from "./api/client";
 import { issuesToAttention, overdueReleasesToAttention } from "./attention";
-import { JIRA_ID } from "./constants";
+import { DEFAULT_RELEASE_STATUSES, JIRA_ID } from "./constants";
 import {
 	INSIGHTS_PAGE_SIZE,
 	insightJql,
@@ -17,8 +20,20 @@ import { createJiraReleaseService } from "./releases";
 import { createJiraService, readJiraSite, resolveJiraSite } from "./service";
 import { unassignedToWaiting } from "./waiting";
 
+/** User-editable Jira settings (Preferences → Jira). */
+export const RELEASE_STATUSES_SETTING: IntegrationSetting = {
+	key: "releaseStatuses",
+	label: "Release statuses",
+	description:
+		"Workflow statuses that mean “ready for release” (the On Release widget). Must match your Jira statuses exactly.",
+	type: "string-list",
+	default: DEFAULT_RELEASE_STATUSES,
+};
+
 export const jiraService = (ctx: IntegrationContext) =>
-	createJiraService(createJiraApi(ctx.accessToken), readJiraSite(ctx.meta));
+	createJiraService(createJiraApi(ctx.accessToken), readJiraSite(ctx.meta), {
+		releaseStatuses: stringListSetting(ctx.settings, RELEASE_STATUSES_SETTING),
+	});
 
 export const jiraReleaseService = (ctx: IntegrationContext) =>
 	createJiraReleaseService(
@@ -28,6 +43,8 @@ export const jiraReleaseService = (ctx: IntegrationContext) =>
 
 export const jiraBackend: IntegrationBackend = {
 	id: JIRA_ID,
+
+	settings: [RELEASE_STATUSES_SETTING],
 
 	oauthClient: ATLASSIAN_OAUTH_CLIENT,
 
@@ -50,7 +67,7 @@ export const jiraBackend: IntegrationBackend = {
 				.catch(() => []),
 		]);
 		return [
-			...issuesToAttention(issues, site.siteUrl, now),
+			...issuesToAttention(issues, site.siteUrl, now, rulesOf(ctx).attention),
 			...overdueReleasesToAttention(releases, now),
 		];
 	},
