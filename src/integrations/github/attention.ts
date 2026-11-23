@@ -34,6 +34,7 @@ export function reviewRequestsToAttention(
 				: "Review requested",
 			context: pr.context,
 			actor: pr.actor,
+			detailRef: pr.detailRef,
 		};
 	});
 }
@@ -57,5 +58,6 @@ export function prSignalsToAttention(
 		at: item.updatedAt,
 		label: signals.map((s) => PR_SIGNAL_LABELS[s]).join(" · "),
 		context: item.context,
+		detailRef: item.detailRef,
 	}));
 }

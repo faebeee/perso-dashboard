@@ -16,6 +16,8 @@ export const calendarEventSchema = z.object({
 	end: z.string(),
 	allDay: z.boolean(),
 	location: z.string().optional(),
+	/** Provider's event id, for the detail view. */
+	detailRef: z.string().optional(),
 	/** Video call link (Meet, Zoom…). */
 	meetingUrl: z.string().optional(),
 	/** You organize it (vs. being invited). */

@@ -31,6 +31,7 @@ export function meetingActivity(
 			kind: "meeting" as const,
 			title: e.title,
 			url: e.url,
+			detailRef: e.detailRef,
 			at: new Date(e.start).toISOString(),
 			context: [
 				formatDuration(minutes(e, Date.parse(e.end))),

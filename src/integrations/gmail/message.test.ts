@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { textToHtml } from "#/lib/text-to-html";
 import { toBase64Url } from "#/platform/encoding";
 import type { GmailFullMessage, GmailPart } from "./api/schemas";
-import { parseAddressList, textToHtml, toEmailDetail } from "./message";
+import { parseAddressList, toEmailDetail } from "./message";
 
 const utf8 = (text: string) => toBase64Url(new TextEncoder().encode(text));
 

@@ -2,6 +2,7 @@ import { Bug, Flame } from "lucide-react";
 import { createWorkItemWidget } from "#/components/widget-kit/create-work-item-widget";
 import type { IntegrationManifest } from "#/core/integration";
 import { SENTRY_ID } from "./constants";
+import { SentryErrorDetailView } from "./error-detail-view";
 import { SentryOverview } from "./overview";
 import { sentryQueries } from "./queries";
 
@@ -16,6 +17,7 @@ export const sentryManifest: IntegrationManifest = {
 		url: "https://sentry.io/settings/account/api/applications/",
 		label: "Sentry → User Settings → API → Applications",
 	},
+	details: { Component: SentryErrorDetailView },
 	overview: { Component: SentryOverview },
 	widgets: [
 		createWorkItemWidget({

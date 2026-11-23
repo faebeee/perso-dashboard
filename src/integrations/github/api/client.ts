@@ -2,12 +2,23 @@ import { TTL, ttlByPath } from "#/platform/cache-ttl";
 import { createHttpClient, type FetchFn } from "#/platform/http";
 import { GITHUB_ID, SEARCH_PAGE_SIZE } from "../constants";
 import {
+	githubCheckRunsSchema,
+	githubCombinedStatusSchema,
+	githubPullFileListSchema,
+	githubPullSchema,
 	githubReleaseListSchema,
+	githubReviewListSchema,
 	githubSearchResponseSchema,
 	githubUserSchema,
 } from "./schemas";
 
 /** Thin, typed wrapper over the GitHub REST API. No mapping, no policy. */
+/** "acme/web" → "/repos/acme/web" (each part encoded). */
+const repoPath = (repoFullName: string) => {
+	const [owner = "", repo = ""] = repoFullName.split("/");
+	return `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+};
+
 export function createGitHubApi(accessToken: string, fetch?: FetchFn) {
 	const http = createHttpClient({
 		integrationId: GITHUB_ID,
@@ -37,6 +48,44 @@ export function createGitHubApi(accessToken: string, fetch?: FetchFn) {
 				order: "desc",
 				per_page: perPage,
 			}),
+
+		/** One PR with its description rendered to HTML. */
+		pull: (repoFullName: string, number: number) =>
+			http.get(
+				`${repoPath(repoFullName)}/pulls/${number}`,
+				githubPullSchema,
+				undefined,
+				{ headers: { Accept: "application/vnd.github.full+json" } },
+			),
+
+		reviews: (repoFullName: string, number: number) =>
+			http.get(
+				`${repoPath(repoFullName)}/pulls/${number}/reviews`,
+				githubReviewListSchema,
+				{ per_page: 100 },
+			),
+
+		files: (repoFullName: string, number: number) =>
+			http.get(
+				`${repoPath(repoFullName)}/pulls/${number}/files`,
+				githubPullFileListSchema,
+				{ per_page: 100 },
+			),
+
+		/** GitHub Actions and other check-run based CI. */
+		checkRuns: (repoFullName: string, sha: string) =>
+			http.get(
+				`${repoPath(repoFullName)}/commits/${encodeURIComponent(sha)}/check-runs`,
+				githubCheckRunsSchema,
+				{ per_page: 100 },
+			),
+
+		/** Classic commit statuses (older CI integrations). */
+		combinedStatus: (repoFullName: string, sha: string) =>
+			http.get(
+				`${repoPath(repoFullName)}/commits/${encodeURIComponent(sha)}/status`,
+				githubCombinedStatusSchema,
+			),
 
 		/** Newest first. Drafts are only visible with push access. */
 		listReleases: (repoFullName: string, perPage = 10) => {

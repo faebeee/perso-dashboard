@@ -26,6 +26,7 @@ export function pendingRepliesToWaiting(
 					pending.length === invited.length
 						? `Nobody replied yet (${invited.length})`
 						: `${pending.length} of ${invited.length} haven't replied`,
+				detailRef: event.detailRef,
 				context:
 					names.slice(0, 3).join(", ") +
 					(names.length > 3 ? ` +${names.length - 3}` : ""),

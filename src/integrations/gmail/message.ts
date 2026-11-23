@@ -1,3 +1,4 @@
+import { textToHtml } from "#/lib/text-to-html";
 import { fromBase64Url } from "#/platform/encoding";
 import type { GmailFullMessage, GmailPart } from "./api/schemas";
 import { gmailThreadUrl, senderName } from "./mapper";
@@ -58,22 +59,6 @@ export function parseAddressList(value: string | undefined): EmailAddress[] {
 			const email = /<([^>]+)>/.exec(raw)?.[1] ?? raw.replace(/[<>]/g, "");
 			return { name: senderName(raw), email: email.trim() };
 		});
-}
-
-const escapeHtml = (text: string) =>
-	text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;");
-
-/** Plain-text mail → safe HTML: escaped, links clickable, line breaks kept. */
-export function textToHtml(text: string): string {
-	const linked = escapeHtml(text).replace(
-		/\bhttps?:\/\/[^\s<>"]+[^\s<>".,;:!?)\]]/g,
-		(url) => `<a href="${url}">${url}</a>`,
-	);
-	return `<div style="white-space:pre-wrap">${linked}</div>`;
 }
 
 /** Pure: Gmail full message → detail view model. */

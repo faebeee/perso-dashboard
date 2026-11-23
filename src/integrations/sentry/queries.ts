@@ -4,6 +4,7 @@ import { integrationQueryKey } from "#/lib/query-keys";
 import { SENTRY_ID } from "./constants";
 import {
 	fetchSentryAssigned,
+	fetchSentryError,
 	fetchSentryEscalating,
 	fetchSentryNew,
 	fetchSentryRegressed,
@@ -16,6 +17,11 @@ export const sentryQueries = {
 		queryOptions({
 			queryKey: [...key, "assigned"],
 			queryFn: async () => unwrap(await fetchSentryAssigned()),
+		}),
+	error: (ref: string) =>
+		queryOptions({
+			queryKey: [...key, "error", ref],
+			queryFn: async () => unwrap(await fetchSentryError(ref)),
 		}),
 	newIssues: () =>
 		queryOptions({

@@ -38,6 +38,68 @@ export const sentryIssueSchema = z.object({
 
 export const sentryIssueListSchema = z.array(sentryIssueSchema);
 
+/** An issue as returned by search, tagged with the organization it came from. */
+export type SentryIssueInOrg = z.infer<typeof sentryIssueSchema> & {
+	orgSlug?: string;
+};
+
+const sentryFrameSchema = z.object({
+	filename: z.string().nullable().optional(),
+	absPath: z.string().nullable().optional(),
+	module: z.string().nullable().optional(),
+	function: z.string().nullable().optional(),
+	lineNo: z.number().nullable().optional(),
+	colNo: z.number().nullable().optional(),
+	inApp: z.boolean().nullable().optional(),
+	/** [[lineNo, code], …] around the frame. */
+	context: z.array(z.tuple([z.number(), z.string().nullable()])).default([]),
+});
+
+/** GET …/issues/{id}/events/latest/ (only the parts we show). */
+export const sentryEventSchema = z.object({
+	eventID: z.string(),
+	dateCreated: z.string().optional(),
+	message: z.string().nullable().optional(),
+	tags: z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+	user: z
+		.object({
+			email: z.string().nullable().optional(),
+			username: z.string().nullable().optional(),
+			id: z.string().nullable().optional(),
+		})
+		.nullable()
+		.optional(),
+	entries: z
+		.array(
+			z.object({
+				type: z.string(),
+				data: z.unknown(),
+			}),
+		)
+		.default([]),
+});
+
+export const sentryExceptionDataSchema = z.object({
+	values: z
+		.array(
+			z.object({
+				type: z.string().nullable().optional(),
+				value: z.string().nullable().optional(),
+				mechanism: z
+					.object({ handled: z.boolean().nullable().optional() })
+					.nullable()
+					.optional(),
+				stacktrace: z
+					.object({ frames: z.array(sentryFrameSchema).default([]) })
+					.nullable()
+					.optional(),
+			}),
+		)
+		.default([]),
+});
+
+export type SentryEvent = z.infer<typeof sentryEventSchema>;
+
 export type SentryOrganization = z.infer<typeof sentryOrganizationSchema>;
 export type SentryIssue = z.infer<typeof sentryIssueSchema>;
 

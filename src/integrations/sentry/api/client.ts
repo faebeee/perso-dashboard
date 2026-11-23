@@ -1,7 +1,12 @@
 import { TTL, ttlByPath } from "#/platform/cache-ttl";
 import { createHttpClient, type FetchFn } from "#/platform/http";
 import { ISSUE_PAGE_SIZE, SENTRY_BASE_URL, SENTRY_ID } from "../constants";
-import { sentryIssueListSchema, sentryOrganizationListSchema } from "./schemas";
+import {
+	sentryEventSchema,
+	sentryIssueListSchema,
+	sentryIssueSchema,
+	sentryOrganizationListSchema,
+} from "./schemas";
 
 /**
  * Region hosts come from API responses; only ever send the token to Sentry
@@ -30,7 +35,24 @@ export function createSentryApi(accessToken: string, fetch?: FetchFn) {
 		ttl: ttlByPath([[/\/organizations\/$/, TTL.stable]], TTL.list),
 	});
 
+	const orgPath = (org: { slug: string; apiUrl: string }) =>
+		`${safeRegionUrl(org.apiUrl)}/api/0/organizations/${encodeURIComponent(org.slug)}`;
+
 	return {
+		/** One issue (detail view). */
+		issue: (org: { slug: string; apiUrl: string }, id: string) =>
+			http.get(
+				`${orgPath(org)}/issues/${encodeURIComponent(id)}/`,
+				sentryIssueSchema,
+			),
+
+		/** The issue's most recent event: stack trace, tags, user. */
+		latestEvent: (org: { slug: string; apiUrl: string }, id: string) =>
+			http.get(
+				`${orgPath(org)}/issues/${encodeURIComponent(id)}/events/latest/`,
+				sentryEventSchema,
+			),
+
 		/** Organizations you're a member of (with their region URL). */
 		organizations: () =>
 			http.get("/api/0/organizations/", sentryOrganizationListSchema, {

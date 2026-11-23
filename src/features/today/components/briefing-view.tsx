@@ -8,6 +8,7 @@ import {
 	Video,
 } from "lucide-react";
 import { type ReactNode, useSyncExternalStore } from "react";
+import { useItemClick } from "#/components/item-detail/item-detail-provider";
 import { ItemIcon } from "#/components/source-kit/item-icon";
 import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
@@ -172,6 +173,7 @@ function Timeline({ briefing, now }: { briefing: Briefing; now: Date }) {
 }
 
 function MeetingRow({ event, now }: { event: CalendarEvent; now: Date }) {
+	const onClick = useItemClick(event);
 	const past = Date.parse(event.end) <= now.getTime();
 	const ongoing = !past && Date.parse(event.start) <= now.getTime();
 	return (
@@ -193,6 +195,7 @@ function MeetingRow({ event, now }: { event: CalendarEvent; now: Date }) {
 				href={event.url}
 				target="_blank"
 				rel="noreferrer"
+				onClick={onClick}
 				className="min-w-0 flex-1 truncate text-foreground no-underline underline-offset-2 hover:underline"
 			>
 				{event.title}

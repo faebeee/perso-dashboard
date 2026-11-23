@@ -41,6 +41,7 @@ export function toCalendarEvent(event: GoogleEvent): CalendarEvent | null {
 		start,
 		end,
 		allDay: !event.start.dateTime,
+		detailRef: event.id,
 		location: event.location,
 		meetingUrl:
 			event.hangoutLink ??

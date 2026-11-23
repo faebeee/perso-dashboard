@@ -1,5 +1,5 @@
 import { makeWorkItemId, type WorkItem } from "#/core/work-item";
-import type { SentryIssue } from "./api/schemas";
+import type { SentryIssueInOrg } from "./api/schemas";
 import { SENTRY_ID } from "./constants";
 
 const SUBSTATUS_LABELS: Record<string, string> = {
@@ -20,7 +20,7 @@ export function compactCount(count: string | number): string {
 }
 
 /** Pure: Sentry issue → WorkItem. */
-export function toWorkItem(issue: SentryIssue): WorkItem {
+export function toWorkItem(issue: SentryIssueInOrg): WorkItem {
 	const level = issue.level.charAt(0).toUpperCase() + issue.level.slice(1);
 	return {
 		id: makeWorkItemId(SENTRY_ID, issue.id),
@@ -31,6 +31,7 @@ export function toWorkItem(issue: SentryIssue): WorkItem {
 		updatedAt: new Date(issue.lastSeen).toISOString(),
 		context: [issue.shortId, issue.culprit].filter(Boolean).join(" · "),
 		project: issue.project.name,
+		detailRef: issue.orgSlug ? `${issue.orgSlug}:${issue.id}` : undefined,
 		status: issue.substatus
 			? (SUBSTATUS_LABELS[issue.substatus] ?? undefined)
 			: undefined,

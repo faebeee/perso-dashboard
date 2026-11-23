@@ -1,4 +1,5 @@
 import { MapPin, Video } from "lucide-react";
+import { useItemClick } from "#/components/item-detail/item-detail-provider";
 import { ItemIcon } from "#/components/source-kit/item-icon";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -35,6 +36,7 @@ export function AgendaList({ events, now = Date.now() }: AgendaListProps) {
 }
 
 function AgendaRow({ event, now }: { event: CalendarEvent; now: number }) {
+	const onClick = useItemClick(event);
 	const ongoing =
 		!event.allDay &&
 		Date.parse(event.start) <= now &&
@@ -62,6 +64,7 @@ function AgendaRow({ event, now }: { event: CalendarEvent; now: number }) {
 					href={event.url}
 					target="_blank"
 					rel="noreferrer"
+					onClick={onClick}
 					className="block truncate text-sm font-medium text-foreground no-underline hover:underline underline-offset-2"
 				>
 					{event.title}

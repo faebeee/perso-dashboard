@@ -1,5 +1,5 @@
 import type { AttentionItem, Urgency } from "#/core/attention";
-import type { SentryIssue } from "./api/schemas";
+import type { SentryIssueInOrg } from "./api/schemas";
 import { compactCount, toWorkItem } from "./mapper";
 
 /**
@@ -10,7 +10,7 @@ import { compactCount, toWorkItem } from "./mapper";
  * - Everything else is ongoing noise and stays off the urgent list.
  */
 export function issuesToAttention(
-	issues: readonly SentryIssue[],
+	issues: readonly SentryIssueInOrg[],
 ): AttentionItem[] {
 	return issues.flatMap((issue): AttentionItem[] => {
 		const mine = issue.assignedTo?.type === "user";
@@ -40,6 +40,7 @@ export function issuesToAttention(
 				at: item.updatedAt,
 				label: `${rule.label} · ${compactCount(issue.count)} events${team}`,
 				context: [issue.shortId, issue.project.name].join(" · "),
+				detailRef: item.detailRef,
 			},
 		];
 	});

@@ -36,6 +36,7 @@ describe("google calendar mapper", () => {
 			start: "2026-01-05T09:00:00Z",
 			end: "2026-01-05T10:00:00Z",
 			allDay: false,
+			detailRef: "evt1",
 			location: "Room 4",
 			meetingUrl: "https://meet.google.com/abc-defg-hij",
 			isOrganizer: false,

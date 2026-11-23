@@ -28,6 +28,8 @@ export interface HttpClient {
 		path: string,
 		schema: z.ZodType<T>,
 		query?: Record<string, string | number | string[] | undefined>,
+		/** Extra request headers (e.g. an Accept variant); part of the cache key. */
+		init?: { headers?: Record<string, string> },
 	): Promise<T>;
 }
 
@@ -56,13 +58,18 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
 				? null
 				: defaultCache;
 
-	const send = async (url: URL, conditional: Record<string, string> = {}) => {
+	const send = async (
+		url: URL,
+		extra: Record<string, string>,
+		conditional: Record<string, string> = {},
+	) => {
 		try {
 			return await fetchFn(url, {
 				headers: {
 					Accept: "application/json",
 					Authorization: `Bearer ${options.accessToken}`,
 					...options.headers,
+					...extra,
 					...conditional,
 				},
 			});
@@ -75,7 +82,10 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
 		}
 	};
 
-	async function loadText(url: URL): Promise<string> {
+	async function loadText(
+		url: URL,
+		extra: Record<string, string>,
+	): Promise<string> {
 		if (cache) {
 			const ttl =
 				typeof options.ttl === "function"
@@ -84,19 +94,23 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
 			return cache.get({
 				integrationId,
 				bucket: options.rateLimitBucket?.(url) ?? "default",
-				url: url.toString(),
+				// Header variants (e.g. Accept) are different responses.
+				url:
+					Object.keys(extra).length > 0
+						? `${url.toString()} ${JSON.stringify(extra)}`
+						: url.toString(),
 				ttlMs: ttl,
-				send: (conditional) => send(url, conditional),
+				send: (conditional) => send(url, extra, conditional),
 				toFailure: (response) => toFailure(response, integrationId),
 			});
 		}
-		const response = await send(url);
+		const response = await send(url, extra);
 		if (!response.ok) throw await toFailure(response, integrationId);
 		return response.text();
 	}
 
 	return {
-		async get(path, schema, query) {
+		async get(path, schema, query, init) {
 			const url = new URL(path, options.baseUrl);
 			for (const [key, value] of Object.entries(query ?? {})) {
 				if (value === undefined) continue;
@@ -105,7 +119,7 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
 				}
 			}
 
-			const text = await loadText(url);
+			const text = await loadText(url, init?.headers ?? {});
 			let json: unknown;
 			try {
 				json = JSON.parse(text);

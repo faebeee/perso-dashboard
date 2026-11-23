@@ -1,7 +1,11 @@
 import { TTL, ttlByPath } from "#/platform/cache-ttl";
 import { createHttpClient, type FetchFn } from "#/platform/http";
 import { GOOGLE_CALENDAR_ID } from "../constants";
-import { googleCalendarSchema, googleEventListSchema } from "./schemas";
+import {
+	googleCalendarSchema,
+	googleEventDetailSchema,
+	googleEventListSchema,
+} from "./schemas";
 
 /** Thin wrapper over the Google Calendar v3 REST API. */
 export function createGoogleCalendarApi(accessToken: string, fetch?: FetchFn) {
@@ -16,6 +20,13 @@ export function createGoogleCalendarApi(accessToken: string, fetch?: FetchFn) {
 	return {
 		primaryCalendar: () =>
 			http.get("/calendar/v3/calendars/primary", googleCalendarSchema),
+
+		/** One event with description and attendees (detail view). */
+		event: (id: string) =>
+			http.get(
+				`/calendar/v3/calendars/primary/events/${encodeURIComponent(id)}`,
+				googleEventDetailSchema,
+			),
 
 		/** Expanded (single) events in [from, to), ordered by start time. */
 		listEvents: (from: Date, to: Date, maxResults = 50) =>

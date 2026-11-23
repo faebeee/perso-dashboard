@@ -23,6 +23,7 @@ describe("github mapper", () => {
 			updatedAt: "2026-01-02T10:00:00Z",
 			context: "acme/web #42",
 			project: "acme/web",
+			detailRef: "acme/web#42",
 			status: "Draft",
 			actor: {
 				name: "octocat",

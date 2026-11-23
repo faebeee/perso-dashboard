@@ -8,6 +8,7 @@ import {
 } from "#/core/insights";
 import type { GitHubSearchItem } from "./api/schemas";
 import { GITHUB_ID } from "./constants";
+import { prDetailRef } from "./detail";
 import { repoFullName } from "./mapper";
 
 /** Search results per page for insights (GitHub's maximum). */
@@ -57,6 +58,7 @@ export function prActivity(
 		url: pr.html_url,
 		at: new Date(at).toISOString(),
 		context: context(pr),
+		detailRef: prDetailRef(repoFullName(pr.repository_url), pr.number),
 	});
 	return [
 		...found.merged

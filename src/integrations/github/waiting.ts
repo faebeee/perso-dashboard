@@ -20,6 +20,7 @@ export function awaitingReviewToWaiting(
 				since: new Date(since).toISOString(),
 				label: `No review for ${waitedFor(since, now)}`,
 				context: item.context,
+				detailRef: item.detailRef,
 			};
 		})
 		.sort((a, b) => Date.parse(a.since) - Date.parse(b.since));

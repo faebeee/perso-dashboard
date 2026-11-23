@@ -5,6 +5,7 @@ import { integrationQueryKey } from "#/lib/query-keys";
 import { GITHUB_ID } from "./constants";
 import {
 	fetchGitHubMyPullRequests,
+	fetchGitHubPullRequest,
 	fetchGitHubReleases,
 	fetchGitHubReviewRequests,
 } from "./fetchers";
@@ -22,6 +23,12 @@ export const githubQueries = {
 		queryOptions({
 			queryKey: [...key, "my-pull-requests", scope],
 			queryFn: async () => unwrap(await fetchGitHubMyPullRequests(scope)),
+		}),
+
+	pullRequest: (ref: string) =>
+		queryOptions({
+			queryKey: [...key, "pull", ref],
+			queryFn: async () => unwrap(await fetchGitHubPullRequest(ref)),
 		}),
 
 	/** Releases in your active repos (upcoming + recently shipped). */

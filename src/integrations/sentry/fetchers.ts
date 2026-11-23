@@ -6,6 +6,9 @@ import { sentryBackend, sentryService } from "./integration";
 export const fetchSentryAssigned = () =>
 	withIntegration(sentryBackend, (ctx) => sentryService(ctx).assigned());
 
+export const fetchSentryError = (ref: string) =>
+	withIntegration(sentryBackend, (ctx) => sentryService(ctx).errorDetail(ref));
+
 export const fetchSentryNew = () =>
 	withIntegration(sentryBackend, (ctx) => sentryService(ctx).newIssues());
 

@@ -227,6 +227,7 @@ function MeetingPrepSection() {
 }
 
 function MeetingCard({ prep: { meeting, related } }: { prep: MeetingPrep }) {
+	const onClick = useItemClick(meeting);
 	const people = meeting.attendees ?? [];
 	return (
 		<article className="rounded-lg border p-3">
@@ -236,6 +237,7 @@ function MeetingCard({ prep: { meeting, related } }: { prep: MeetingPrep }) {
 					href={meeting.url}
 					target="_blank"
 					rel="noreferrer"
+					onClick={onClick}
 					className="min-w-0 flex-1 truncate text-sm font-medium text-foreground no-underline underline-offset-2 hover:underline"
 				>
 					{meeting.title}

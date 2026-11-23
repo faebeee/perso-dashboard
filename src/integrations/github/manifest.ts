@@ -3,6 +3,7 @@ import { createWorkItemWidget } from "#/components/widget-kit/create-work-item-w
 import type { IntegrationManifest } from "#/core/integration";
 import { GITHUB_ID } from "./constants";
 import { GitHubOverview } from "./overview";
+import { PullRequestDetailView } from "./pull-request-detail-view";
 import { githubQueries } from "./queries";
 
 export const githubManifest: IntegrationManifest = {
@@ -15,6 +16,7 @@ export const githubManifest: IntegrationManifest = {
 		url: "https://github.com/settings/developers",
 		label: "GitHub → Developer settings → OAuth Apps",
 	},
+	details: { Component: PullRequestDetailView },
 	overview: { Component: GitHubOverview, scoped: true },
 	widgets: [
 		createWorkItemWidget({

@@ -43,6 +43,33 @@ export const googleEventSchema = z.object({
 		.default([]),
 });
 
+/** One event (detail view): adds the description and organizer identity. */
+export const googleEventDetailSchema = googleEventSchema.extend({
+	description: z.string().optional(),
+	organizer: z
+		.object({
+			email: z.string().optional(),
+			displayName: z.string().optional(),
+			self: z.boolean().optional(),
+		})
+		.optional(),
+	attendees: z
+		.array(
+			z.object({
+				email: z.string().optional(),
+				displayName: z.string().optional(),
+				self: z.boolean().optional(),
+				resource: z.boolean().optional(),
+				optional: z.boolean().optional(),
+				organizer: z.boolean().optional(),
+				responseStatus: z.string().optional(),
+			}),
+		)
+		.default([]),
+});
+
+export type GoogleEventDetail = z.infer<typeof googleEventDetailSchema>;
+
 export const googleEventListSchema = z.object({
 	items: z.array(googleEventSchema).default([]),
 });

@@ -2,6 +2,7 @@ import type { Release } from "#/core/release";
 import { makeWorkItemId, type WorkItem } from "#/core/work-item";
 import type { GitHubRelease, GitHubSearchItem } from "./api/schemas";
 import { GITHUB_ID } from "./constants";
+import { prDetailRef } from "./detail";
 
 export type GitHubPrKind = Extract<
 	WorkItem["kind"],
@@ -33,6 +34,7 @@ export function toWorkItem(
 		updatedAt: item.updated_at,
 		context: `${repo} #${item.number}`,
 		project: repo,
+		detailRef: prDetailRef(repo, item.number),
 		status: item.draft ? "Draft" : undefined,
 		actor: item.user
 			? { name: item.user.login, avatarUrl: item.user.avatar_url }

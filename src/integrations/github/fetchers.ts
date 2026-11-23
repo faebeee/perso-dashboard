@@ -19,6 +19,11 @@ export const fetchGitHubMyPullRequests = (scope: WorkScope) =>
 		githubService(ctx.accessToken).myPullRequests(scope),
 	);
 
+export const fetchGitHubPullRequest = (ref: string) =>
+	withIntegration(githubBackend, (ctx) =>
+		githubService(ctx.accessToken).pullRequestDetail(ref),
+	);
+
 export const fetchGitHubReleases = () =>
 	withIntegration(githubBackend, async (ctx) =>
 		sortReleases(

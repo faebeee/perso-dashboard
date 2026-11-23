@@ -2,6 +2,11 @@ import { sortByUpdatedDesc, type WorkItem } from "#/core/work-item";
 import type { WorkScope } from "#/core/work-scope";
 import type { GitHubApi } from "./api/client";
 import { GITHUB_QUERIES } from "./constants";
+import {
+	type PullRequestDetail,
+	parsePrDetailRef,
+	toPullRequestDetail,
+} from "./detail";
 import { type GitHubPrKind, toWorkItem } from "./mapper";
 
 /** Something on your own PR that's waiting on you. */
@@ -62,6 +67,29 @@ export function createGitHubService(api: GitHubApi) {
 
 	return {
 		prsNeedingAction,
+
+		/** Everything for the PR detail view (`detailRef` = "owner/repo#123"). */
+		async pullRequestDetail(ref: string): Promise<PullRequestDetail> {
+			const parsed = parsePrDetailRef(ref);
+			if (!parsed) throw new Error(`Not a pull request reference: ${ref}`);
+			const { repo, number } = parsed;
+			const pull = await api.pull(repo, number);
+			// CI can be hidden from OAuth apps on some repos: show what's there.
+			const [reviews, files, checkRuns, statuses] = await Promise.all([
+				api.reviews(repo, number),
+				api.files(repo, number),
+				api.checkRuns(repo, pull.head.sha).catch(() => ({ check_runs: [] })),
+				api.combinedStatus(repo, pull.head.sha).catch(() => ({ statuses: [] })),
+			]);
+			return toPullRequestDetail({
+				repo,
+				pull,
+				reviews,
+				files,
+				checkRuns,
+				statuses,
+			});
+		},
 
 		/** Raw (with created_at), for the Waiting page. */
 		awaitingReview: async () =>

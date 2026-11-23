@@ -33,6 +33,7 @@ export function eventsToAttention(
 			url: event.url,
 			at: new Date(startMs).toISOString(),
 			context: event.location,
+			detailRef: event.detailRef,
 		};
 
 		if (!event.allDay) {
