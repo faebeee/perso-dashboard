@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
+	ChartColumn,
 	Hourglass,
 	LayoutDashboard,
 	ListTodo,
@@ -21,6 +22,7 @@ const MAIN_NAV = [
 	{ to: "/waiting", label: "Waiting", icon: Hourglass },
 	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
 	{ to: "/feed", label: "My Work", icon: ListTodo },
+	{ to: "/insights", label: "Insights", icon: ChartColumn },
 ] as const;
 
 /** One entry per integration that ships an overview page. */
@@ -135,6 +137,7 @@ function NavLink({
 		| "/urgent"
 		| "/waiting"
 		| "/feed"
+		| "/insights"
 		| "/settings/integrations"
 		| "/settings/preferences";
 	label: string;

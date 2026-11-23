@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
 import {
 	CalendarPlus,
+	ChartColumn,
 	Hourglass,
 	LayoutDashboard,
 	ListTodo,
@@ -57,6 +58,7 @@ const PAGES: {
 	{ to: "/waiting", label: "Waiting", icon: Hourglass },
 	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
 	{ to: "/feed", label: "My Work", icon: ListTodo },
+	{ to: "/insights", label: "Insights", icon: ChartColumn },
 	...integrationManifests
 		.filter((m) => m.overview)
 		.map((m) => ({ to: `/apps/${m.id}`, label: m.name, icon: m.icon })),

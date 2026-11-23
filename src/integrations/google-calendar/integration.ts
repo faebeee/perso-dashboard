@@ -4,6 +4,7 @@ import { GOOGLE_OAUTH_CLIENT } from "#/platform/oauth/google";
 import { createGoogleCalendarApi } from "./api/client";
 import { eventsToAttention } from "./attention";
 import { GOOGLE_CALENDAR_ID } from "./constants";
+import { meetingActivity, meetingMetrics } from "./insights";
 import { createGoogleCalendarOAuth } from "./oauth";
 import { createGoogleCalendarService } from "./service";
 import { pendingRepliesToWaiting } from "./waiting";
@@ -34,6 +35,24 @@ export const googleCalendarBackend: IntegrationBackend = {
 					now.getTime() + WAITING_RULES.invitationWindowDays * 86_400_000,
 				),
 			),
+		),
+
+	getActivity: async ({ accessToken }, { from, to }) =>
+		meetingActivity(
+			await googleCalendarService(accessToken).between(from, to, 250),
+			from,
+			to,
+		),
+
+	getMetrics: async ({ accessToken }, weeks, now) =>
+		meetingMetrics(
+			await googleCalendarService(accessToken).between(
+				weeks[0]?.start ?? now,
+				now,
+				2500, // Google's maximum: six weeks of meetings fit
+			),
+			weeks,
+			now,
 		),
 
 	getAgenda: ({ accessToken }, { from, to }) =>

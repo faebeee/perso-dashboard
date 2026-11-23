@@ -1,6 +1,7 @@
 import type { WorkItem } from "#/core/work-item";
 import type { GmailApi } from "./api/client";
 import { GMAIL_QUERIES, withPeopleQuery } from "./constants";
+import { insightQueries } from "./insights";
 import { toWorkItem } from "./mapper";
 import { toEmailDetail } from "./message";
 
@@ -39,6 +40,15 @@ export function createGmailService(api: GmailApi, accountEmail?: string) {
 			people.length === 0
 				? Promise.resolve([])
 				: search(withPeopleQuery(people, since)),
+
+		/** Messages you sent in [from, to) (latest page). */
+		sentBetween: (from: Date, to: Date) =>
+			search(insightQueries.sent(from, to)),
+
+		/** Gmail's result estimate for a query (one cheap request). */
+		async estimate(q: string): Promise<number> {
+			return (await api.listMessages(q, 1)).resultSizeEstimate ?? 0;
+		},
 
 		/** One message for the detail view. */
 		message: async (id: string) =>

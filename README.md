@@ -53,6 +53,23 @@ Then open **Integrations**, enter the OAuth client for each provider, and click 
 
 **Meeting prep:** for your next meetings with other people (next 24h), it shows recent email conversations with the attendees. Integrations contribute through `getWaitingItems` and `getRelatedToPeople`; thresholds are in `WAITING_RULES` (`src/core/waiting.ts`).
 
+## Insights
+
+**Insights** (sidebar) has two parts:
+
+- **Summary:** what you did *since your last workday* (Friday on Mondays), *this week* or *last week*. It covers merged, opened and reviewed PRs, resolved and worked-on Jira issues, meetings and sent mail. **Copy as Markdown** gives a paste-ready standup or weekly update.
+- **Trends:** six weeks of weekly charts:
+  - time in meetings
+  - PRs merged
+  - PR cycle time (median, open → merge)
+  - PRs reviewed
+  - Jira issues resolved
+  - emails received and sent
+
+  Each chart compares last week with the average of the weeks before. The current week is hatched ("so far"). A **Table** view shows every value. Values marked ≈ are estimates (Gmail's counts; reviews counted by the PR's last activity).
+
+Integrations contribute through `getActivity` and `getMetrics`.
+
 ## Desktop behaviour
 
 - **Menu bar:** an icon with the urgent count. Its menu lists the urgent items (click to open), plus *Open Urgent*, *Open Dashboard* and *Quit*. The same count shows on the **Dock badge**.

@@ -2,6 +2,12 @@ import type { IntegrationBackend } from "#/core/integration";
 import { createGitHubApi } from "./api/client";
 import { prSignalsToAttention, reviewRequestsToAttention } from "./attention";
 import { GITHUB_ID } from "./constants";
+import {
+	INSIGHTS_PAGE_SIZE,
+	insightQueries,
+	prActivity,
+	prMetrics,
+} from "./insights";
 import { createGitHubOAuth, GITHUB_OAUTH_CLIENT } from "./oauth";
 import { createGitHubReleaseService } from "./releases";
 import { createGitHubService } from "./service";
@@ -44,6 +50,30 @@ export const githubBackend: IntegrationBackend = {
 			...reviewRequestsToAttention(reviews, now),
 			...prSignalsToAttention(mine),
 		];
+	},
+
+	async getActivity({ accessToken }, { from, to }) {
+		const api = createGitHubApi(accessToken);
+		const search = async (q: string) =>
+			(await api.searchIssues(q, INSIGHTS_PAGE_SIZE)).items;
+		const [merged, opened, reviewed] = await Promise.all([
+			search(insightQueries.merged(from, to)),
+			search(insightQueries.opened(from, to)),
+			search(insightQueries.reviewed(from, to)),
+		]);
+		return prActivity({ merged, opened, reviewed }, from, to);
+	},
+
+	async getMetrics({ accessToken }, weeks, now) {
+		const api = createGitHubApi(accessToken);
+		const from = weeks[0]?.start ?? now;
+		const search = async (q: string) =>
+			(await api.searchIssues(q, INSIGHTS_PAGE_SIZE)).items;
+		const [merged, reviewed] = await Promise.all([
+			search(insightQueries.merged(from, now)),
+			search(insightQueries.reviewed(from, now)),
+		]);
+		return prMetrics({ merged, reviewed }, weeks);
 	},
 
 	getWaitingItems: async ({ accessToken }, now) =>

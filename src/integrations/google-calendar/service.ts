@@ -16,8 +16,12 @@ export function createGoogleCalendarService(
 	now: () => Date = () => new Date(),
 ) {
 	/** Events you'll attend in [from, to): declined and cancelled ones are dropped. */
-	async function between(from: Date, to: Date): Promise<CalendarEvent[]> {
-		const res = await api.listEvents(from, to);
+	async function between(
+		from: Date,
+		to: Date,
+		maxResults?: number,
+	): Promise<CalendarEvent[]> {
+		const res = await api.listEvents(from, to, maxResults);
 		return sortByStart(
 			res.items
 				.map(toCalendarEvent)

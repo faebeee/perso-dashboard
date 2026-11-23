@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { AttentionItem } from "./attention";
 import type { CalendarEvent } from "./calendar-event";
+import type { ActivityItem, MetricSeries, WeekRange } from "./insights";
 import type {
 	OAuthClientCredentials,
 	OAuthClientRef,
@@ -84,6 +85,17 @@ export interface IntegrationBackend {
 		ctx: IntegrationContext,
 		now: Date,
 	): Promise<AttentionItem[]>;
+	/** What you did between two moments (Insights summary / standup). */
+	getActivity?(
+		ctx: IntegrationContext,
+		range: { from: Date; to: Date },
+	): Promise<ActivityItem[]>;
+	/** Weekly series for Insights trends, one value per requested week. */
+	getMetrics?(
+		ctx: IntegrationContext,
+		weeks: WeekRange[],
+		now: Date,
+	): Promise<MetricSeries[]>;
 	/** What you're waiting on others for (Waiting page). */
 	getWaitingItems?(ctx: IntegrationContext, now: Date): Promise<WaitingItem[]>;
 	/**
