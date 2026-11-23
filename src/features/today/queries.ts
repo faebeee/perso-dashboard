@@ -9,6 +9,7 @@ import { localDayKey } from "#/lib/time";
 import {
 	addToToday,
 	fetchAgenda,
+	fetchCompletedSince,
 	fetchToday,
 	removeFromToday,
 	setTodayDone,
@@ -29,6 +30,13 @@ export const todayQueries = {
 			// Local data: only changes through these mutations (or at midnight).
 			staleTime: 60_000,
 			refetchInterval: 10 * 60_000,
+		}),
+
+	completedSince: (since: Date) =>
+		queryOptions({
+			// Under "today" so ticking items off refreshes it too.
+			queryKey: [...queryKeys.today, "completed", since.getTime()],
+			queryFn: () => fetchCompletedSince(since),
 		}),
 };
 

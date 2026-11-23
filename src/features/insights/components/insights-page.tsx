@@ -8,14 +8,13 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useItemClick } from "#/components/item-detail/item-detail-provider";
-import { ItemIcon, type ItemKind } from "#/components/source-kit/item-icon";
+import { ItemIcon } from "#/components/source-kit/item-icon";
 import { useSources } from "#/components/source-kit/source-context";
 import { Button } from "#/components/ui/button";
 import { QueryState } from "#/components/widget-kit/query-state";
 import { SourceErrors } from "#/components/widget-kit/source-errors";
 import {
 	type ActivityItem,
-	type ActivityKind,
 	lastWeeks,
 	type MetricSeries,
 	type SummaryRange,
@@ -25,6 +24,7 @@ import {
 import { cn } from "#/lib/utils";
 import { insightQueries, TREND_WEEKS } from "../queries";
 import {
+	ACTIVITY_ITEM_KIND,
 	compareWeeks,
 	formatMetric,
 	formatSummaryMarkdown,
@@ -46,16 +46,6 @@ const RANGES: { range: SummaryRange; label: string }[] = [
 	{ range: "this_week", label: "This week" },
 	{ range: "last_week", label: "Last week" },
 ];
-
-const KIND_ICON: Record<ActivityKind, ItemKind> = {
-	pr_merged: "pull_request",
-	pr_opened: "pull_request",
-	pr_reviewed: "review_request",
-	issue_resolved: "issue",
-	issue_worked: "issue",
-	meeting: "meeting",
-	email_sent: "email",
-};
 
 function SummarySection() {
 	const [range, setRange] = useState<SummaryRange>("since_last_workday");
@@ -176,7 +166,7 @@ function ActivityRow({ item }: { item: ActivityItem }) {
 		>
 			<ItemIcon
 				source={item.source}
-				kind={KIND_ICON[item.kind]}
+				kind={ACTIVITY_ITEM_KIND[item.kind]}
 				className="size-6"
 			/>
 			<span className="min-w-0 flex-1 truncate">{item.title}</span>

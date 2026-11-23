@@ -79,6 +79,24 @@ describe("today repository", () => {
 		]);
 	});
 
+	it("lists items finished since a moment, newest first", async () => {
+		const repo = createDrizzleTodayRepository(db);
+		const a = await repo.add({ kind: "note", title: "first" });
+		const b = await repo.add({ kind: "note", title: "second" });
+		await repo.add({ kind: "note", title: "open" });
+		await repo.setDone(a.id, true);
+		await new Promise((r) => setTimeout(r, 5));
+		await repo.setDone(b.id, true);
+		const since = new Date(Date.now() - 60_000);
+		expect((await repo.completedSince(since)).map((i) => i.title)).toEqual([
+			"second",
+			"first",
+		]);
+		expect(await repo.completedSince(new Date(Date.now() + 60_000))).toEqual(
+			[],
+		);
+	});
+
 	it("shows open items and today's finished ones, hides older finished ones", async () => {
 		const repo = createDrizzleTodayRepository(db);
 		const done = await repo.add({ kind: "note", title: "done today" });

@@ -107,7 +107,11 @@ export function median(values: readonly number[]): number | null {
 export const daysBetween = (from: Date, to: Date) =>
 	(to.getTime() - from.getTime()) / DAY_MS;
 
-export type SummaryRange = "since_last_workday" | "this_week" | "last_week";
+export type SummaryRange =
+	| "since_last_workday"
+	| "last_24_hours"
+	| "this_week"
+	| "last_week";
 
 /**
  * Pure: the period a summary covers. "Since last workday" starts at 00:00 of
@@ -126,6 +130,12 @@ export function summaryRange(
 			from.setDate(from.getDate() - 7);
 			return { from, to: weekStart, title: "Last week" };
 		}
+		case "last_24_hours":
+			return {
+				from: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+				to: now,
+				title: "Last 24 hours",
+			};
 		case "since_last_workday": {
 			const from = new Date(now);
 			from.setHours(0, 0, 0, 0);

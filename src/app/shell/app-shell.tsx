@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import {
 	ChartColumn,
+	History,
 	Hourglass,
 	LayoutDashboard,
 	ListTodo,
@@ -19,6 +20,7 @@ import { UrgentCount } from "./urgent-count";
 
 const MAIN_NAV = [
 	{ to: "/today", label: "Today", icon: Sun },
+	{ to: "/review", label: "Daily review", icon: History },
 	{ to: "/urgent", label: "Urgent", icon: Siren, badge: UrgentCount },
 	{ to: "/waiting", label: "Waiting", icon: Hourglass },
 	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -136,6 +138,7 @@ function NavLink({
 	to:
 		| "/"
 		| "/today"
+		| "/review"
 		| "/urgent"
 		| "/waiting"
 		| "/feed"

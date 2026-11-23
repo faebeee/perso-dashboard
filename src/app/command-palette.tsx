@@ -4,6 +4,7 @@ import { Command } from "cmdk";
 import {
 	CalendarPlus,
 	ChartColumn,
+	History,
 	Hourglass,
 	LayoutDashboard,
 	ListTodo,
@@ -55,6 +56,7 @@ const PAGES: {
 	icon: ComponentType<{ className?: string }>;
 }[] = [
 	{ to: "/today", label: "Today", icon: Sun },
+	{ to: "/review", label: "Daily review (standup)", icon: History },
 	{ to: "/urgent", label: "Urgent", icon: Siren },
 	{ to: "/waiting", label: "Waiting", icon: Hourglass },
 	{ to: "/", label: "Dashboard", icon: LayoutDashboard },

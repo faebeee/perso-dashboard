@@ -17,6 +17,11 @@ export async function fetchToday(): Promise<TodayItem[]> {
 	return (await getServices()).today.list(startOfToday());
 }
 
+/** Items you ticked off since `since` (daily review). */
+export async function fetchCompletedSince(since: Date): Promise<TodayItem[]> {
+	return (await getServices()).today.completedSince(since);
+}
+
 export async function addToToday(item: NewTodayItem): Promise<TodayItem> {
 	if (!item.title.trim()) throw new Error("Write something first.");
 	return (await getServices()).today.add(item);

@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, or } from "drizzle-orm";
+import { and, asc, desc, eq, gte, or } from "drizzle-orm";
 import type { NewTodayItem, TodayItem } from "#/core/today";
 import type { AppDatabase } from "../db/client";
 import { todayItems } from "../db/schema";
@@ -9,13 +9,44 @@ export interface TodayRepository {
 	 * plus what you finished since `since` (start of today).
 	 */
 	list(since: Date): Promise<TodayItem[]>;
+	/** Items you ticked off since `since`, newest first (daily review). */
+	completedSince(since: Date): Promise<TodayItem[]>;
 	add(item: NewTodayItem): Promise<TodayItem>;
 	setDone(id: string, done: boolean): Promise<void>;
 	delete(id: string): Promise<void>;
 }
 
 export function createDrizzleTodayRepository(db: AppDatabase): TodayRepository {
+	const toItem = (row: typeof todayItems.$inferSelect): TodayItem => ({
+		id: row.id,
+		kind: row.kind,
+		title: row.title,
+		ref:
+			row.kind === "item" && row.source && row.itemKind && row.itemId && row.url
+				? {
+						source: row.source,
+						itemKind: row.itemKind,
+						itemId: row.itemId,
+						url: row.url,
+						detailRef: row.detailRef ?? undefined,
+					}
+				: undefined,
+		done: row.done,
+		doneAt: row.doneAt,
+		createdAt: row.createdAt,
+	});
+
 	return {
+		async completedSince(since) {
+			const rows = await db
+				.select()
+				.from(todayItems)
+				.where(and(eq(todayItems.done, true), gte(todayItems.doneAt, since)))
+				.orderBy(desc(todayItems.doneAt))
+				.all();
+			return rows.map(toItem);
+		},
+
 		async list(since) {
 			const rows = await db
 				.select()
@@ -28,28 +59,7 @@ export function createDrizzleTodayRepository(db: AppDatabase): TodayRepository {
 				)
 				.orderBy(asc(todayItems.createdAt))
 				.all();
-			return rows.map((row) => ({
-				id: row.id,
-				kind: row.kind,
-				title: row.title,
-				ref:
-					row.kind === "item" &&
-					row.source &&
-					row.itemKind &&
-					row.itemId &&
-					row.url
-						? {
-								source: row.source,
-								itemKind: row.itemKind,
-								itemId: row.itemId,
-								url: row.url,
-								detailRef: row.detailRef ?? undefined,
-							}
-						: undefined,
-				done: row.done,
-				doneAt: row.doneAt,
-				createdAt: row.createdAt,
-			}));
+			return rows.map(toItem);
 		},
 
 		async add({ kind, title, ref }) {

@@ -40,6 +40,18 @@ Then open **Integrations**, enter the OAuth client for each provider, and click 
 - **Morning briefing notification:** once per day, at the start of your workday.
 - Workday hours, the briefing and the shortcut are set in **Preferences**.
 
+## Daily review
+
+**Daily review** (sidebar, right after Today) prepares your standup:
+
+- **What you did:** a timeline by day and time, since your last workday (Friday on Mondays) or for the last 24 hours. It covers merged, opened and reviewed PRs, resolved and worked-on issues, meetings, sent mail, and items you ticked off on Today.
+- **Today:** your open Today items and today's meetings.
+- **Blockers:** what you're waiting on others for (from Waiting).
+- **Notes:** extra points, kept as a draft for the day.
+- **Standup:** a live preview of the text, then **Copy** as Markdown, Slack or plain text.
+
+Pinned items that also show up as activity (e.g. a pinned PR that got merged) are listed once.
+
 ## Waiting
 
 **Waiting** (sidebar) lists what you're waiting on *others* for, oldest first:

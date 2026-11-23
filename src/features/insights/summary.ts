@@ -1,5 +1,17 @@
+import type { ItemKind } from "#/components/source-kit/item-icon";
 import type { ActivityItem, ActivityKind, MetricSeries } from "#/core/insights";
 import { formatDuration } from "#/lib/time";
+
+/** Which row icon each kind of activity gets. */
+export const ACTIVITY_ITEM_KIND: Record<ActivityKind, ItemKind> = {
+	pr_merged: "pull_request",
+	pr_opened: "pull_request",
+	pr_reviewed: "review_request",
+	issue_resolved: "issue",
+	issue_worked: "issue",
+	meeting: "meeting",
+	email_sent: "email",
+};
 
 /** Order and wording of summary groups. Counted kinds become one line. */
 export const ACTIVITY_GROUPS: {

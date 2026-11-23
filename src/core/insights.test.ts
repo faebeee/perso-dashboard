@@ -62,6 +62,13 @@ describe("summaryRange", () => {
 		expect(range.title).toMatch(/^Since /);
 	});
 
+	it("covers the last 24 hours", () => {
+		expect(summaryRange("last_24_hours", NOW)).toMatchObject({
+			from: new Date(2026, 0, 13, 15, 0),
+			to: NOW,
+		});
+	});
+
 	it("covers this and last week", () => {
 		expect(summaryRange("this_week", NOW).from).toEqual(new Date(2026, 0, 12));
 		expect(summaryRange("last_week", NOW)).toMatchObject({

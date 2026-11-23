@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as ReviewRouteImport } from './routes/review'
 import { Route as TodayRouteImport } from './routes/today'
 import { Route as UrgentRouteImport } from './routes/urgent'
 import { Route as WaitingRouteImport } from './routes/waiting'
@@ -32,6 +33,11 @@ const FeedRoute = FeedRouteImport.update({
 const InsightsRoute = InsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReviewRoute = ReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TodayRoute = TodayRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
   '/insights': typeof InsightsRoute
+  '/review': typeof ReviewRoute
   '/today': typeof TodayRoute
   '/urgent': typeof UrgentRoute
   '/waiting': typeof WaitingRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
   '/insights': typeof InsightsRoute
+  '/review': typeof ReviewRoute
   '/today': typeof TodayRoute
   '/urgent': typeof UrgentRoute
   '/waiting': typeof WaitingRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
   '/insights': typeof InsightsRoute
+  '/review': typeof ReviewRoute
   '/today': typeof TodayRoute
   '/urgent': typeof UrgentRoute
   '/waiting': typeof WaitingRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/feed'
     | '/insights'
+    | '/review'
     | '/today'
     | '/urgent'
     | '/waiting'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/feed'
     | '/insights'
+    | '/review'
     | '/today'
     | '/urgent'
     | '/waiting'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/feed'
     | '/insights'
+    | '/review'
     | '/today'
     | '/urgent'
     | '/waiting'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FeedRoute: typeof FeedRoute
   InsightsRoute: typeof InsightsRoute
+  ReviewRoute: typeof ReviewRoute
   TodayRoute: typeof TodayRoute
   UrgentRoute: typeof UrgentRoute
   WaitingRoute: typeof WaitingRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/insights'
       fullPath: '/insights'
       preLoaderRoute: typeof InsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/review': {
+      id: '/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof ReviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/today': {
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FeedRoute: FeedRoute,
   InsightsRoute: InsightsRoute,
+  ReviewRoute: ReviewRoute,
   TodayRoute: TodayRoute,
   UrgentRoute: UrgentRoute,
   WaitingRoute: WaitingRoute,
