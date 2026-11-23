@@ -40,6 +40,15 @@
         },
         {
           "url": "https://www.googleapis.com/*"
+        },
+        {
+          "url": "https://sentry.io/oauth/token/"
+        },
+        {
+          "url": "https://sentry.io/api/*"
+        },
+        {
+          "url": "https://*.sentry.io/api/*"
         }
       ]
     }

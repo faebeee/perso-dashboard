@@ -1,4 +1,5 @@
 import {
+	Bug,
 	CalendarDays,
 	CalendarPlus,
 	CircleDot,
@@ -31,6 +32,7 @@ export const ITEM_KINDS: Record<
 	review_request: { label: "Review request", icon: GitPullRequestArrow },
 	issue: { label: "Issue", icon: CircleDot },
 	email: { label: "Email", icon: Mail },
+	error: { label: "Error", icon: Bug },
 	event: { label: "Event", icon: CalendarDays },
 	invitation: { label: "Invitation", icon: CalendarPlus },
 	meeting: { label: "Meeting", icon: Video },

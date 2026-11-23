@@ -1,6 +1,6 @@
 # Productivity Dashboard
 
-A personal, local-first **desktop app** that brings work from **GitHub**, **Jira Cloud**, **Gmail** and **Google Calendar** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists. The **Urgent** view (top of the sidebar, with a live count, also available as a widget) shows only what needs you soon:
+A personal, local-first **desktop app** that brings work from **GitHub**, **Jira Cloud**, **Gmail**, **Google Calendar** and **Sentry** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists. The **Urgent** view (top of the sidebar, with a live count, also available as a widget) shows only what needs you soon:
 
 | Source | Urgent when… |
 |---|---|
@@ -8,6 +8,7 @@ A personal, local-first **desktop app** that brings work from **GitHub**, **Jira
 | GitHub | your review is requested (escalated after 24h without activity); one of your ready PRs has changes requested or failing checks |
 | Jira | an issue assigned to you is overdue, due today, or Highest/Blocker/Critical/High priority (overdue issues are found however long ago they were last touched), or a fix version is overdue |
 | Gmail | unread inbox mail marked Important from the last 2 days |
+| Sentry | an unresolved issue assigned to you or your teams is escalating, regressed or fatal; a new one assigned to you personally |
 
 Thresholds live in `ATTENTION_RULES` (`src/core/attention.ts`); each integration's rules are in its `attention.ts`.
 
@@ -55,6 +56,7 @@ The app uses the desktop OAuth flow from [RFC 8252](https://www.rfc-editor.org/r
 | GitHub | Settings → Developer settings → **OAuth Apps** | `http://127.0.0.1:47390/oauth/github/callback` | Scopes `repo read:user` are requested at login. |
 | Jira Cloud | [developer.atlassian.com](https://developer.atlassian.com/console/myapps/) → OAuth 2.0 (3LO) | `http://127.0.0.1:47390/oauth/jira/callback` | Must match exactly. Under *Permissions*, add **Jira API** with `read:jira-work` and `read:jira-user`. |
 | Gmail + Google Calendar | Google Cloud Console → APIs & Services → enable **Gmail API** and **Google Calendar API** → Credentials → OAuth client of type **Desktop app** | Nothing to register: Desktop clients accept any loopback port | One client is shared by both integrations. Consent screen in *Testing* mode, with yourself as a test user. |
+| Sentry (sentry.io, US or EU) | User Settings → API → **Applications** → *Create New Application* | `http://127.0.0.1:47390/oauth/sentry/callback` | Must match exactly. Scopes `org:read project:read event:read` are requested at login. All organizations you're a member of are included (EU orgs via their region host). |
 
 Client secrets are stored encrypted on this device. Desktop apps are "public" OAuth clients, but these three providers still require the secret at the token endpoint.
 

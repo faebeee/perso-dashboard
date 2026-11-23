@@ -29,6 +29,7 @@ export const attentionItemSchema = z.object({
 		"due_today",
 		"overdue_release",
 		"important_email",
+		"production_error",
 		"meeting",
 	]),
 	urgency: urgencySchema,

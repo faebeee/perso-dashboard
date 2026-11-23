@@ -3,6 +3,7 @@ import { githubManifest } from "./github/manifest";
 import { gmailManifest } from "./gmail/manifest";
 import { googleCalendarManifest } from "./google-calendar/manifest";
 import { jiraManifest } from "./jira/manifest";
+import { sentryManifest } from "./sentry/manifest";
 
 /**
  * UI-facing list of installed integrations.
@@ -14,6 +15,7 @@ export const integrationManifests: readonly IntegrationManifest[] = [
 	jiraManifest,
 	gmailManifest,
 	googleCalendarManifest,
+	sentryManifest,
 ];
 
 export function getIntegrationManifest(id: string) {

@@ -22,6 +22,8 @@ export const workItemSchema = z.object({
 		"review_request",
 		"issue",
 		"email",
+		/** An error/crash group from an error tracker (Sentry issue). */
+		"error",
 	]),
 	title: z.string(),
 	url: z.string(),

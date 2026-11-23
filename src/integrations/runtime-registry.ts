@@ -3,6 +3,7 @@ import { githubBackend } from "./github/integration";
 import { gmailBackend } from "./gmail/integration";
 import { googleCalendarBackend } from "./google-calendar/integration";
 import { jiraBackend } from "./jira/integration";
+import { sentryBackend } from "./sentry/integration";
 
 /** Data-access counterpart of `registry.ts` (manifests). Keep both lists in sync. */
 export const integrationBackends: readonly IntegrationBackend[] = [
@@ -10,6 +11,7 @@ export const integrationBackends: readonly IntegrationBackend[] = [
 	jiraBackend,
 	gmailBackend,
 	googleCalendarBackend,
+	sentryBackend,
 ];
 
 export function getIntegrationBackend(
