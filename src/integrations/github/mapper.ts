@@ -3,14 +3,29 @@ import { makeWorkItemId, type WorkItem } from "#/core/work-item";
 import type { GitHubRelease, GitHubSearchItem } from "./api/schemas";
 import { GITHUB_ID } from "./constants";
 
+export type GitHubPrKind = Extract<
+	WorkItem["kind"],
+	"pull_request" | "assigned_pull_request" | "review_request"
+>;
+
+/**
+ * Stable id for a PR in "my PRs" lists. Authored and assigned PRs share it,
+ * so a PR that's both collapses into one item; review requests stay apart.
+ */
+export const pullRequestItemId = (nativeId: number) =>
+	makeWorkItemId(GITHUB_ID, `pull_request:${nativeId}`);
+
 /** Pure: GitHub search item → WorkItem. */
 export function toWorkItem(
 	item: GitHubSearchItem,
-	kind: "pull_request" | "review_request",
+	kind: GitHubPrKind,
 ): WorkItem {
 	const repo = repoFullName(item.repository_url);
 	return {
-		id: makeWorkItemId(GITHUB_ID, `${kind}:${item.id}`),
+		id:
+			kind === "review_request"
+				? makeWorkItemId(GITHUB_ID, `review_request:${item.id}`)
+				: pullRequestItemId(item.id),
 		source: GITHUB_ID,
 		kind,
 		title: item.title,

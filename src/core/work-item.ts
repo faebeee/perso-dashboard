@@ -15,7 +15,14 @@ export const workItemSchema = z.object({
 	id: z.string(),
 	/** Integration id, e.g. "github" */
 	source: z.string(),
-	kind: z.enum(["pull_request", "review_request", "issue", "email"]),
+	/** pull_request = you opened it; assigned_pull_request = assigned to you only. */
+	kind: z.enum([
+		"pull_request",
+		"assigned_pull_request",
+		"review_request",
+		"issue",
+		"email",
+	]),
 	title: z.string(),
 	url: z.string(),
 	/** ISO-8601 timestamp used for sorting. */

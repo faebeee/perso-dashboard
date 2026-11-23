@@ -6,6 +6,7 @@ import {
 	GitPullRequestArrow,
 	Mail,
 	Tag,
+	UserCheck,
 	Video,
 } from "lucide-react";
 import type { ComponentType, CSSProperties } from "react";
@@ -26,6 +27,7 @@ export const ITEM_KINDS: Record<
 	{ label: string; icon: ComponentType<{ className?: string }> }
 > = {
 	pull_request: { label: "Pull request", icon: GitPullRequest },
+	assigned_pull_request: { label: "Assigned pull request", icon: UserCheck },
 	review_request: { label: "Review request", icon: GitPullRequestArrow },
 	issue: { label: "Issue", icon: CircleDot },
 	email: { label: "Email", icon: Mail },

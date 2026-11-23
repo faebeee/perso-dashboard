@@ -21,6 +21,8 @@ export const attentionItemSchema = z.object({
 	source: z.string(),
 	reason: z.enum([
 		"review_requested",
+		"changes_requested",
+		"checks_failing",
 		"invitation",
 		"high_priority",
 		"overdue",

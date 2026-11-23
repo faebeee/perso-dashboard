@@ -59,34 +59,89 @@ describe("github service", () => {
 		expect(url.searchParams.get("sort")).toBe("updated");
 	});
 
-	it.each([
-		["created", [GITHUB_QUERIES.authored]],
-		["assigned", [GITHUB_QUERIES.assigned]],
-	] as const)("searches PRs for scope %s", async (scope, queries) => {
-		const fetch = fakeFetch({ "/search/issues": searchIssuesFixture });
-		await createGitHubService(createGitHubApi("t", fetch)).myPullRequests(
-			scope,
-		);
-		expect(
-			fetch.mock.calls.map((c) => new URL(String(c[0])).searchParams.get("q")),
-		).toEqual(queries);
+	const routeByQuery =
+		(answers: Partial<Record<string, typeof searchIssuesFixture.items>>) =>
+		(url: URL) => {
+			const items = answers[url.searchParams.get("q") ?? ""] ?? [];
+			return { total_count: items.length, items };
+		};
+	const [pr2001, pr2002] = searchIssuesFixture.items;
+	const queriesOf = (fetch: ReturnType<typeof fakeFetch>) =>
+		fetch.mock.calls
+			.map((c) => new URL(String(c[0])).searchParams.get("q"))
+			.sort();
+
+	it("searches only assigned PRs for 'assigned', marked as assigned", async () => {
+		const fetch = fakeFetch({
+			"/search/issues": routeByQuery({ [GITHUB_QUERIES.assigned]: [pr2002] }),
+		});
+		const items = await createGitHubService(
+			createGitHubApi("t", fetch),
+		).myPullRequests("assigned");
+
+		expect(queriesOf(fetch)).toEqual([GITHUB_QUERIES.assigned]);
+		expect(items.map((i) => i.kind)).toEqual(["assigned_pull_request"]);
 	});
 
-	it("merges authored and assigned PRs for 'all' without duplicates", async () => {
+	it("searches authored PRs plus their signals for 'created'", async () => {
+		const fetch = fakeFetch({ "/search/issues": routeByQuery({}) });
+		await createGitHubService(createGitHubApi("t", fetch)).myPullRequests(
+			"created",
+		);
+		expect(queriesOf(fetch)).toEqual(
+			[
+				GITHUB_QUERIES.authored,
+				GITHUB_QUERIES.changesRequested,
+				GITHUB_QUERIES.checksFailing,
+			].sort(),
+		);
+	});
+
+	it("merges authored and assigned PRs for 'all'; authored wins and carries signals", async () => {
 		const fetch = fakeFetch({
-			"/search/issues": (url: URL) =>
-				url.searchParams.get("q") === GITHUB_QUERIES.authored
-					? searchIssuesFixture
-					: { total_count: 1, items: [searchIssuesFixture.items[1]] },
+			"/search/issues": routeByQuery({
+				[GITHUB_QUERIES.authored]: [pr2001, pr2002],
+				[GITHUB_QUERIES.assigned]: [pr2002],
+				[GITHUB_QUERIES.changesRequested]: [pr2002],
+				[GITHUB_QUERIES.checksFailing]: [pr2002],
+			}),
 		});
 		const items = await createGitHubService(
 			createGitHubApi("t", fetch),
 		).myPullRequests("all");
 
-		expect(fetch).toHaveBeenCalledTimes(2);
-		expect(items.map((i) => i.id)).toEqual([
-			"github:pull_request:2001",
-			"github:pull_request:2002",
+		expect(
+			items
+				.map((i) => [i.id, i.kind, i.status])
+				.sort(([a], [b]) => String(a).localeCompare(String(b))),
+		).toEqual([
+			["github:pull_request:2001", "pull_request", "Draft"],
+			[
+				"github:pull_request:2002",
+				"pull_request",
+				"Changes requested · Checks failing",
+			],
+		]);
+	});
+
+	it("lists PRs needing action with all their signals", async () => {
+		const fetch = fakeFetch({
+			"/search/issues": routeByQuery({
+				[GITHUB_QUERIES.changesRequested]: [pr2002],
+				[GITHUB_QUERIES.checksFailing]: [pr2001, pr2002],
+			}),
+		});
+		const needing = await createGitHubService(
+			createGitHubApi("t", fetch),
+		).prsNeedingAction();
+
+		expect(
+			needing
+				.map((n) => [n.item.id, n.signals])
+				.sort(([a], [b]) => String(a).localeCompare(String(b))),
+		).toEqual([
+			["github:pull_request:2001", ["checks_failing"]],
+			["github:pull_request:2002", ["changes_requested", "checks_failing"]],
 		]);
 	});
 });

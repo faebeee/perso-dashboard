@@ -5,8 +5,8 @@ A personal, local-first **desktop app** that brings work from **GitHub**, **Jira
 | Source | Urgent when… |
 |---|---|
 | Google Calendar | a meeting is on now or starts within 2h (≤15 min counts as *right now*), or an invitation for the next 48h is unanswered |
-| GitHub | your review is requested (escalated after 24h without activity) |
-| Jira | an issue assigned to you is overdue, due today, or Highest/Blocker/Critical/High priority, or a fix version is overdue |
+| GitHub | your review is requested (escalated after 24h without activity); one of your ready PRs has changes requested or failing checks |
+| Jira | an issue assigned to you is overdue, due today, or Highest/Blocker/Critical/High priority (overdue issues are found however long ago they were last touched), or a fix version is overdue |
 | Gmail | unread inbox mail marked Important from the last 2 days |
 
 Thresholds live in `ATTENTION_RULES` (`src/core/attention.ts`); each integration's rules are in its `attention.ts`.

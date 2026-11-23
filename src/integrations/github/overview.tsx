@@ -17,16 +17,33 @@ import { ReleaseList } from "#/components/release/release-list";
 import { useWorkScope } from "#/components/widget-kit/work-scope-context";
 import { WorkItemList } from "#/components/work-item/work-item-list";
 import { RECENT_RELEASE_DAYS, type Release } from "#/core/release";
+import type { WorkItem } from "#/core/work-item";
 import { tally } from "#/lib/tally";
 import { formatRelative } from "#/lib/time";
 import { SEARCH_PAGE_SIZE } from "./constants";
 import { githubQueries } from "./queries";
+import { PR_SIGNAL_LABELS } from "./service";
 
 const upcoming = (releases: Release[]) =>
 	releases.filter((r) => r.state === "upcoming");
 const shipped = (releases: Release[]) =>
 	releases.filter((r) => r.state === "released");
 const count = (items: unknown[]) => cappedCount(items.length, SEARCH_PAGE_SIZE);
+
+/** "2 need changes · 1 failing checks", or the draft count when all is well. */
+function myPrHint(items: WorkItem[]): string {
+	const has = (label: string) =>
+		items.filter((i) => i.status?.includes(label)).length;
+	const changes = has(PR_SIGNAL_LABELS.changes_requested);
+	const failing = has(PR_SIGNAL_LABELS.checks_failing);
+	const parts = [
+		changes > 0 && `${changes} need${changes === 1 ? "s" : ""} changes`,
+		failing > 0 && `${failing} failing checks`,
+	].filter(Boolean);
+	return parts.length > 0
+		? parts.join(" · ")
+		: `${items.filter((i) => i.status === "Draft").length} drafts`;
+}
 
 export function GitHubOverview() {
 	const scope = useWorkScope();
@@ -54,9 +71,7 @@ export function GitHubOverview() {
 					icon={GitPullRequestDraft}
 					query={mine}
 					value={count}
-					hint={(items) =>
-						`${items.filter((i) => i.status === "Draft").length} drafts`
-					}
+					hint={myPrHint}
 				/>
 				<StatTile
 					label="Upcoming releases"

@@ -1,6 +1,6 @@
 import type { IntegrationBackend } from "#/core/integration";
 import { createGitHubApi } from "./api/client";
-import { reviewRequestsToAttention } from "./attention";
+import { prSignalsToAttention, reviewRequestsToAttention } from "./attention";
 import { GITHUB_ID } from "./constants";
 import { createGitHubOAuth, GITHUB_OAUTH_CLIENT } from "./oauth";
 import { createGitHubReleaseService } from "./releases";
@@ -34,8 +34,15 @@ export const githubBackend: IntegrationBackend = {
 	},
 
 	async getAttentionItems({ accessToken }, now) {
-		const reviews = await githubService(accessToken).reviewRequests();
-		return reviewRequestsToAttention(reviews, now);
+		const service = githubService(accessToken);
+		const [reviews, mine] = await Promise.all([
+			service.reviewRequests(),
+			service.prsNeedingAction(),
+		]);
+		return [
+			...reviewRequestsToAttention(reviews, now),
+			...prSignalsToAttention(mine),
+		];
 	},
 
 	getReleases: ({ accessToken }, query) =>

@@ -1,6 +1,7 @@
 import { ATTENTION_RULES, type AttentionItem } from "#/core/attention";
 import type { WorkItem } from "#/core/work-item";
 import { formatRelative } from "#/lib/time";
+import { PR_SIGNAL_LABELS, type PrNeedingAction } from "./service";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -30,4 +31,26 @@ export function reviewRequestsToAttention(
 			actor: pr.actor,
 		};
 	});
+}
+
+/**
+ * Pure: your own PRs blocked on you → attention items ("today"). Changes
+ * requested takes precedence as the reason; the label lists every signal.
+ */
+export function prSignalsToAttention(
+	prs: readonly PrNeedingAction[],
+): AttentionItem[] {
+	return prs.map(({ item, signals }) => ({
+		id: `${item.id}:signals`,
+		source: item.source,
+		reason: signals.includes("changes_requested")
+			? "changes_requested"
+			: "checks_failing",
+		urgency: "today",
+		title: item.title,
+		url: item.url,
+		at: item.updatedAt,
+		label: signals.map((s) => PR_SIGNAL_LABELS[s]).join(" · "),
+		context: item.context,
+	}));
 }
