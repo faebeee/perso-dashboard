@@ -30,6 +30,28 @@ export interface Host {
 	cancelAuthorization(): Promise<void>;
 	/** Opens a link in the system browser instead of the app window. */
 	openExternal(url: string): Promise<void>;
+	/** Native app integration: menu bar, Dock, notifications, login item. */
+	desktop: DesktopShell;
+}
+
+/** What the menu-bar icon, its menu and the Dock badge show. */
+export interface UrgentSummary {
+	/** 0 hides the count and the badge. */
+	count: number;
+	/** Most urgent first; the shell may show only the first few. */
+	items: { id: string; title: string; detail: string; url: string }[];
+}
+
+export type NotificationPermission = "granted" | "denied" | "default";
+
+export interface DesktopShell {
+	setUrgentSummary(summary: UrgentSummary): Promise<void>;
+	notificationPermission(): Promise<NotificationPermission>;
+	/** Asks the OS once; resolves with the resulting permission. */
+	requestNotificationPermission(): Promise<NotificationPermission>;
+	notify(notification: { title: string; body: string }): Promise<void>;
+	getLaunchAtLogin(): Promise<boolean>;
+	setLaunchAtLogin(enabled: boolean): Promise<void>;
 }
 
 /** Failure kinds of `Host.authorizeInBrowser`. */

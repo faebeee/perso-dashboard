@@ -8,15 +8,23 @@ import { getRouter } from "./router";
 import "./styles.css";
 
 // Composition root: pick the host before anything touches the platform.
-const host = createTauriHost();
+const router = getRouter();
+const host = createTauriHost({
+	navigate: (path) => void router.navigate({ to: path }),
+});
 setHost(host);
 installExternalLinkHandler((url) => host.openExternal(url));
+
+// Platform-specific styling (e.g. the macOS transparent title bar).
+document.documentElement.dataset.platform = /Mac/.test(navigator.userAgent)
+	? "macos"
+	: "other";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Missing #root element");
 
 createRoot(rootElement).render(
 	<StrictMode>
-		<RouterProvider router={getRouter()} />
+		<RouterProvider router={router} />
 	</StrictMode>,
 );

@@ -14,6 +14,7 @@ import { Route as FeedRouteImport } from './routes/feed'
 import { Route as UrgentRouteImport } from './routes/urgent'
 import { Route as AppsIntegrationIdRouteImport } from './routes/apps/$integrationId'
 import { Route as SettingsIntegrationsRouteImport } from './routes/settings/integrations'
+import { Route as SettingsPreferencesRouteImport } from './routes/settings/preferences'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const SettingsIntegrationsRoute = SettingsIntegrationsRouteImport.update({
   path: '/settings/integrations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsPreferencesRoute = SettingsPreferencesRouteImport.update({
+  id: '/settings/preferences',
+  path: '/settings/preferences',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/urgent': typeof UrgentRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
+  '/settings/preferences': typeof SettingsPreferencesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/urgent': typeof UrgentRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
+  '/settings/preferences': typeof SettingsPreferencesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,6 +70,7 @@ export interface FileRoutesById {
   '/urgent': typeof UrgentRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
+  '/settings/preferences': typeof SettingsPreferencesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -71,6 +80,7 @@ export interface FileRouteTypes {
     | '/urgent'
     | '/apps/$integrationId'
     | '/settings/integrations'
+    | '/settings/preferences'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -78,6 +88,7 @@ export interface FileRouteTypes {
     | '/urgent'
     | '/apps/$integrationId'
     | '/settings/integrations'
+    | '/settings/preferences'
   id:
     | '__root__'
     | '/'
@@ -85,6 +96,7 @@ export interface FileRouteTypes {
     | '/urgent'
     | '/apps/$integrationId'
     | '/settings/integrations'
+    | '/settings/preferences'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -93,6 +105,7 @@ export interface RootRouteChildren {
   UrgentRoute: typeof UrgentRoute
   AppsIntegrationIdRoute: typeof AppsIntegrationIdRoute
   SettingsIntegrationsRoute: typeof SettingsIntegrationsRoute
+  SettingsPreferencesRoute: typeof SettingsPreferencesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -132,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIntegrationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/preferences': {
+      id: '/settings/preferences'
+      path: '/settings/preferences'
+      fullPath: '/settings/preferences'
+      preLoaderRoute: typeof SettingsPreferencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -141,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   UrgentRoute: UrgentRoute,
   AppsIntegrationIdRoute: AppsIntegrationIdRoute,
   SettingsIntegrationsRoute: SettingsIntegrationsRoute,
+  SettingsPreferencesRoute: SettingsPreferencesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

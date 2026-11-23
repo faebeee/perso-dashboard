@@ -9,6 +9,7 @@ import {
 	type BrowserAuthErrorKind,
 	type Host,
 } from "../host";
+import { createTauriDesktopShell } from "./desktop";
 
 /**
  * Host implementation for the Tauri shell. The only module that imports
@@ -18,7 +19,13 @@ import {
 /** Relative to the app's config directory (see tauri-plugin-sql). */
 const DATABASE_URL = "sqlite:dashboard.db";
 
-export function createTauriHost(): Host {
+export interface TauriHostOptions {
+	/** In-app navigation, used by native menus (tray). */
+	navigate: (path: string) => void;
+}
+
+export function createTauriHost({ navigate }: TauriHostOptions): Host {
+	const openExternal = (url: string) => openUrl(url);
 	return {
 		fetch: tauriFetch,
 
@@ -48,7 +55,9 @@ export function createTauriHost(): Host {
 			await invoke("oauth_cancel");
 		},
 
-		openExternal: (url) => openUrl(url),
+		openExternal,
+
+		desktop: createTauriDesktopShell({ navigate, openExternal }),
 	};
 }
 

@@ -2,22 +2,45 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Permissions for the main window. Provider hosts must be listed under http:default.",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
+    "core:tray:default",
+    "core:menu:default",
+    "core:window:allow-set-badge-count",
+    "core:window:allow-start-dragging",
+    "core:window:allow-internal-toggle-maximize",
+    "notification:default",
+    "autostart:default",
     "opener:default",
     "sql:default",
     "sql:allow-execute",
     {
       "identifier": "http:default",
       "allow": [
-        { "url": "https://github.com/login/oauth/access_token" },
-        { "url": "https://api.github.com/*" },
-        { "url": "https://auth.atlassian.com/oauth/token" },
-        { "url": "https://api.atlassian.com/*" },
-        { "url": "https://oauth2.googleapis.com/token" },
-        { "url": "https://gmail.googleapis.com/*" },
-        { "url": "https://www.googleapis.com/*" }
+        {
+          "url": "https://github.com/login/oauth/access_token"
+        },
+        {
+          "url": "https://api.github.com/*"
+        },
+        {
+          "url": "https://auth.atlassian.com/oauth/token"
+        },
+        {
+          "url": "https://api.atlassian.com/*"
+        },
+        {
+          "url": "https://oauth2.googleapis.com/token"
+        },
+        {
+          "url": "https://gmail.googleapis.com/*"
+        },
+        {
+          "url": "https://www.googleapis.com/*"
+        }
       ]
     }
   ]

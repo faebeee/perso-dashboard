@@ -1,17 +1,17 @@
 import { Video } from "lucide-react";
-import { ItemIcon, type ItemKind } from "#/components/source-kit/item-icon";
+import { ItemIcon } from "#/components/source-kit/item-icon";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { SourceErrors } from "#/components/widget-kit/source-errors";
 import {
 	type AttentionItem,
-	type AttentionReason,
 	URGENCY_LABELS,
 	type Urgency,
 	urgencySchema,
 } from "#/core/attention";
 import type { IntegrationError } from "#/core/result";
 import { cn } from "#/lib/utils";
+import { KIND_FOR_REASON } from "../kinds";
 
 interface AttentionListProps {
 	items: AttentionItem[];
@@ -19,18 +19,6 @@ interface AttentionListProps {
 	/** Cap per urgency group (widget). */
 	limit?: number;
 }
-
-/** Which icon each reason gets: an overdue Jira task is an issue, etc. */
-const KIND_FOR_REASON: Record<AttentionReason, ItemKind> = {
-	review_requested: "review_request",
-	invitation: "invitation",
-	meeting: "meeting",
-	high_priority: "issue",
-	overdue: "issue",
-	due_today: "issue",
-	overdue_release: "release",
-	important_email: "email",
-};
 
 const GROUP_STYLE: Record<Urgency, string> = {
 	now: "text-destructive",

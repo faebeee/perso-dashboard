@@ -10,5 +10,7 @@ export const attentionQueries = {
 			// Meeting countdowns go stale fast.
 			staleTime: 30_000,
 			refetchInterval: 60_000,
+			// Keep the tray, badge and notifications live while the window is hidden.
+			refetchIntervalInBackground: true,
 		}),
 };

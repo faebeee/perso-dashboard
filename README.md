@@ -26,6 +26,17 @@ Then open **Integrations**, enter the OAuth client for each provider, and click 
 
 `npm run build` produces installers under `src-tauri/target/release/bundle/`.
 
+## Desktop behaviour
+
+- **Menu bar:** an icon with the urgent count. Its menu lists the urgent items (click to open), plus *Open Urgent*, *Open Dashboard* and *Quit*. The same count shows on the **Dock badge**.
+- **Background:** closing the window keeps the app running, so the count and notifications stay live. Click the Dock or menu-bar icon to bring the window back; quit with ⌘Q or from the menu bar. Launching the app a second time focuses the running one.
+- **Notifications** when something becomes urgent: once per item, and again if it escalates (e.g. a meeting moving to "starts in 10 min"). More than 3 at once arrive as one summary. Toggle them in **Preferences**.
+- **Open at login**: toggle in **Preferences**.
+- **⌘K / Ctrl+K** searches pages, urgent items, My Work and releases.
+- The window remembers its size and position. On macOS, content runs under a transparent title bar.
+
+Code: native parts are in `src-tauri/src/desktop.rs`, the `Host.desktop` port in `src/platform/host.ts`, and its Tauri adapter in `src/platform/tauri/desktop.ts`. `src/app/desktop/desktop-sync.tsx` mirrors the urgent items to the menu bar, badge and notifications, and the notify rule lives in `src/features/attention/alerts.ts`.
+
 ## Where data lives
 
 | What | Where |
