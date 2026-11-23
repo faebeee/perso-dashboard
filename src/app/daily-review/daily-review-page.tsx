@@ -11,6 +11,7 @@ import {
 import { useMemo, useState } from "react";
 import { useItemClick } from "#/components/item-detail/item-detail-provider";
 import { ItemIcon } from "#/components/source-kit/item-icon";
+import { useSources } from "#/components/source-kit/source-context";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { QueryState } from "#/components/widget-kit/query-state";
@@ -23,7 +24,14 @@ import { waitingQueries } from "#/features/waiting/queries";
 import { formatStandup, type StandupFormat } from "#/lib/standup";
 import { localDayKey } from "#/lib/time";
 import { cn } from "#/lib/utils";
-import { buildDailyReview, type TimelineEntry } from "./build-review";
+import {
+	buildDailyReview,
+	collectProjects,
+	type ReviewFilter,
+	type ReviewProject,
+	scopeHeading,
+	type TimelineEntry,
+} from "./build-review";
 
 const RANGES: { range: SummaryRange; label: string }[] = [
 	{ range: "since_last_workday", label: "Since last workday" },
@@ -68,32 +76,44 @@ export function DailyReviewPage() {
 	const [notes, setNotes] = useNotes();
 	const [copied, setCopied] = useState(false);
 
-	const review = useMemo(
-		() =>
-			buildDailyReview({
-				activity: activity.data?.items ?? [],
-				completed: completed.data ?? [],
-				openToday: (todayList.data ?? []).filter((t) => !t.done),
-				agenda: agenda.data?.items ?? [],
-				waiting: waiting.data?.items ?? [],
-				now: new Date(),
-			}),
+	const [filter, setFilter] = useReviewFilter();
+	const input = useMemo(
+		() => ({
+			activity: activity.data?.items ?? [],
+			completed: completed.data ?? [],
+			openToday: (todayList.data ?? []).filter((t) => !t.done),
+			agenda: agenda.data?.items ?? [],
+			waiting: waiting.data?.items ?? [],
+			now: new Date(),
+		}),
 		[activity.data, completed.data, todayList.data, agenda.data, waiting.data],
+	);
+	// From everything in the period, so chips don't vanish while filtering.
+	const projects = useMemo(() => collectProjects(input), [input]);
+	const review = useMemo(
+		() => buildDailyReview({ ...input, filter }),
+		[input, filter],
 	);
 
 	const noteLines = notes
 		.split("\n")
 		.map((line) => line.trim())
 		.filter(Boolean);
-	const standup = formatStandup(
-		[
-			review.done,
-			review.today,
-			review.blockers,
-			...(noteLines.length > 0 ? [{ title: "Notes", lines: noteLines }] : []),
-		],
-		format,
-	);
+	const heading = scopeHeading(filter);
+	const standup = [
+		heading,
+		formatStandup(
+			[
+				review.done,
+				review.today,
+				review.blockers,
+				...(noteLines.length > 0 ? [{ title: "Notes", lines: noteLines }] : []),
+			],
+			format,
+		),
+	]
+		.filter(Boolean)
+		.join("\n\n");
 
 	const chooseFormat = (next: StandupFormat) => {
 		setFormat(next);
@@ -135,12 +155,18 @@ export function DailyReviewPage() {
 				</span>
 			</div>
 
+			<ProjectFilter projects={projects} filter={filter} onChange={setFilter} />
+
 			<div className="grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
 				<Card title="What you did" icon={History}>
 					<QueryState
 						query={activity}
 						isEmpty={() => review.timeline.length === 0}
-						emptyMessage="Nothing recorded for this period yet."
+						emptyMessage={
+							filter.projects.length > 0
+								? "Nothing for the selected projects in this period."
+								: "Nothing recorded for this period yet."
+						}
 					>
 						{({ errors }) => (
 							<div className="space-y-4">
@@ -370,5 +396,134 @@ function Segmented<T extends string>({
 				</Button>
 			))}
 		</fieldset>
+	);
+}
+
+const FILTER_KEY = "review.filter";
+const NO_FILTER: ReviewFilter = { projects: [], includeUnscoped: false };
+
+/** The project filter, remembered on this device ("what I currently need"). */
+function useReviewFilter(): [ReviewFilter, (filter: ReviewFilter) => void] {
+	const [filter, setFilter] = useState<ReviewFilter>(() => {
+		try {
+			const stored = JSON.parse(localStorage.getItem(FILTER_KEY) ?? "null");
+			if (
+				stored &&
+				Array.isArray(stored.projects) &&
+				stored.projects.every((p: unknown) => typeof p === "string")
+			) {
+				return {
+					projects: stored.projects,
+					includeUnscoped: Boolean(stored.includeUnscoped),
+				};
+			}
+		} catch {
+			// fall through
+		}
+		return NO_FILTER;
+	});
+	const update = (next: ReviewFilter) => {
+		setFilter(next);
+		try {
+			localStorage.setItem(FILTER_KEY, JSON.stringify(next));
+		} catch {
+			// kept for this session only
+		}
+	};
+	return [filter, update];
+}
+
+function ProjectFilter({
+	projects,
+	filter,
+	onChange,
+}: {
+	projects: ReviewProject[];
+	filter: ReviewFilter;
+	onChange: (filter: ReviewFilter) => void;
+}) {
+	const sources = useSources();
+	const active = filter.projects.length > 0;
+	// Keep chosen projects visible even on a day without anything in them.
+	const shown: ReviewProject[] = [
+		...projects,
+		...filter.projects
+			.filter((name) => !projects.some((p) => p.name === name))
+			.map((name) => ({ name, count: 0, sources: [] })),
+	];
+	if (shown.length === 0) return null;
+
+	const toggle = (name: string) =>
+		onChange({
+			...filter,
+			projects: filter.projects.includes(name)
+				? filter.projects.filter((p) => p !== name)
+				: [...filter.projects, name],
+		});
+
+	return (
+		<div
+			className="flex flex-wrap items-center gap-2"
+			role="toolbar"
+			aria-label="Filter by project"
+		>
+			<FilterChip
+				pressed={!active}
+				onClick={() => onChange({ ...filter, projects: [] })}
+			>
+				All projects
+			</FilterChip>
+			{shown.map((project) => (
+				<FilterChip
+					key={project.name}
+					pressed={filter.projects.includes(project.name)}
+					onClick={() => toggle(project.name)}
+				>
+					{project.sources.map((id) => {
+						const Icon = sources[id]?.icon;
+						return Icon ? (
+							<Icon key={id} aria-label={sources[id]?.name} />
+						) : null;
+					})}
+					{project.name}
+					<span className="text-muted-foreground">{project.count}</span>
+				</FilterChip>
+			))}
+			{active && (
+				<label className="ml-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+					<input
+						type="checkbox"
+						className="size-3.5 accent-primary"
+						checked={filter.includeUnscoped}
+						onChange={(e) =>
+							onChange({ ...filter, includeUnscoped: e.target.checked })
+						}
+					/>
+					Also show meetings, mail and notes
+				</label>
+			)}
+		</div>
+	);
+}
+
+function FilterChip({
+	pressed,
+	onClick,
+	children,
+}: {
+	pressed: boolean;
+	onClick: () => void;
+	children: React.ReactNode;
+}) {
+	return (
+		<Button
+			size="sm"
+			variant={pressed ? "secondary" : "outline"}
+			aria-pressed={pressed}
+			className="h-7 rounded-full"
+			onClick={onClick}
+		>
+			{children}
+		</Button>
 	);
 }

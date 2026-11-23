@@ -1,0 +1,1 @@
+ALTER TABLE `today_items` ADD `project` text;

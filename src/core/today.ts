@@ -11,6 +11,8 @@ export interface TodayItem {
 		itemId: string;
 		url: string;
 		detailRef?: string;
+		/** Repository or project of the pinned item. */
+		project?: string;
 	};
 	done: boolean;
 	doneAt: Date | null;

@@ -26,6 +26,72 @@ export interface TimelineDay {
 	entries: TimelineEntry[];
 }
 
+/** Which projects the review covers (empty = everything). */
+export interface ReviewFilter {
+	projects: readonly string[];
+	/** Also keep meetings, mail and notes, which belong to no project. */
+	includeUnscoped: boolean;
+}
+
+export interface ReviewProject {
+	name: string;
+	/** Things in the period (activity, pinned items, blockers). */
+	count: number;
+	/** Integration ids it appears in (for icons). */
+	sources: string[];
+}
+
+export interface DailyReviewInput {
+	activity: readonly ActivityItem[];
+	completed: readonly TodayItem[];
+	openToday: readonly TodayItem[];
+	agenda: readonly CalendarEvent[];
+	waiting: readonly WaitingItem[];
+	now: Date;
+	filter?: ReviewFilter;
+}
+
+/** Pure: the projects present in the input, busiest first. */
+export function collectProjects(input: DailyReviewInput): ReviewProject[] {
+	const projects = new Map<string, { count: number; sources: Set<string> }>();
+	const add = (name: string | undefined, source: string | undefined) => {
+		if (!name) return;
+		const entry = projects.get(name) ?? {
+			count: 0,
+			sources: new Set<string>(),
+		};
+		entry.count++;
+		if (source) entry.sources.add(source);
+		projects.set(name, entry);
+	};
+	for (const a of input.activity) add(a.project, a.source);
+	for (const w of input.waiting) add(w.project, w.source);
+	for (const t of [...input.completed, ...input.openToday])
+		add(t.ref?.project, t.ref?.source);
+	return [...projects.entries()]
+		.map(([name, { count, sources }]) => ({
+			name,
+			count,
+			sources: [...sources],
+		}))
+		.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+/** Pure: does something with this project belong in the filtered review? */
+export function inScope(
+	project: string | undefined,
+	filter?: ReviewFilter,
+): boolean {
+	if (!filter || filter.projects.length === 0) return true;
+	return project ? filter.projects.includes(project) : filter.includeUnscoped;
+}
+
+/** Heading for the copied standup when it's filtered. */
+export function scopeHeading(filter?: ReviewFilter): string | undefined {
+	if (!filter || filter.projects.length === 0) return undefined;
+	return `Projects: ${filter.projects.join(", ")}`;
+}
+
 export interface DailyReview {
 	timeline: TimelineDay[];
 	done: StandupSection;
@@ -70,15 +136,20 @@ function dayLabel(key: string, now: Date): string {
  * - Today: open Today items, then today's meetings as one line.
  * - Blockers: what you're waiting on others for, oldest first.
  */
-export function buildDailyReview(input: {
-	activity: readonly ActivityItem[];
-	completed: readonly TodayItem[];
-	openToday: readonly TodayItem[];
-	agenda: readonly CalendarEvent[];
-	waiting: readonly WaitingItem[];
-	now: Date;
-}): DailyReview {
-	const { now } = input;
+export function buildDailyReview(unfiltered: DailyReviewInput): DailyReview {
+	const { now, filter } = unfiltered;
+	const scoped = <T>(
+		items: readonly T[],
+		projectOf: (item: T) => string | undefined,
+	) => items.filter((item) => inScope(projectOf(item), filter));
+	const input = {
+		activity: scoped(unfiltered.activity, (a) => a.project),
+		completed: scoped(unfiltered.completed, (t) => t.ref?.project),
+		openToday: scoped(unfiltered.openToday, (t) => t.ref?.project),
+		// Meetings have no project: they follow "include meetings, mail and notes".
+		agenda: scoped(unfiltered.agenda, () => undefined),
+		waiting: scoped(unfiltered.waiting, (w) => w.project),
+	};
 
 	const entries: TimelineEntry[] = [
 		...input.activity.map((a) => ({

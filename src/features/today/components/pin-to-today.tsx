@@ -32,6 +32,7 @@ export function PinToTodayButton({ item }: { item: ActionableItem }) {
 						itemId: item.id,
 						url: item.url,
 						detailRef: item.detailRef,
+						project: item.project,
 					},
 				});
 			}}

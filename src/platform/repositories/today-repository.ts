@@ -29,6 +29,7 @@ export function createDrizzleTodayRepository(db: AppDatabase): TodayRepository {
 						itemId: row.itemId,
 						url: row.url,
 						detailRef: row.detailRef ?? undefined,
+						project: row.project ?? undefined,
 					}
 				: undefined,
 		done: row.done,
@@ -107,6 +108,7 @@ export function createDrizzleTodayRepository(db: AppDatabase): TodayRepository {
 					itemId: ref?.itemId ?? null,
 					url: ref?.url ?? null,
 					detailRef: ref?.detailRef ?? null,
+					project: ref?.project ?? null,
 					done: false,
 					doneAt: null,
 					createdAt: item.createdAt,

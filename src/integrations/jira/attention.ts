@@ -76,6 +76,7 @@ export function issuesToAttention(
 				context: [item.context, item.status].filter(Boolean).join(" · "),
 				actor: item.actor,
 				detailRef: item.detailRef,
+				project: item.project,
 			},
 		];
 	});
@@ -100,5 +101,6 @@ export function overdueReleasesToAttention(
 				: now.toISOString(),
 			label: "Release overdue",
 			context: r.project,
+			project: r.project,
 		}));
 }

@@ -60,6 +60,7 @@ export function prActivity(
 		at: new Date(at).toISOString(),
 		context: context(pr),
 		detailRef: prDetailRef(repoFullName(pr.repository_url), pr.number),
+		project: repoFullName(pr.repository_url),
 	});
 	return [
 		...found.merged
@@ -86,6 +87,7 @@ export function commitActivity(commits: readonly CommitInfo[]): ActivityItem[] {
 		url: c.url,
 		at: c.at,
 		context: `${c.repo} (${c.branch})`,
+		project: c.repo,
 	}));
 }
 

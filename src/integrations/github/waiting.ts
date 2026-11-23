@@ -21,6 +21,7 @@ export function awaitingReviewToWaiting(
 				label: `No review for ${waitedFor(since, now)}`,
 				context: item.context,
 				detailRef: item.detailRef,
+				project: item.project,
 			};
 		})
 		.sort((a, b) => Date.parse(a.since) - Date.parse(b.since));

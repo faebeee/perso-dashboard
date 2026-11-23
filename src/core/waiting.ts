@@ -23,6 +23,8 @@ export const waitingItemSchema = z.object({
 	label: z.string(),
 	context: z.string().optional(),
 	detailRef: z.string().optional(),
+	/** Repository or project it belongs to (filters, grouping). */
+	project: z.string().optional(),
 });
 
 export type WaitingItem = z.infer<typeof waitingItemSchema>;

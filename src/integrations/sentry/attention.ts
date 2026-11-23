@@ -41,6 +41,7 @@ export function issuesToAttention(
 				label: `${rule.label} · ${compactCount(issue.count)} events${team}`,
 				context: [issue.shortId, issue.project.name].join(" · "),
 				detailRef: item.detailRef,
+				project: issue.project.name,
 			},
 		];
 	});

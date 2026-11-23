@@ -48,6 +48,8 @@ export const attentionItemSchema = z.object({
 	 * key, Gmail message id…). Absent = the item only opens in the browser.
 	 */
 	detailRef: z.string().optional(),
+	/** Repository or project it belongs to (filters, grouping). */
+	project: z.string().optional(),
 	/** Primary action, e.g. joining a video call. */
 	action: z.object({ label: z.string(), url: z.string() }).optional(),
 });

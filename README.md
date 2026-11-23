@@ -52,6 +52,8 @@ Then open **Integrations**, enter the OAuth client for each provider, and click 
 
 Pinned items that also show up as activity (e.g. a pinned PR that got merged) are listed once.
 
+**Project filter:** chips above the review list the repos and projects that appear in the period. Pick the ones you need and the timeline, Today, Blockers and the copied standup cover only those, with a `Projects: …` line on top. Meetings, mail and notes have no project; tick *Also show meetings, mail and notes* to keep them. The filter is remembered on this device. Pinned Today items remember their project.
+
 ## Waiting
 
 **Waiting** (sidebar) lists what you're waiting on *others* for, oldest first:

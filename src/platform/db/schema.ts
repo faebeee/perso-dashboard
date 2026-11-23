@@ -55,6 +55,8 @@ export const todayItems = sqliteTable("today_items", {
 	itemId: text("item_id"),
 	url: text("url"),
 	detailRef: text("detail_ref"),
+	/** Repository or project of the pinned item (daily review filter). */
+	project: text("project"),
 	done: integer("done", { mode: "boolean" }).notNull().default(false),
 	doneAt: integer("done_at", { mode: "timestamp_ms" }),
 	createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),

@@ -7,6 +7,7 @@ import { cn } from "#/lib/utils";
 export interface ActionableItem extends OpenableItem {
 	id: string;
 	kind: ItemKind;
+	project?: string;
 }
 
 type RenderActions = (item: ActionableItem) => ReactNode;

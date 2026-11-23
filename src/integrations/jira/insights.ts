@@ -53,6 +53,7 @@ export function issueActivity(
 			at: new Date(at).toISOString(),
 			context: [issue.key, item.status].filter(Boolean).join(" · "),
 			detailRef: item.detailRef,
+			project: item.project,
 		};
 	};
 	const resolved = found.resolved.filter((i) =>

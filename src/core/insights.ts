@@ -21,6 +21,8 @@ export interface ActivityItem {
 	at: string;
 	context?: string;
 	detailRef?: string;
+	/** Repository or project it belongs to (filters, grouping). */
+	project?: string;
 }
 
 /** A calendar week, Monday 00:00 to the next Monday 00:00 (local time). */

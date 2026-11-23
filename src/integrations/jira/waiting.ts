@@ -21,6 +21,7 @@ export function unassignedToWaiting(
 			label: `Unassigned for ${waitedFor(since, now)}`,
 			context: [item.context, item.status].filter(Boolean).join(" · "),
 			detailRef: item.detailRef,
+			project: item.project,
 		};
 	});
 }
