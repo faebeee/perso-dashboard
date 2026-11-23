@@ -1,3 +1,4 @@
+import type { AttendeeResponse, EventDetail } from "#/core/calendar-event";
 import { textToHtml } from "#/lib/text-to-html";
 import type { GoogleEventDetail } from "./api/schemas";
 
@@ -16,34 +17,6 @@ export function parseEventDetailRef(ref: string): {
 	return bar === -1
 		? { calendarId: "primary", eventId: ref }
 		: { calendarId: ref.slice(0, bar), eventId: ref.slice(bar + 1) };
-}
-
-export type AttendeeResponse =
-	| "accepted"
-	| "tentative"
-	| "declined"
-	| "needsAction";
-
-export interface EventDetail {
-	title: string;
-	url: string;
-	start: string;
-	end: string;
-	allDay: boolean;
-	location?: string;
-	meetingUrl?: string;
-	organizer: { name: string; email?: string; you: boolean } | null;
-	/** Everyone invited (you included), grouped and counted by the view. */
-	attendees: {
-		name: string;
-		email?: string;
-		response: AttendeeResponse;
-		you: boolean;
-		optional: boolean;
-		organizer: boolean;
-	}[];
-	/** Untrusted HTML (Google allows formatted descriptions). */
-	descriptionHtml?: string;
 }
 
 const RESPONSES = new Set<string>([

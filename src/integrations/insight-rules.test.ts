@@ -4,9 +4,9 @@ import { lastWeeks } from "#/core/insights";
 import type { GitHubSearchItem } from "./github/api/schemas";
 import { prActivity, prMetrics } from "./github/insights";
 import { insightQueries as gmailQueries } from "./gmail/insights";
-import { meetingActivity, meetingMetrics } from "./google-calendar/insights";
 import type { JiraIssue } from "./jira/api/schemas";
 import { insightJql, issueActivity } from "./jira/insights";
+import { meetingActivity, meetingMetrics } from "./shared/calendar-insights";
 
 const NOW = new Date(2026, 0, 14, 15, 0); // Wednesday
 const at = (day: number, h = 12) => new Date(2026, 0, day, h).toISOString();
@@ -124,8 +124,10 @@ describe("calendar insights", () => {
 			],
 			weeks,
 			NOW,
+			"google-calendar",
 		);
 		expect(hours?.values).toEqual([2, 1]);
+		expect(hours?.id).toBe("google-calendar.meeting-hours");
 	});
 
 	it("lists meetings in the range as activity", () => {
@@ -134,6 +136,7 @@ describe("calendar insights", () => {
 				[event(at(13, 10), at(13, 11))],
 				new Date(2026, 0, 13),
 				NOW,
+				"google-calendar",
 			).map((i) => [i.kind, i.context]),
 		).toEqual([["meeting", "1h"]]);
 	});

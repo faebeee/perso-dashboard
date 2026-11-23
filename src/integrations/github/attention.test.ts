@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { WorkItem } from "#/core/work-item";
-import { prSignalsToAttention, reviewRequestsToAttention } from "./attention";
+import {
+	criticalAlertsToAttention,
+	prSignalsToAttention,
+	reviewRequestsToAttention,
+} from "./attention";
+import { alertsToWorkItems } from "./dependabot";
 
 const NOW = new Date("2026-01-05T12:00:00Z");
 const pr = (id: string, updatedAt: string): WorkItem => ({
@@ -52,5 +57,47 @@ describe("github PR signals", () => {
 		]);
 		// Own id suffix: never collides with the PR's other attention items.
 		expect(items[0]?.id).toBe("github:pull_request:1:signals");
+	});
+});
+
+describe("criticalAlertsToAttention", () => {
+	const alert = (number: number, severity: string, fix: string | null) => ({
+		number,
+		state: "open",
+		html_url: `https://github.com/acme/web/security/dependabot/${number}`,
+		created_at: "2026-01-01T00:00:00Z",
+		dependency: {
+			package: { ecosystem: "npm", name: "lodash" },
+			manifest_path: "package-lock.json",
+		},
+		security_advisory: {
+			ghsa_id: `GHSA-${number}`,
+			cve_id: null,
+			summary: "Command injection",
+			severity,
+		},
+		security_vulnerability: {
+			vulnerable_version_range: "< 4.17.21",
+			first_patched_version: fix ? { identifier: fix } : null,
+		},
+	});
+
+	it("keeps only critical alerts, due today, with the fix in the label", () => {
+		const items = criticalAlertsToAttention(
+			alertsToWorkItems("acme/web", [
+				alert(1, "critical", "4.17.21"),
+				alert(2, "high", "4.17.21"),
+				alert(3, "critical", null),
+			]),
+		);
+		expect(items.map((i) => [i.reason, i.urgency, i.label])).toEqual([
+			["security_alert", "today", "Critical vulnerability · Fix: 4.17.21"],
+			["security_alert", "today", "Critical vulnerability · No fix yet"],
+		]);
+		expect(items[0]).toMatchObject({
+			title: "lodash: Command injection",
+			project: "acme/web",
+			context: "acme/web · GHSA-1",
+		});
 	});
 });

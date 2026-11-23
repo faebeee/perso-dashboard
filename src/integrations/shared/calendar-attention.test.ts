@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CalendarEvent } from "#/core/calendar-event";
-import { eventsToAttention } from "./attention";
+import { eventsToAttention } from "./calendar-attention";
 
 const NOW = new Date(2026, 0, 5, 10, 0);
 const minutes = (n: number) =>

@@ -5,6 +5,7 @@ import {
 } from "#/core/attention";
 import type { WorkItem } from "#/core/work-item";
 import { formatRelative } from "#/lib/time";
+import { SEVERITY_LABELS } from "./dependabot";
 import { PR_SIGNAL_LABELS, type PrNeedingAction } from "./service";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -62,4 +63,30 @@ export function prSignalsToAttention(
 		detailRef: item.detailRef,
 		project: item.project,
 	}));
+}
+
+/**
+ * Pure: open Dependabot alerts → attention items. Only critical ones are
+ * urgent ("today"); the rest stay on the GitHub page and widget.
+ */
+export function criticalAlertsToAttention(
+	alerts: readonly WorkItem[],
+): AttentionItem[] {
+	return alerts
+		.filter((a) => a.status === SEVERITY_LABELS.critical)
+		.map((alert) => {
+			const fix = alert.tags?.find((t) => t.startsWith("Fix: "));
+			return {
+				id: `${alert.id}:attention`,
+				source: alert.source,
+				reason: "security_alert",
+				urgency: "today",
+				title: alert.title,
+				url: alert.url,
+				at: alert.updatedAt,
+				label: `Critical vulnerability · ${fix ?? "No fix yet"}`,
+				context: alert.context,
+				project: alert.project,
+			};
+		});
 }

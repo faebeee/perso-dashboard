@@ -5,9 +5,9 @@ import { awaitingReviewToWaiting } from "./github/waiting";
 import type { GmailThread } from "./gmail/api/schemas";
 import { withPeopleQuery } from "./gmail/constants";
 import { unansweredToWaiting } from "./gmail/waiting";
-import { pendingRepliesToWaiting } from "./google-calendar/waiting";
 import type { JiraIssue } from "./jira/api/schemas";
 import { unassignedToWaiting } from "./jira/waiting";
+import { pendingRepliesToWaiting } from "./shared/calendar-waiting";
 
 const NOW = new Date("2026-01-10T12:00:00Z");
 const daysAgo = (d: number) =>

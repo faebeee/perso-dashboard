@@ -40,6 +40,35 @@ export const calendarEventSchema = z.object({
 
 export type CalendarEvent = z.infer<typeof calendarEventSchema>;
 
+export type AttendeeResponse =
+	| "accepted"
+	| "tentative"
+	| "declined"
+	| "needsAction";
+
+/** One event in full, for the (provider-agnostic) detail view. */
+export interface EventDetail {
+	title: string;
+	url: string;
+	start: string;
+	end: string;
+	allDay: boolean;
+	location?: string;
+	meetingUrl?: string;
+	organizer: { name: string; email?: string; you: boolean } | null;
+	/** Everyone invited (you included), grouped and counted by the view. */
+	attendees: {
+		name: string;
+		email?: string;
+		response: AttendeeResponse;
+		you: boolean;
+		optional: boolean;
+		organizer: boolean;
+	}[];
+	/** Untrusted HTML (Google allows formatted descriptions). */
+	descriptionHtml?: string;
+}
+
 /** Comparable start timestamp; all-day events count from local midnight. */
 export function eventStartMs(event: CalendarEvent): number {
 	return event.allDay

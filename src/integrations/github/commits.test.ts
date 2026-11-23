@@ -150,6 +150,78 @@ describe("commit service", () => {
 			["h2", "spike"],
 		]);
 	});
+
+	it("lists every commit of a new branch, not just its head", async () => {
+		const fetch = fakeFetch({
+			"/users/ada/events": [
+				event("1", "2026-01-14T10:00:00Z", {
+					ref: "refs/heads/feature/new",
+					head: "h1",
+					before: "0000000000000000000000000000000000000000",
+				}),
+			],
+			"/repos/acme/web": { default_branch: "main" },
+			"/repos/acme/web/compare/main...h1": {
+				commits: [
+					commit("c1", "ada", "2026-01-14T09:00:00Z"),
+					commit("h1", "ada", "2026-01-14T09:30:00Z"),
+				],
+			},
+		});
+		const commits = await createGitHubCommitService(
+			createGitHubApi("t", fetch),
+		).recent("ada", new Date("2026-01-14T00:00:00Z"));
+		expect(commits.map((c) => [c.sha, c.branch])).toEqual([
+			["h1", "feature/new"],
+			["c1", "feature/new"],
+		]);
+	});
+
+	it("shows merged work on the branch it was done on, whatever the feed order", async () => {
+		const fetch = fakeFetch({
+			// GitHub's feed isn't strictly ordered: the later merge comes first.
+			"/users/ada/events": [
+				event("2", "2026-01-14T11:00:00Z", {
+					ref: "refs/heads/test",
+					head: "m1",
+					before: "t0",
+				}),
+				event("3", "2026-01-14T12:00:00Z", {
+					ref: "refs/heads/main",
+					head: "x1",
+					before: "x0",
+				}),
+				event("1", "2026-01-14T10:00:00Z", {
+					ref: "refs/heads/feature/cart",
+					head: "c1",
+					before: "f0",
+				}),
+			],
+			"/repos/acme/web/compare/t0...m1": {
+				commits: [
+					commit("c1", "ada", "2026-01-14T09:50:00Z"),
+					commit("m1", "ada", "2026-01-14T11:00:00Z"),
+				],
+			},
+			"/repos/acme/web/compare/x0...x1": {
+				commits: [commit("x1", "ada", "2026-01-14T11:30:00Z")],
+			},
+			"/repos/acme/web/compare/f0...c1": {
+				commits: [commit("c1", "ada", "2026-01-14T09:50:00Z")],
+			},
+		});
+		const commits = await createGitHubCommitService(
+			createGitHubApi("t", fetch),
+		).recent(
+			"ada",
+			new Date("2026-01-14T00:00:00Z"),
+			new Date("2026-01-14T11:59:00Z"),
+		);
+		expect(commits.map((c) => [c.sha, c.branch])).toEqual([
+			["m1", "test"],
+			["c1", "feature/cart"],
+		]);
+	});
 });
 
 describe("groupCommits", () => {

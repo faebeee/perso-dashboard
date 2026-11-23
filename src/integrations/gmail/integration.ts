@@ -4,10 +4,10 @@ import {
 	rulesOf,
 } from "#/core/integration";
 import { GOOGLE_OAUTH_CLIENT } from "#/platform/oauth/google";
+import { importantMailToAttention, sentActivity } from "../shared/mail-rules";
 import { createGmailApi } from "./api/client";
-import { importantMailToAttention } from "./attention";
 import { GMAIL_ID } from "./constants";
-import { insightQueries, mailMetrics, sentActivity } from "./insights";
+import { insightQueries, mailMetrics } from "./insights";
 import { createGmailOAuth } from "./oauth";
 import { createGmailService } from "./service";
 import { unansweredToWaiting } from "./waiting";

@@ -8,19 +8,25 @@ import type { DashboardLayout } from "#/core/layout";
 import type { WidgetDefinition } from "#/core/widget";
 import { queryKeys } from "#/lib/query-keys";
 import { saveDashboardLayout } from "./fetchers";
-import { buildDefaultLayout } from "./model";
+import { defaultLayout, type WidgetPlacement } from "./model";
 import { layoutQueries } from "./queries";
 
 const SAVE_DEBOUNCE_MS = 600;
 
 /**
  * Layout state with optimistic updates and debounced persistence.
- * Falls back to a generated default when nothing has been saved yet.
+ * Falls back to the default layout when nothing has been saved yet.
  */
-export function useDashboardLayout(catalog: readonly WidgetDefinition[]) {
+export function useDashboardLayout(
+	catalog: readonly WidgetDefinition[],
+	placements?: readonly WidgetPlacement[],
+) {
 	const queryClient = useQueryClient();
 	const { data: saved } = useSuspenseQuery(layoutQueries.current());
-	const fallback = useMemo(() => buildDefaultLayout(catalog), [catalog]);
+	const fallback = useMemo(
+		() => defaultLayout(catalog, placements),
+		[catalog, placements],
+	);
 	const layout = saved ?? fallback;
 
 	const save = useMutation({
@@ -51,9 +57,17 @@ export function useDashboardLayout(catalog: readonly WidgetDefinition[]) {
 	// Don't lose the last change when navigating away mid-debounce.
 	useEffect(() => flush, [flush]);
 
+	/** Back to the default layout (saved, so it sticks). */
+	const resetLayout = useCallback(
+		() => setLayout(fallback),
+		[setLayout, fallback],
+	);
+
 	return {
 		layout,
+		defaultLayout: fallback,
 		setLayout,
+		resetLayout,
 		isSaving: save.isPending,
 		saveError: save.error,
 	};

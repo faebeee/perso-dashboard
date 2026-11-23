@@ -1,13 +1,14 @@
 # Productivity Dashboard
 
-A personal, local-first **desktop app** that brings work from **GitHub**, **Jira Cloud**, **Gmail**, **Google Calendar** and **Sentry** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists. The **Urgent** view (top of the sidebar, with a live count, also available as a widget) shows only what needs you soon:
+A personal, local-first **desktop app** that brings work from **GitHub**, **Jira Cloud**, **Gmail**, **Google Calendar**, **Outlook** (mail and calendar, Microsoft 365 or personal) and **Sentry** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists. The **Urgent** view (top of the sidebar, with a live count, also available as a widget) shows only what needs you soon:
 
 | Source | Urgent when… |
 |---|---|
-| Google Calendar | a meeting is on now or starts within 2h (≤15 min counts as *right now*), or an invitation for the next 48h is unanswered |
-| GitHub | your review is requested (escalated after 24h without activity); one of your ready PRs has changes requested or failing checks |
+| Google Calendar, Outlook Calendar | a meeting is on now or starts within 2h (≤15 min counts as *right now*), or an invitation for the next 48h is unanswered |
+| GitHub | your review is requested (escalated after 24h without activity); one of your ready PRs has changes requested or failing checks; a repo you can write to has an open **critical** Dependabot alert |
 | Jira | an issue assigned to you is overdue, due today, or Highest/Blocker/Critical/High priority (overdue issues are found however long ago they were last touched), or a fix version is overdue |
 | Gmail | unread inbox mail marked Important from the last 2 days |
+| Outlook | unread inbox mail marked high importance from the last 2 days |
 | Sentry | an unresolved issue assigned to you or your teams is escalating, regressed or fatal; a new one assigned to you personally |
 
 Thresholds live in `ATTENTION_RULES` (`src/core/attention.ts`); each integration's rules are in its `attention.ts`.
@@ -34,6 +35,7 @@ Then open **Integrations**, enter the OAuth client for each provider, and click 
   - Your day as a timeline: meetings interleaved with free blocks within your workday.
   - **Your list:** pinned items and quick notes. Unfinished items carry over to the next day.
   - What needs you.
+- **Default dashboard:** new users start with a predefined layout (Urgent, reviews and calendar on top; your PRs, Jira issues and Sentry errors below; mail, My Work and Dependabot at the bottom). *Edit layout → Reset layout* brings it back. The preset lives in `src/app/catalog.ts` (`defaultDashboard`).
 - **Pin anything:** the calendar icon on any row (widgets, My Work, Urgent, source pages) adds it to Today.
 - **Quick capture:** ⌃⌥Space (Ctrl+Alt+Space) works from anywhere, even with the app in the background. In ⌘K, type and choose *Add “…” to Today*.
 - **Done / Snooze** on urgent items: *Done* hides an item until it escalates. *Snooze* hides it for 1h, 3h, until tomorrow morning or next week. Cleared items leave the badge, the menu bar and notifications too; restore them under *Done & snoozed*.
@@ -44,7 +46,7 @@ Then open **Integrations**, enter the OAuth client for each provider, and click 
 
 **Daily review** (sidebar, right after Today) prepares your standup:
 
-- **What you did:** a timeline by day and time, since your last workday (Friday on Mondays) or for the last 24 hours. It covers merged, opened and reviewed PRs, resolved and worked-on issues, meetings, sent mail, and items you ticked off on Today.
+- **What you did:** a timeline by day and time, since your last workday (Friday on Mondays) or for the last 24 hours. It covers commits you pushed to any branch, merged, opened and reviewed PRs, resolved and worked-on issues, meetings, sent mail, and items you ticked off on Today.
 - **Today:** your open Today items and today's meetings.
 - **Blockers:** what you're waiting on others for (from Waiting).
 - **Notes:** extra points, kept as a draft for the day.
@@ -61,9 +63,9 @@ Pinned items that also show up as activity (e.g. a pinned PR that got merged) ar
 | Source | Shows |
 |---|---|
 | GitHub | your ready PRs without any review yet |
-| Gmail | conversations from the last 14 days where your message is still the last one after 2+ days |
+| Gmail, Outlook | conversations from the last 14 days where your message is still the last one after 2+ days |
 | Jira | issues you reported that are still open and unassigned |
-| Google Calendar | meetings you organize in the next 7 days with invitees who haven't replied |
+| Google Calendar, Outlook Calendar | meetings you organize in the next 7 days with invitees who haven't replied |
 
 **Meeting prep:** for your next meetings with other people (next 24h), it shows recent email conversations with the attendees. Integrations contribute through `getWaitingItems` and `getRelatedToPeople`; thresholds are in `WAITING_RULES` (`src/core/waiting.ts`).
 
@@ -86,13 +88,13 @@ Integrations contribute through `getActivity` and `getMetrics`.
 
 ## Calendars
 
-By default only your **primary** Google calendar is read. To add others (team calendars, calendars shared with you, subscriptions), go to **Preferences → Google Calendar** or click **Choose calendars** on the Integrations page, then tick them. Selected calendars feed the agenda, Today, Urgent, Waiting, Insights and meeting prep. A meeting that appears on several calendars is shown once. Events on shared calendars that you aren't invited to never count as "yours" (e.g. for pending replies).
+By default only your **primary** Google calendar (or your default Outlook calendar) is read. To add others (team calendars, calendars shared with you, subscriptions), go to **Preferences → Google Calendar** / **Outlook Calendar** or click **Choose calendars** on the Integrations page, then tick them. Selected calendars feed the agenda, Today, Urgent, Waiting, Insights and meeting prep. A meeting that appears on several calendars is shown once. Events on shared calendars that you aren't invited to never count as "yours" (e.g. for pending replies).
 
 This uses a generic `choice-list` setting: an integration declares it in `settings` and serves the options through `loadSettingOptions`, and Preferences renders them as checkboxes.
 
 ## Dependabot alerts
 
-The GitHub page (and the *Dependabot alerts* widget) lists open Dependabot alerts across the repositories you can write to: the 50 most recently pushed, non-archived ones, cached for 10 minutes. It shows counts per severity, then the alerts sorted most severe and longest-open first, with package, advisory, CVE/GHSA id and the fixed version. Repos where Dependabot is off, or whose alerts you can't see, are counted as skipped. GitHub has no single "all my alerts" endpoint for users, so each repo is checked separately.
+The GitHub page (and the *Dependabot alerts* widget) lists open Dependabot alerts across the repositories you can write to: the 50 most recently pushed, non-archived ones, cached for 10 minutes. It shows counts per severity, then the alerts sorted most severe and longest-open first, with package, advisory, CVE/GHSA id and the fixed version. Repos where Dependabot is off, or whose alerts you can't see, are counted as skipped. GitHub has no single "all my alerts" endpoint for users, so each repo is checked separately. Critical alerts also show up in **Urgent** (*today*); without repository access they are simply left out there.
 
 GitHub scopes are hierarchical: the `repo` scope you already granted includes `security_events`, so no reconnect is needed (see `src/integrations/github/scopes.ts`).
 
@@ -100,7 +102,7 @@ GitHub scopes are hierarchical: the `repo` scope you already granted includes `s
 
 Your pushed commits appear on the GitHub page ("Your commits", last 7 days, grouped by repo and branch), in Insights' Summary and in the Daily review. Standups condense them per branch: "5 commits to acme/web (feature/cart): Fix rounding".
 
-They come from your GitHub activity events, which cover all repos and branches you pushed to, private ones included. Since October 2025 those events no longer list commits, so each push is expanded with the compare API: the 25 most recent pushes, cached for a day since commits never change. Commits of other people that arrive in your pushes (e.g. merging main) are left out. GitHub keeps events for 90 days (300 at most).
+They come from your GitHub activity events, which cover **every branch** of all repos you pushed to (feature branches, `test`, `main`…), private ones included. Since October 2025 those events no longer list commits, so each push is expanded with the compare API: up to the 100 most recent pushes, six requests at a time, cached for a day since commits never change. A new branch contributes all its commits that aren't on the default branch. Work that reached several branches (a feature branch merged into `test`, then `main`) is listed once, on the branch you pushed it to first. Commits of other people that arrive in your pushes (e.g. merging main) are left out. GitHub keeps events for 90 days (300 at most) and may list them up to a few hours late.
 
 ## Sync & rate limits
 
@@ -157,9 +159,10 @@ The app uses the desktop OAuth flow from [RFC 8252](https://www.rfc-editor.org/r
 | GitHub | Settings → Developer settings → **OAuth Apps** | `http://127.0.0.1:47390/oauth/github/callback` | Scopes `repo read:user` are requested at login (`repo` includes `security_events`, which Dependabot alerts need). |
 | Jira Cloud | [developer.atlassian.com](https://developer.atlassian.com/console/myapps/) → OAuth 2.0 (3LO) | `http://127.0.0.1:47390/oauth/jira/callback` | Must match exactly. Under *Permissions*, add **Jira API** with `read:jira-work` and `read:jira-user`. |
 | Gmail + Google Calendar | Google Cloud Console → APIs & Services → enable **Gmail API** and **Google Calendar API** → Credentials → OAuth client of type **Desktop app** | Nothing to register: Desktop clients accept any loopback port | One client is shared by both integrations. Consent screen in *Testing* mode, with yourself as a test user. |
+| Outlook + Outlook Calendar | [Microsoft Entra](https://entra.microsoft.com/) → App registrations → *New registration*, account type **any organizational directory and personal Microsoft accounts** → platform **Public client/native (mobile & desktop)** | `http://localhost:47390/oauth/microsoft/callback` | One registration is shared by both integrations, with one redirect URI. Microsoft only accepts `http://localhost` in its portal (the listener still binds 127.0.0.1). No client secret: Microsoft refuses one from desktop apps, so only the client ID is asked for. Read-only Graph scopes `Mail.Read`, `Calendars.Read`, `Calendars.Read.Shared` (+ `User.Read`, `offline_access`). Work accounts may need an admin to grant consent. |
 | Sentry (sentry.io, US or EU) | User Settings → API → **Applications** → *Create New Application* | `http://127.0.0.1:47390/oauth/sentry/callback` | Must match exactly. Scopes `org:read project:read event:read` are requested at login. All organizations you're a member of are included (EU orgs via their region host). |
 
-Client secrets are stored encrypted on this device. Desktop apps are "public" OAuth clients, but these three providers still require the secret at the token endpoint.
+Client secrets are stored encrypted on this device. Desktop apps are "public" OAuth clients, but GitHub, Atlassian, Google and Sentry still require the secret at the token endpoint (Microsoft is the exception: see above).
 
 > The port is fixed in `OAUTH_LOOPBACK_PORT` (`src/platform/services.ts`) because Atlassian matches redirect URIs exactly. If you change it, update the registered URIs.
 
@@ -187,8 +190,11 @@ src/
                  composition root (services.ts)
     host.ts      The Host port: fetch, database, encryption key, browser OAuth, open links
     tauri/       The Tauri adapter for Host (the only code importing @tauri-apps/*)
-  integrations/  One self-contained folder per provider + two registries
-  components/    ui/ (shadcn), work-item/, release/, calendar/ (shared lists),
+  integrations/  One self-contained folder per provider + two registries;
+                 shared/ holds pure rules any calendar or mail provider reuses
+                 (urgent meetings, pending replies, meeting insights, mail rules)
+  components/    ui/ (shadcn), work-item/, release/, calendar/ (agenda, overview,
+                 event detail), mail/ (email detail),
                  widget-kit/ (query states, widget factory, scope filter),
                  overview-kit/ (stat tiles, sections, breakdown bars)
   features/      dashboard/, feed/, releases/, attention/ (urgent view), connections/,
@@ -246,6 +252,8 @@ integrations/github/
 1. Copy `src/integrations/github/` to `src/integrations/linear/` and adapt the files above.
 2. Add `linearManifest` to `integrations/registry.ts` and `linearBackend` to `integrations/runtime-registry.ts`.
 3. Allow its API and token hosts under `http:default` in `src-tauri/capabilities/default.json`.
+
+A calendar or mail provider maps into `CalendarEvent` / `EmailDetail` (`src/core/`) and reuses `integrations/shared/` plus `components/calendar` and `components/mail`, as Google and Outlook do. Providers whose integrations share one OAuth app put its config in `src/platform/oauth/` (see `google.ts`, `microsoft.ts`).
 
 Connection handling, the OAuth flow, the credentials form, the feed, the dashboard and the sidebar pick it up through the registries. To give the source its own sidebar page, set `overview` in its manifest; it's served at `/apps/<id>`. To feed the Urgent view, implement `getAttentionItems` on its backend. To open its items in the detail modal instead of the browser, set `details` in its manifest and a `detailRef` on its items.
 

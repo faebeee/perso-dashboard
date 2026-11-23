@@ -98,6 +98,7 @@ export function ConnectionCard({
 					<OAuthClientForm
 						oauthClientId={client.id}
 						label={client.label}
+						publicClient={client.publicClient}
 						integrationIds={[integration.id, ...client.sharedWith]}
 						sharedWithNames={client.sharedWith.map(nameOf)}
 						currentClientId={client.clientId}

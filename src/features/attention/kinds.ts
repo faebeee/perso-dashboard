@@ -14,4 +14,5 @@ export const KIND_FOR_REASON: Record<AttentionReason, ItemKind> = {
 	overdue_release: "release",
 	important_email: "email",
 	production_error: "error",
+	security_alert: "security_alert",
 };

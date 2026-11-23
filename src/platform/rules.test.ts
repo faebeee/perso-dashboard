@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { DEFAULT_ATTENTION_RULES } from "#/core/attention";
 import type { CalendarEvent } from "#/core/calendar-event";
 import { type IntegrationSetting, stringListSetting } from "#/core/integration";
-import { eventsToAttention } from "#/integrations/google-calendar/attention";
 import { releaseStatusFilter } from "#/integrations/jira/constants";
+import { eventsToAttention } from "#/integrations/shared/calendar-attention";
 import {
 	integrationSettingsFor,
 	preferences,

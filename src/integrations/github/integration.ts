@@ -4,9 +4,14 @@ import {
 	rulesOf,
 } from "#/core/integration";
 import { createGitHubApi } from "./api/client";
-import { prSignalsToAttention, reviewRequestsToAttention } from "./attention";
+import {
+	criticalAlertsToAttention,
+	prSignalsToAttention,
+	reviewRequestsToAttention,
+} from "./attention";
 import { type CommitInfo, createGitHubCommitService } from "./commits";
 import { GITHUB_ID } from "./constants";
+import { createDependabotService } from "./dependabot";
 import {
 	commitActivity,
 	INSIGHTS_PAGE_SIZE,
@@ -67,13 +72,19 @@ export const githubBackend: IntegrationBackend = {
 
 	async getAttentionItems(ctx, now) {
 		const service = githubService(ctx.accessToken);
-		const [reviews, mine] = await Promise.all([
+		const [reviews, mine, alerts] = await Promise.all([
 			service.reviewRequests(),
 			service.prsNeedingAction(),
+			// A bonus: missing scope or API trouble must not hide your PRs.
+			createDependabotService(createGitHubApi(ctx.accessToken))
+				.openAlerts(ctx.scopes)
+				.then((r) => r.items)
+				.catch(() => []),
 		]);
 		return [
 			...reviewRequestsToAttention(reviews, now, rulesOf(ctx).attention),
 			...prSignalsToAttention(mine),
+			...criticalAlertsToAttention(alerts),
 		];
 	},
 

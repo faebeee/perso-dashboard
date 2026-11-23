@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { widgetCatalog, widgetGroupLabel } from "#/app/catalog";
+import {
+	defaultDashboard,
+	widgetCatalog,
+	widgetGroupLabel,
+} from "#/app/catalog";
 import { PageHeader } from "#/app/shell/app-shell";
 import { workScopeSchema } from "#/core/work-scope";
 import { DashboardPage } from "#/features/dashboard/components/dashboard-page";
@@ -26,6 +30,7 @@ function DashboardRoute() {
 			<PageHeader title="Dashboard" />
 			<DashboardPage
 				catalog={widgetCatalog}
+				defaultPlacements={defaultDashboard}
 				groupLabel={widgetGroupLabel}
 				scope={scope}
 				onScopeChange={(next) =>

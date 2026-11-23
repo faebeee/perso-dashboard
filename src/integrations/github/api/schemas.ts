@@ -213,6 +213,8 @@ export const githubDependabotAlertListSchema = z.array(
 );
 
 export type GitHubRepoList = z.infer<typeof githubRepoListSchema>;
+
+export const githubRepoSchema = z.object({ default_branch: z.string() });
 export type GitHubDependabotAlertList = z.infer<
 	typeof githubDependabotAlertListSchema
 >;

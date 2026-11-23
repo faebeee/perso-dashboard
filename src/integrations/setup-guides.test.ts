@@ -18,7 +18,13 @@ describe("setup guides", () => {
 	});
 
 	it("ask for the redirect URI where the provider matches it exactly", () => {
-		for (const id of ["github", "jira", "sentry"]) {
+		for (const id of [
+			"github",
+			"jira",
+			"sentry",
+			"outlook",
+			"outlook-calendar",
+		]) {
 			expect(usesRedirect(id), id).toBe(true);
 		}
 		// Google "Desktop app" clients accept any loopback port: nothing to register.

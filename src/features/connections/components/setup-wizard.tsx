@@ -95,8 +95,9 @@ export function SetupWizard({
 					) : step === guideSteps ? (
 						<div className="space-y-2 text-sm">
 							<p className="text-muted-foreground">
-								Paste the Client ID and secret from the previous step. They're
-								encrypted and stay on this computer.
+								{status.oauthClient.publicClient
+									? "Paste the Client ID from the previous step. It's encrypted and stays on this computer."
+									: "Paste the Client ID and secret from the previous step. They're encrypted and stay on this computer."}
 							</p>
 							{status.configured && (
 								<p className="text-muted-foreground">
@@ -107,6 +108,7 @@ export function SetupWizard({
 							<OAuthClientForm
 								oauthClientId={status.oauthClient.id}
 								label={status.oauthClient.label}
+								publicClient={status.oauthClient.publicClient}
 								integrationIds={[
 									integration.id,
 									...status.oauthClient.sharedWith,

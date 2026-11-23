@@ -3,6 +3,8 @@ import { githubManifest } from "./github/manifest";
 import { gmailManifest } from "./gmail/manifest";
 import { googleCalendarManifest } from "./google-calendar/manifest";
 import { jiraManifest } from "./jira/manifest";
+import { outlookManifest } from "./outlook/manifest";
+import { outlookCalendarManifest } from "./outlook-calendar/manifest";
 import { sentryManifest } from "./sentry/manifest";
 
 /**
@@ -15,6 +17,8 @@ export const integrationManifests: readonly IntegrationManifest[] = [
 	jiraManifest,
 	gmailManifest,
 	googleCalendarManifest,
+	outlookManifest,
+	outlookCalendarManifest,
 	sentryManifest,
 ];
 

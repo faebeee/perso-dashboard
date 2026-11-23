@@ -62,16 +62,28 @@ export interface Services {
 	httpCache: HttpCache;
 	tokenManager: TokenManager;
 	/** Redirect URI to register in the provider's OAuth app. */
-	oauthCallbackUrl(integrationId: string): string;
+	oauthCallbackUrl(
+		integration: Pick<IntegrationBackend, "id" | "oauthClient">,
+	): string;
 	/** null when the user hasn't entered this integration's OAuth client yet. */
 	oauthProvider(integration: IntegrationBackend): Promise<OAuthProvider | null>;
 	/** Runs the browser half of the OAuth flow for one integration. */
-	authorizeInBrowser(integrationId: string, url: URL): Promise<URL>;
+	authorizeInBrowser(
+		integration: Pick<IntegrationBackend, "id" | "oauthClient">,
+		url: URL,
+	): Promise<URL>;
 	cancelAuthorization(): Promise<void>;
 }
 
-const callbackPath = (integrationId: string) =>
-	`/oauth/${encodeURIComponent(integrationId)}/callback`;
+/**
+ * One path per integration, or per OAuth client when the provider matches
+ * redirect URIs exactly and its integrations share one (Microsoft).
+ */
+const callbackPath = ({
+	id,
+	oauthClient,
+}: Pick<IntegrationBackend, "id" | "oauthClient">) =>
+	`/oauth/${encodeURIComponent(oauthClient.sharedRedirectUri ? oauthClient.id : id)}/callback`;
 
 export async function createServices(host: Host): Promise<Services> {
 	const [driver, key] = await Promise.all([
@@ -95,15 +107,17 @@ export async function createServices(host: Host): Promise<Services> {
 	setDefaultHttpCache(httpCache);
 	const oauthClients = createDrizzleOAuthClientRepository(db, cipher);
 
-	const oauthCallbackUrl = (integrationId: string) =>
-		`http://127.0.0.1:${OAUTH_LOOPBACK_PORT}${callbackPath(integrationId)}`;
+	const oauthCallbackUrl = (
+		integration: Pick<IntegrationBackend, "id" | "oauthClient">,
+	) =>
+		`http://${integration.oauthClient.redirectHost ?? "127.0.0.1"}:${OAUTH_LOOPBACK_PORT}${callbackPath(integration)}`;
 
 	const oauthProvider = async (integration: IntegrationBackend) => {
 		const credentials = await oauthClients.get(integration.oauthClient.id);
 		return credentials
 			? integration.createOAuthProvider(
 					credentials,
-					oauthCallbackUrl(integration.id),
+					oauthCallbackUrl(integration),
 				)
 			: null;
 	};
@@ -121,11 +135,11 @@ export async function createServices(host: Host): Promise<Services> {
 		}),
 		oauthCallbackUrl,
 		oauthProvider,
-		authorizeInBrowser: (integrationId, url) =>
+		authorizeInBrowser: (integration, url) =>
 			host.authorizeInBrowser({
 				url,
 				port: OAUTH_LOOPBACK_PORT,
-				callbackPath: callbackPath(integrationId),
+				callbackPath: callbackPath(integration),
 				timeoutSeconds: OAUTH_TIMEOUT_SECONDS,
 			}),
 		cancelAuthorization: () => host.cancelAuthorization(),

@@ -1,5 +1,4 @@
-import type { ActivityItem, MetricSeries } from "#/core/insights";
-import type { WorkItem } from "#/core/work-item";
+import type { MetricSeries } from "#/core/insights";
 import { GMAIL_ID } from "./constants";
 
 /** Gmail accepts Unix seconds in after:/before:, so ranges are exact. */
@@ -11,20 +10,6 @@ export const insightQueries = {
 	received: (from: Date, to: Date) =>
 		`in:inbox after:${epoch(from)} before:${epoch(to)} -in:chats`,
 };
-
-/** Pure: sent messages → activity. */
-export function sentActivity(sent: readonly WorkItem[]): ActivityItem[] {
-	return sent.map((mail) => ({
-		id: `${mail.id}:sent`,
-		source: GMAIL_ID,
-		kind: "email_sent",
-		title: mail.title,
-		url: mail.url,
-		at: mail.updatedAt,
-		context: mail.context,
-		detailRef: mail.detailRef,
-	}));
-}
 
 /** Pure: Gmail's per-week result estimates → series (approximate by nature). */
 export function mailMetrics(estimates: {

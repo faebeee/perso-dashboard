@@ -12,6 +12,7 @@ import {
 	githubPullSchema,
 	githubReleaseListSchema,
 	githubRepoListSchema,
+	githubRepoSchema,
 	githubReviewListSchema,
 	githubSearchResponseSchema,
 	githubUserSchema,
@@ -34,6 +35,8 @@ export function createGitHubApi(accessToken: string, fetch?: FetchFn) {
 		ttl: ttlByPath(
 			[
 				[/^\/user$/, TTL.stable],
+				// A repo's default branch rarely changes.
+				[/^\/repos\/[^/]+\/[^/]+$/, TTL.stable],
 				// A commit never changes once pushed.
 				[/\/compare\/|\/commits\/[0-9a-f]{7,}$/, TTL.stable],
 				[/\/releases$/, TTL.slow],
@@ -85,6 +88,10 @@ export function createGitHubApi(accessToken: string, fetch?: FetchFn) {
 				githubEventListSchema,
 				{ per_page: 100, page },
 			),
+
+		/** Repository metadata (its default branch). */
+		repo: (repoFullName: string) =>
+			http.get(repoPath(repoFullName), githubRepoSchema),
 
 		/** Commits between two SHAs (what a push added). */
 		compare: (repoFullName: string, base: string, head: string) =>

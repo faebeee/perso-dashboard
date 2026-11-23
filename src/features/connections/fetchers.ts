@@ -24,6 +24,8 @@ export interface IntegrationStatus {
 	oauthClient: {
 		id: string;
 		label: string;
+		/** No secret: only the client id is entered. */
+		publicClient?: boolean;
 		/** Stored client id (never the secret), or null. */
 		clientId: string | null;
 		/** Other integrations that use the same OAuth client. */
@@ -46,7 +48,7 @@ export async function fetchIntegrationStatuses(): Promise<IntegrationStatus[]> {
 			connected: Boolean(connection),
 			accountLabel: connection?.accountLabel ?? null,
 			connectedAt: connection?.createdAt.toISOString() ?? null,
-			callbackUrl: services.oauthCallbackUrl(backend.id),
+			callbackUrl: services.oauthCallbackUrl(backend),
 			settingLabels: (backend.settings ?? []).map((s) => s.label),
 			oauthClient: {
 				...backend.oauthClient,
@@ -79,7 +81,7 @@ export async function connectIntegration(integrationId: string): Promise<void> {
 	await runOAuthFlow({
 		integration,
 		provider,
-		authorize: (url) => services.authorizeInBrowser(integrationId, url),
+		authorize: (url) => services.authorizeInBrowser(integration, url),
 		connections: services.connections,
 	});
 	// Possibly another account: never show the previous one's cached data.
@@ -105,7 +107,11 @@ export async function saveOAuthClient(
 	oauthClientId: string,
 	credentials: OAuthClientCredentials,
 ): Promise<void> {
-	if (!credentials.clientId.trim() || !credentials.clientSecret.trim()) {
+	const publicClient = integrationBackends.some(
+		(b) => b.oauthClient.id === oauthClientId && b.oauthClient.publicClient,
+	);
+	if (!credentials.clientId.trim()) throw new Error("Client ID is required.");
+	if (!publicClient && !credentials.clientSecret.trim()) {
 		throw new Error("Client ID and client secret are required.");
 	}
 	await (await getServices()).oauthClients.save(oauthClientId, credentials);

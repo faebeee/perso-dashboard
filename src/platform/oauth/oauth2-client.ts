@@ -67,7 +67,8 @@ export function createOAuth2Provider(config: OAuth2Config): OAuthProvider {
 			body: new URLSearchParams({
 				...params,
 				client_id: clientId,
-				client_secret: clientSecret,
+				// Public clients (no secret) must not send one at all.
+				...(clientSecret ? { client_secret: clientSecret } : {}),
 			}).toString(),
 		});
 

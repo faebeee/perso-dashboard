@@ -6,6 +6,8 @@ import { useSaveOAuthClient } from "../queries";
 interface OAuthClientFormProps {
 	oauthClientId: string;
 	label: string;
+	/** Public client: no secret field. */
+	publicClient?: boolean;
 	/** Integration ids that use this client (reloaded after saving). */
 	integrationIds: string[];
 	/** Names of other integrations sharing the client, for a hint. */
@@ -22,6 +24,7 @@ interface OAuthClientFormProps {
 export function OAuthClientForm({
 	oauthClientId,
 	label,
+	publicClient = false,
 	integrationIds,
 	sharedWithNames,
 	currentClientId,
@@ -60,17 +63,23 @@ export function OAuthClientForm({
 				value={clientId}
 				onChange={(e) => setClientId(e.target.value)}
 			/>
-			<label htmlFor={`${id}-secret`} className="sr-only">
-				Client secret
-			</label>
-			<Input
-				id={`${id}-secret`}
-				type="password"
-				placeholder={currentClientId ? "New client secret" : "Client secret"}
-				autoComplete="off"
-				value={clientSecret}
-				onChange={(e) => setClientSecret(e.target.value)}
-			/>
+			{!publicClient && (
+				<>
+					<label htmlFor={`${id}-secret`} className="sr-only">
+						Client secret
+					</label>
+					<Input
+						id={`${id}-secret`}
+						type="password"
+						placeholder={
+							currentClientId ? "New client secret" : "Client secret"
+						}
+						autoComplete="off"
+						value={clientSecret}
+						onChange={(e) => setClientSecret(e.target.value)}
+					/>
+				</>
+			)}
 			{sharedWithNames.length > 0 && (
 				<p className="text-xs">Shared with {sharedWithNames.join(", ")}.</p>
 			)}
@@ -81,7 +90,11 @@ export function OAuthClientForm({
 				<Button
 					type="submit"
 					size="sm"
-					disabled={save.isPending || !clientId.trim() || !clientSecret.trim()}
+					disabled={
+						save.isPending ||
+						!clientId.trim() ||
+						(!publicClient && !clientSecret.trim())
+					}
 				>
 					Save
 				</Button>

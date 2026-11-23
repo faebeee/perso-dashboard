@@ -1,30 +1,12 @@
+import {
+	type EmailAddress,
+	type EmailDetail,
+	hasRemoteImages,
+} from "#/core/email";
 import { textToHtml } from "#/lib/text-to-html";
 import { fromBase64Url } from "#/platform/encoding";
 import type { GmailFullMessage, GmailPart } from "./api/schemas";
 import { gmailThreadUrl, senderName } from "./mapper";
-
-export interface EmailAddress {
-	name: string;
-	email: string;
-}
-
-export interface EmailDetail {
-	id: string;
-	url: string;
-	subject: string;
-	from: EmailAddress | null;
-	to: EmailAddress[];
-	cc: EmailAddress[];
-	/** ISO timestamp. */
-	date: string;
-	important: boolean;
-	unread: boolean;
-	/** Untrusted HTML: show in SafeHtmlFrame only. Plain-text mail is converted. */
-	html: string;
-	/** True when `html` references remote (http/https) images. */
-	hasRemoteImages: boolean;
-	attachments: { filename: string; mimeType: string; size: number }[];
-}
 
 const header = (part: GmailPart, name: string) =>
 	part.headers.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value;
@@ -101,7 +83,7 @@ export function toEmailDetail(
 		important: message.labelIds.includes("IMPORTANT"),
 		unread: message.labelIds.includes("UNREAD"),
 		html,
-		hasRemoteImages: /<img\b[^>]*\bsrc\s*=\s*["']?https?:/i.test(html),
+		hasRemoteImages: hasRemoteImages(html),
 		attachments: parts.filter(isAttachment).map((p) => ({
 			filename: p.filename || "attachment",
 			mimeType: p.mimeType,

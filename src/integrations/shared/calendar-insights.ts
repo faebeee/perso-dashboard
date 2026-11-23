@@ -6,7 +6,6 @@ import {
 	weekIndexOf,
 } from "#/core/insights";
 import { formatDuration } from "#/lib/time";
-import { GOOGLE_CALENDAR_ID } from "./constants";
 
 const minutes = (e: CalendarEvent, until: number) =>
 	Math.max(
@@ -14,11 +13,16 @@ const minutes = (e: CalendarEvent, until: number) =>
 		(Math.min(Date.parse(e.end), until) - Date.parse(e.start)) / 60_000,
 	);
 
-/** Pure: meetings that started in [from, to) → activity. All-day events aren't meetings. */
+/**
+ * Shared by every calendar integration (they map into `CalendarEvent`).
+ * Pure: meetings that started in [from, to) → activity. All-day events
+ * aren't meetings.
+ */
 export function meetingActivity(
 	events: readonly CalendarEvent[],
 	from: Date,
 	to: Date,
+	source: string,
 ): ActivityItem[] {
 	return events
 		.filter((e) => {
@@ -27,7 +31,7 @@ export function meetingActivity(
 		})
 		.map((e) => ({
 			id: `${e.id}:meeting`,
-			source: GOOGLE_CALENDAR_ID,
+			source,
 			kind: "meeting" as const,
 			title: e.title,
 			url: e.url,
@@ -47,6 +51,7 @@ export function meetingMetrics(
 	events: readonly CalendarEvent[],
 	weeks: readonly WeekRange[],
 	now: Date,
+	source: string,
 ): MetricSeries[] {
 	const hours = weeks.map(() => 0);
 	for (const e of events) {
@@ -56,8 +61,8 @@ export function meetingMetrics(
 	}
 	return [
 		{
-			id: "calendar.meeting-hours",
-			source: GOOGLE_CALENDAR_ID,
+			id: `${source}.meeting-hours`,
+			source,
 			label: "Time in meetings",
 			unit: "hours",
 			description:

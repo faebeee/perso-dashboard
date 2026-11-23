@@ -13,6 +13,41 @@ export function newInstanceId(): string {
 	);
 }
 
+/** Where a widget sits in a predefined layout (see the app's default dashboard). */
+export type WidgetPlacement = Omit<LayoutItem, "i">;
+
+/** Deterministic so the unsaved default is stable across renders/SSR. */
+const defaultInstanceId = (type: string) => `default:${type}`;
+
+/**
+ * A predefined layout → a dashboard layout. Widgets missing from the catalog
+ * (e.g. a removed integration) are left out; duplicates keep the first.
+ */
+export function layoutFromPlacements(
+	placements: readonly WidgetPlacement[],
+	catalog: readonly WidgetDefinition[],
+): DashboardLayout {
+	const known = new Set(catalog.map((w) => w.type));
+	const seen = new Set<string>();
+	return placements.flatMap((p) => {
+		if (!known.has(p.type) || seen.has(p.type)) return [];
+		seen.add(p.type);
+		return [{ i: defaultInstanceId(p.type), ...p }];
+	});
+}
+
+/**
+ * The layout "Reset layout" restores and new users start with: the
+ * predefined placements, or (none given or none usable) the whole catalog.
+ */
+export function defaultLayout(
+	catalog: readonly WidgetDefinition[],
+	placements: readonly WidgetPlacement[] = [],
+): DashboardLayout {
+	const preset = layoutFromPlacements(placements, catalog);
+	return preset.length > 0 ? preset : buildDefaultLayout(catalog);
+}
+
 /** Lays the catalog out in columns, filling the shortest column first. */
 export function buildDefaultLayout(
 	catalog: readonly WidgetDefinition[],
@@ -25,8 +60,7 @@ export function buildDefaultLayout(
 		const column = heights.indexOf(Math.min(...heights));
 		const h = widget.defaultSize.h;
 		const item: LayoutItem = {
-			// Deterministic so the unsaved default is stable across renders/SSR.
-			i: `default:${widget.type}`,
+			i: defaultInstanceId(widget.type),
 			type: widget.type,
 			x: column * columnWidth,
 			y: heights[column] ?? 0,

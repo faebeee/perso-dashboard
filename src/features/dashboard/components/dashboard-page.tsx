@@ -13,15 +13,19 @@ import {
 	applyPositions,
 	removeWidget,
 	samePositions,
+	type WidgetPlacement,
 } from "../model";
 import { useDashboardLayout } from "../use-dashboard-layout";
 import { AddWidgetMenu } from "./add-widget-menu";
 import { DashboardGrid } from "./dashboard-grid";
+import { ResetLayoutButton } from "./reset-layout-button";
 import { WidgetFrame } from "./widget-frame";
 
 interface DashboardPageProps {
 	/** Every widget type the user may place. Injected by the app layer. */
 	catalog: readonly WidgetDefinition[];
+	/** The default layout (new users, "Reset layout"). Injected by the app layer. */
+	defaultPlacements?: readonly WidgetPlacement[];
 	groupLabel: (integrationId: string | undefined) => string;
 	/** Controlled so the app can keep it in the URL. */
 	scope: WorkScope;
@@ -30,11 +34,13 @@ interface DashboardPageProps {
 
 export function DashboardPage({
 	catalog,
+	defaultPlacements,
 	groupLabel,
 	scope,
 	onScopeChange,
 }: DashboardPageProps) {
-	const { layout, setLayout, isSaving } = useDashboardLayout(catalog);
+	const { layout, defaultLayout, setLayout, resetLayout, isSaving } =
+		useDashboardLayout(catalog, defaultPlacements);
 	const [editing, setEditing] = useState(false);
 	const queryClient = useQueryClient();
 
@@ -64,6 +70,12 @@ export function DashboardPage({
 							<RefreshCw /> Refresh
 						</Button>
 						{editing && (
+							<ResetLayoutButton
+								disabled={samePositions(layout, defaultLayout)}
+								onReset={resetLayout}
+							/>
+						)}
+						{editing && (
 							<AddWidgetMenu
 								catalog={catalog}
 								groupLabel={groupLabel}
@@ -84,7 +96,15 @@ export function DashboardPage({
 				{layout.length === 0 ? (
 					<div className="rounded-xl border border-dashed p-12 text-center text-sm text-muted-foreground">
 						Your dashboard is empty. Click <strong>Edit layout</strong> and add
-						a widget.
+						a widget, or{" "}
+						<button
+							type="button"
+							className="font-medium text-foreground underline underline-offset-2"
+							onClick={resetLayout}
+						>
+							restore the default layout
+						</button>
+						.
 					</div>
 				) : (
 					<DashboardGrid

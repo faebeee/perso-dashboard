@@ -6,13 +6,13 @@ import {
 	stringListSetting,
 } from "#/core/integration";
 import { GOOGLE_OAUTH_CLIENT } from "#/platform/oauth/google";
+import { eventsToAttention } from "../shared/calendar-attention";
+import { meetingActivity, meetingMetrics } from "../shared/calendar-insights";
+import { pendingRepliesToWaiting } from "../shared/calendar-waiting";
 import { createGoogleCalendarApi } from "./api/client";
-import { eventsToAttention } from "./attention";
 import { GOOGLE_CALENDAR_ID } from "./constants";
-import { meetingActivity, meetingMetrics } from "./insights";
 import { createGoogleCalendarOAuth } from "./oauth";
 import { createGoogleCalendarService } from "./service";
-import { pendingRepliesToWaiting } from "./waiting";
 
 /** Which calendars feed the app (Preferences → Google Calendar). */
 export const CALENDARS_SETTING: ChoiceListSetting = {
@@ -72,6 +72,7 @@ export const googleCalendarBackend: IntegrationBackend = {
 			await googleCalendarService(ctx).between(from, to, 250),
 			from,
 			to,
+			GOOGLE_CALENDAR_ID,
 		),
 
 	getMetrics: async (ctx, weeks, now) =>
@@ -83,6 +84,7 @@ export const googleCalendarBackend: IntegrationBackend = {
 			),
 			weeks,
 			now,
+			GOOGLE_CALENDAR_ID,
 		),
 
 	getAgenda: (ctx, { from, to }) =>

@@ -31,10 +31,40 @@ export interface PushInfo {
 	commits?: { sha: string; message: string }[];
 }
 
-/** Pushes expanded per refresh: each needs a compare call (cached for a day). */
-export const PUSH_LIMIT = 25;
+/**
+ * Pushes expanded per refresh, newest first: each needs a compare call
+ * (cached for a day, since a SHA range never changes).
+ */
+export const PUSH_LIMIT = 100;
+/** Compare calls in flight at once (GitHub frowns on bursts). */
+const CONCURRENCY = 6;
 /** Events pages read (100 each); GitHub keeps 90 days / 300 events. */
 const EVENT_PAGES = 3;
+
+/** Starts `fn` for each item, at most `limit` at a time; one promise per item. */
+function mapWithLimit<T, R>(
+	items: readonly T[],
+	limit: number,
+	fn: (item: T) => Promise<R>,
+): Promise<R>[] {
+	let running = 0;
+	const queue: (() => void)[] = [];
+	const next = () => {
+		running--;
+		queue.shift()?.();
+	};
+	return items.map(
+		(item) =>
+			new Promise<R>((resolve, reject) => {
+				const start = () => {
+					running++;
+					fn(item).then(resolve, reject).finally(next);
+				};
+				if (running < limit) start();
+				else queue.push(start);
+			}),
+	);
+}
 
 const firstLine = (message: string) => message.split("\n")[0]?.trim() ?? "";
 const isZeroSha = (sha: string) => /^0+$/.test(sha);
@@ -105,11 +135,18 @@ export function commitsOfPush(
 		);
 }
 
-/** Pure: newest first, each commit once (first branch it was seen on wins). */
+/**
+ * Pure: newest first, each commit once. A commit that reached several
+ * branches (a feature branch merged into test or main) is shown on the
+ * branch it was pushed to first: where the work was done.
+ */
 export function mergeCommits(lists: readonly CommitInfo[][]): CommitInfo[] {
 	const bySha = new Map<string, CommitInfo>();
 	for (const commit of lists.flat()) {
-		if (!bySha.has(commit.sha)) bySha.set(commit.sha, commit);
+		const seen = bySha.get(commit.sha);
+		if (!seen || Date.parse(commit.pushedAt) < Date.parse(seen.pushedAt)) {
+			bySha.set(commit.sha, commit);
+		}
 	}
 	return [...bySha.values()].sort(
 		(a, b) => Date.parse(b.at) - Date.parse(a.at),
@@ -123,14 +160,9 @@ export function createGitHubCommitService(api: GitHubApi) {
 		for (let page = 1; page <= EVENT_PAGES; page++) {
 			const events = await api.userEvents(login, page);
 			found.push(...pushesSince(events, since));
-			const oldest = events.at(-1);
-			if (
-				events.length < 100 ||
-				!oldest ||
-				Date.parse(oldest.created_at) < since.getTime()
-			) {
-				break;
-			}
+			// The feed isn't strictly ordered: look at the page's oldest event.
+			const oldest = Math.min(...events.map((e) => Date.parse(e.created_at)));
+			if (events.length < 100 || !(oldest >= since.getTime())) break;
 		}
 		return found;
 	}
@@ -141,11 +173,31 @@ export function createGitHubCommitService(api: GitHubApi) {
 			return push.commits.map((c) => toCommit(push, c.sha, c.message, push.at));
 		}
 		if (isZeroSha(push.head)) return []; // branch deleted
-		// A new branch has no "before": take its head commit.
 		const fetched = isZeroSha(push.before)
-			? [await api.commit(push.repo, push.head)]
+			? await newBranchCommits(push)
 			: (await api.compare(push.repo, push.before, push.head)).commits;
 		return commitsOfPush(push, fetched, login);
+	}
+
+	/**
+	 * A new branch has no "before": its commits are the ones not on the
+	 * default branch. Falls back to the head commit (e.g. a new repo).
+	 */
+	async function newBranchCommits(push: PushInfo): Promise<GitHubCommit[]> {
+		try {
+			const { default_branch } = await api.repo(push.repo);
+			if (default_branch !== push.branch) {
+				const { commits } = await api.compare(
+					push.repo,
+					default_branch,
+					push.head,
+				);
+				if (commits.length > 0) return commits;
+			}
+		} catch {
+			// Unrelated histories, no access to the repo: use the head commit.
+		}
+		return [await api.commit(push.repo, push.head)];
 	}
 
 	return {
@@ -155,10 +207,14 @@ export function createGitHubCommitService(api: GitHubApi) {
 			since: Date,
 			until: Date = new Date(),
 		): Promise<CommitInfo[]> {
-			const recentPushes = (await pushes(login, since)).slice(0, PUSH_LIMIT);
+			// Every branch counts; the newest pushes first when there are many.
+			const recentPushes = (await pushes(login, since))
+				.filter((p) => Date.parse(p.at) < until.getTime())
+				.sort((a, b) => Date.parse(b.at) - Date.parse(a.at))
+				.slice(0, PUSH_LIMIT);
 			// A deleted repo or force-pushed history fails alone.
 			const lists = await settleLeniently(
-				recentPushes.map((p) => expand(p, login)),
+				mapWithLimit(recentPushes, CONCURRENCY, (p) => expand(p, login)),
 			).catch(() => []);
 			return mergeCommits(lists).filter(
 				(c) => Date.parse(c.pushedAt) < until.getTime(),

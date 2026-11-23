@@ -4,6 +4,8 @@ import {
 	addWidget,
 	applyPositions,
 	buildDefaultLayout,
+	defaultLayout,
+	layoutFromPlacements,
 	removeWidget,
 	samePositions,
 } from "./model";
@@ -62,5 +64,29 @@ describe("dashboard layout model", () => {
 		});
 		expect(samePositions(layout, next)).toBe(false);
 		expect(samePositions(next, applyPositions(next, []))).toBe(true);
+	});
+
+	it("builds the predefined layout, skipping unknown and duplicate widgets", () => {
+		const layout = layoutFromPlacements(
+			[
+				{ type: "a", x: 0, y: 0, w: 8, h: 6 },
+				{ type: "gone", x: 8, y: 0, w: 4, h: 6 },
+				{ type: "b", x: 8, y: 0, w: 4, h: 6 },
+				{ type: "a", x: 0, y: 6, w: 4, h: 6 },
+			],
+			[widget("a"), widget("b")],
+		);
+		expect(layout).toEqual([
+			{ i: "default:a", type: "a", x: 0, y: 0, w: 8, h: 6 },
+			{ i: "default:b", type: "b", x: 8, y: 0, w: 4, h: 6 },
+		]);
+	});
+
+	it("falls back to the whole catalog without usable placements", () => {
+		const catalog = [widget("a"), widget("b")];
+		expect(defaultLayout(catalog)).toEqual(buildDefaultLayout(catalog));
+		expect(
+			defaultLayout(catalog, [{ type: "gone", x: 0, y: 0, w: 4, h: 4 }]),
+		).toEqual(buildDefaultLayout(catalog));
 	});
 });

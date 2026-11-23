@@ -31,6 +31,23 @@ export interface OAuthClientRef {
 	id: string;
 	/** Shown in the credentials form, e.g. "Google OAuth client". */
 	label: string;
+	/**
+	 * Public client: the provider forbids a secret for desktop apps (Microsoft
+	 * "Mobile and desktop" registrations). Only the client id is asked for.
+	 */
+	publicClient?: boolean;
+	/**
+	 * Host of the loopback redirect URI. Defaults to "127.0.0.1"; Microsoft
+	 * only lets you register `http://localhost` in its portal (the listener
+	 * still binds 127.0.0.1, which browsers fall back to).
+	 */
+	redirectHost?: "127.0.0.1" | "localhost";
+	/**
+	 * Every integration on this client uses one redirect URI
+	 * (`/oauth/<client id>/callback`), for providers that match redirect URIs
+	 * exactly, so the user registers only one.
+	 */
+	sharedRedirectUri?: boolean;
 }
 
 export interface OAuthProvider {
