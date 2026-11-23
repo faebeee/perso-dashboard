@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react";
+import { useSources } from "#/components/source-kit/source-context";
 import { Button } from "#/components/ui/button";
 import { SourceErrors } from "#/components/widget-kit/source-errors";
-import {
-	WorkItemList,
-	type WorkItemSource,
-} from "#/components/work-item/work-item-list";
+import { WorkItemList } from "#/components/work-item/work-item-list";
 import type { IntegrationError } from "#/core/result";
 import type { WorkItem } from "#/core/work-item";
 import { cn } from "#/lib/utils";
@@ -12,7 +10,6 @@ import { cn } from "#/lib/utils";
 interface FeedListProps {
 	items: WorkItem[];
 	errors: IntegrationError[];
-	sources: Record<string, WorkItemSource>;
 	/** Show per-source filter chips. */
 	filterable?: boolean;
 	limit?: number;
@@ -21,10 +18,10 @@ interface FeedListProps {
 export function FeedList({
 	items,
 	errors,
-	sources,
 	filterable = false,
 	limit,
 }: FeedListProps) {
+	const sources = useSources();
 	const [active, setActive] = useState<string | null>(null);
 
 	const counts = useMemo(() => {
@@ -40,10 +37,7 @@ export function FeedList({
 
 	return (
 		<div className="space-y-3">
-			<SourceErrors
-				errors={errors}
-				nameOf={(id) => (id ? sources[id]?.name : undefined)}
-			/>
+			<SourceErrors errors={errors} />
 
 			{filterable && counts.size > 1 && (
 				<div
@@ -77,7 +71,7 @@ export function FeedList({
 					Nothing in your feed. Connect an integration or enjoy the quiet.
 				</p>
 			) : (
-				<WorkItemList items={visible} sources={sources} />
+				<WorkItemList items={visible} />
 			)}
 		</div>
 	);

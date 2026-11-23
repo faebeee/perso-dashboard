@@ -20,10 +20,9 @@ import { WorkItemList } from "#/components/work-item/work-item-list";
 import { RECENT_RELEASE_DAYS, type Release } from "#/core/release";
 import type { WorkItem } from "#/core/work-item";
 import { tally } from "#/lib/tally";
-import { JIRA_ID, JIRA_RELEASE_STATUSES, SEARCH_PAGE_SIZE } from "./constants";
+import { JIRA_RELEASE_STATUSES, SEARCH_PAGE_SIZE } from "./constants";
 import { jiraQueries } from "./queries";
 
-const SOURCES = { [JIRA_ID]: { name: "Jira", icon: SquareKanban } };
 const DAY_MS = 24 * 60 * 60 * 1000;
 const count = (items: unknown[]) => cappedCount(items.length, SEARCH_PAGE_SIZE);
 const upcoming = (releases: Release[]) =>
@@ -125,7 +124,7 @@ export function JiraOverview() {
 					isEmpty={(r) => r.length === 0}
 					emptyMessage={`No upcoming versions and nothing released in the last ${RECENT_RELEASE_DAYS} days.`}
 				>
-					{(r) => <ReleaseList releases={r} sources={SOURCES} />}
+					{(r) => <ReleaseList releases={r} />}
 				</OverviewSection>
 			</div>
 		</div>

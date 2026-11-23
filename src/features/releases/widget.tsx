@@ -3,37 +3,26 @@ import { Rocket } from "lucide-react";
 import { ReleaseList } from "#/components/release/release-list";
 import { QueryState } from "#/components/widget-kit/query-state";
 import { SourceErrors } from "#/components/widget-kit/source-errors";
-import type { WorkItemSource } from "#/components/work-item/work-item-list";
-import type { IntegrationManifest } from "#/core/integration";
 import { RECENT_RELEASE_DAYS } from "#/core/release";
 import type { WidgetDefinition } from "#/core/widget";
 import { releaseQueries } from "./queries";
 
 /** Built-in widget combining releases from every integration that has them. */
-export function createReleasesWidget(
-	integrations: readonly IntegrationManifest[],
-): WidgetDefinition {
-	const sources: Record<string, WorkItemSource> = Object.fromEntries(
-		integrations.map((i) => [i.id, { name: i.name, icon: i.icon }]),
-	);
-
+export function createReleasesWidget(): WidgetDefinition {
 	function ReleasesWidget() {
 		const query = useQuery(releaseQueries.all());
 		return (
 			<QueryState query={query}>
 				{({ items, errors }) => (
 					<div className="space-y-2">
-						<SourceErrors
-							errors={errors}
-							nameOf={(id) => (id ? sources[id]?.name : undefined)}
-						/>
+						<SourceErrors errors={errors} />
 						{items.length === 0 ? (
 							<p className="py-8 text-center text-sm text-muted-foreground">
 								No upcoming releases and nothing shipped in the last{" "}
 								{RECENT_RELEASE_DAYS} days.
 							</p>
 						) : (
-							<ReleaseList releases={items} sources={sources} />
+							<ReleaseList releases={items} />
 						)}
 					</div>
 				)}

@@ -27,6 +27,15 @@ export function createJiraService(api: JiraApi, site: JiraSite) {
 				),
 			),
 
+		/** Raw open issues assigned to me (keeps fields like the due date). */
+		openAssignedIssues: async () =>
+			(
+				await api.searchIssues(
+					site.cloudId,
+					buildJql(JIRA_FILTERS.open, JIRA_SCOPE_CLAUSES.assigned),
+				)
+			).issues,
+
 		/** Issues in a release status; "all" = everyone's. */
 		onRelease: (scope: WorkScope) =>
 			search(

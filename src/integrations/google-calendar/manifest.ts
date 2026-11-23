@@ -9,6 +9,7 @@ export const googleCalendarManifest: IntegrationManifest = {
 	name: "Google Calendar",
 	description: "Your upcoming meetings and events (read-only access).",
 	icon: CalendarDays,
+	accent: "#188038",
 	setup: {
 		url: "https://console.cloud.google.com/apis/library/calendar-json.googleapis.com",
 		label:

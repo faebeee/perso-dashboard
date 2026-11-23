@@ -4,6 +4,7 @@ import type {
 } from "#/core/integration";
 import { GOOGLE_OAUTH_CLIENT } from "#/platform/oauth/google";
 import { createGmailApi } from "./api/client";
+import { importantMailToAttention } from "./attention";
 import { GMAIL_ID } from "./constants";
 import { createGmailOAuth } from "./oauth";
 import { createGmailService } from "./service";
@@ -30,4 +31,7 @@ export const gmailBackend: IntegrationBackend = {
 	},
 
 	getFeedItems: (ctx) => gmailService(ctx).unreadInbox(),
+
+	getAttentionItems: async (ctx, now) =>
+		importantMailToAttention(await gmailService(ctx).importantUnread(), now),
 };

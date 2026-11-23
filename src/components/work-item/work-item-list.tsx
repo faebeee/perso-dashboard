@@ -1,69 +1,49 @@
 import { UserRound } from "lucide-react";
-import type { ComponentType } from "react";
+import { ItemIcon } from "#/components/source-kit/item-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Badge } from "#/components/ui/badge";
 import type { WorkItem } from "#/core/work-item";
 import { formatRelative } from "#/lib/time";
 import { cn } from "#/lib/utils";
 
-export interface WorkItemSource {
-	name: string;
-	icon: ComponentType<{ className?: string }>;
-}
-
 interface WorkItemListProps {
 	items: WorkItem[];
-	/** When provided, each row shows which integration it came from. */
-	sources?: Record<string, WorkItemSource>;
 	className?: string;
 }
 
-export function WorkItemList({ items, sources, className }: WorkItemListProps) {
+/** Each row leads with an icon for its kind (PR, issue, email…) tinted by source. */
+export function WorkItemList({ items, className }: WorkItemListProps) {
 	return (
 		<ul className={cn("divide-y divide-border", className)}>
 			{items.map((item) => (
 				<li key={item.id}>
-					<WorkItemRow item={item} source={sources?.[item.source]} />
+					<WorkItemRow item={item} />
 				</li>
 			))}
 		</ul>
 	);
 }
 
-function WorkItemRow({
-	item,
-	source,
-}: {
-	item: WorkItem;
-	source?: WorkItemSource;
-}) {
-	const SourceIcon = source?.icon;
+function WorkItemRow({ item }: { item: WorkItem }) {
 	return (
 		<a
 			href={item.url}
 			target="_blank"
 			rel="noreferrer"
-			className="group flex items-start gap-3 px-1 py-2.5 text-inherit no-underline hover:bg-accent/60 rounded-md transition-colors"
+			className="group flex items-start gap-3 rounded-md px-1 py-2.5 text-inherit no-underline transition-colors hover:bg-accent/60"
 		>
-			<Avatar className="mt-0.5 size-7">
-				{item.actor?.avatarUrl && (
-					<AvatarImage src={item.actor.avatarUrl} alt="" />
-				)}
-				<AvatarFallback className="text-[10px]">
-					{initials(item.actor?.name ?? item.source)}
-				</AvatarFallback>
-			</Avatar>
+			<ItemIcon source={item.source} kind={item.kind} className="mt-0.5" />
 
 			<div className="min-w-0 flex-1">
-				<p className="truncate text-sm font-medium text-foreground group-hover:underline underline-offset-2">
+				<p className="truncate text-sm font-medium text-foreground underline-offset-2 group-hover:underline">
 					{item.title}
 				</p>
 				<div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-					{SourceIcon && (
-						<SourceIcon
-							className="size-3.5 shrink-0"
-							aria-label={source?.name}
-						/>
+					{item.actor && (
+						<>
+							<Actor person={item.actor} />
+							<span aria-hidden>·</span>
+						</>
 					)}
 					{item.context && <span className="truncate">{item.context}</span>}
 					{item.assignee !== undefined && (
@@ -90,6 +70,20 @@ function WorkItemRow({
 				</div>
 			)}
 		</a>
+	);
+}
+
+function Actor({ person }: { person: NonNullable<WorkItem["actor"]> }) {
+	return (
+		<span className="inline-flex max-w-40 min-w-0 shrink items-center gap-1">
+			<Avatar className="size-4">
+				{person.avatarUrl && <AvatarImage src={person.avatarUrl} alt="" />}
+				<AvatarFallback className="text-[8px]">
+					{initials(person.name)}
+				</AvatarFallback>
+			</Avatar>
+			<span className="truncate">{person.name}</span>
+		</span>
 	);
 }
 

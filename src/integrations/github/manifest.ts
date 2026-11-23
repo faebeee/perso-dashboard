@@ -10,6 +10,7 @@ export const githubManifest: IntegrationManifest = {
 	name: "GitHub",
 	description: "Pull requests waiting for your review and the ones you opened.",
 	icon: GitPullRequest,
+	accent: "#8250df",
 	setup: {
 		url: "https://github.com/settings/developers",
 		label: "GitHub → Developer settings → OAuth Apps",

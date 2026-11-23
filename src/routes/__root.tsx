@@ -4,6 +4,8 @@ import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { AppShell } from "#/app/shell/app-shell";
+import { sourceRegistry } from "#/app/sources";
+import { SourceProvider } from "#/components/source-kit/source-context";
 
 interface RouterContext {
 	queryClient: QueryClient;
@@ -16,9 +18,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 function RootLayout() {
 	return (
 		<>
-			<AppShell>
-				<Outlet />
-			</AppShell>
+			<SourceProvider sources={sourceRegistry}>
+				<AppShell>
+					<Outlet />
+				</AppShell>
+			</SourceProvider>
 			{import.meta.env.DEV && (
 				<TanStackDevtools
 					config={{ position: "bottom-right" }}

@@ -9,6 +9,12 @@ const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
 
 const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
+/** "YYYY-MM-DD" in the viewer's time zone. */
+export function localDayKey(ms: number): string {
+	const d = new Date(ms);
+	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 /** 150 → "2h 30m", 45 → "45m". */
 export function formatDuration(minutes: number): string {
 	const total = Math.max(0, Math.round(minutes));

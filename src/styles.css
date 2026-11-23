@@ -126,6 +126,18 @@
   html.dark {
     color-scheme: dark;
   }
+  /*
+   * Desktop app frame: the document never scrolls (no rubber-band bounce
+   * dragging the sidebar and exposing the white window backing). Only the
+   * shell's <main> scrolls; see app-shell.tsx.
+   */
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
   body {
     @apply bg-background text-foreground antialiased;
   }

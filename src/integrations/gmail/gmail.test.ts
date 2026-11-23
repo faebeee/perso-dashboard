@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import { fakeFetch } from "#/test/fake-fetch";
 import { createGmailApi } from "./api/client";
 import { gmailMessageSchema } from "./api/schemas";
-import { decodeEntities, senderName, toWorkItem } from "./mapper";
+import {
+	decodeEntities,
+	gmailThreadUrl,
+	senderName,
+	toWorkItem,
+} from "./mapper";
 import { createGmailService } from "./service";
 
 const message = (id: string, overrides: Record<string, unknown> = {}) => ({
@@ -29,7 +34,7 @@ describe("gmail mapper", () => {
 			source: "gmail",
 			kind: "email",
 			title: "Compiler review",
-			url: "https://mail.google.com/mail/u/me%40x.com/#inbox/thread-m1",
+			url: "https://mail.google.com/mail/?authuser=me%40x.com#all/thread-m1",
 			updatedAt: "2026-01-02T00:00:00.000Z",
 			context: "Let's meet & talk",
 			actor: { name: "Grace Hopper" },
@@ -111,5 +116,31 @@ describe("gmail inbox stats", () => {
 			inboxThreads: 120,
 			starredThreads: 4,
 		});
+	});
+});
+
+describe("gmail important unread", () => {
+	it("searches recent important unread inbox mail", async () => {
+		const fetch = fakeFetch({
+			"/gmail/v1/users/me/messages": { messages: [] },
+		});
+		await createGmailService(createGmailApi("token", fetch)).importantUnread();
+		const url = new URL(String(fetch.mock.calls[0]?.[0]));
+		expect(url.searchParams.get("q")).toBe(
+			"is:unread is:important in:inbox newer_than:2d",
+		);
+	});
+});
+
+describe("gmailThreadUrl", () => {
+	it("selects the account with authuser and opens the thread in All Mail", () => {
+		const url = new URL(gmailThreadUrl("18c2f0a1b2c3d4e5", "me+work@x.com"));
+		expect(url.origin + url.pathname).toBe("https://mail.google.com/mail/");
+		expect(url.searchParams.get("authuser")).toBe("me+work@x.com");
+		expect(url.hash).toBe("#all/18c2f0a1b2c3d4e5");
+	});
+
+	it("falls back to the default account", () => {
+		expect(gmailThreadUrl("abc")).toBe("https://mail.google.com/mail/#all/abc");
 	});
 });

@@ -1,6 +1,7 @@
-import { groupByDay, localDayKey } from "#/components/calendar/agenda-list";
+import { groupByDay } from "#/components/calendar/agenda-list";
 import { type CalendarEvent, eventStartMs } from "#/core/calendar-event";
 import type { TallyRow } from "#/lib/tally";
+import { localDayKey } from "#/lib/time";
 
 export interface CalendarSummary {
 	/** Events on today's date, including ongoing and multi-day ones. */

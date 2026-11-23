@@ -1,14 +1,14 @@
 import { CircleAlert } from "lucide-react";
+import { useSources } from "#/components/source-kit/source-context";
 import type { IntegrationError } from "#/core/result";
 
 interface SourceErrorsProps {
 	errors: IntegrationError[];
-	/** Display name per integration id. */
-	nameOf: (integrationId: string | undefined) => string | undefined;
 }
 
 /** Compact chips for sources that failed while the others still loaded. */
-export function SourceErrors({ errors, nameOf }: SourceErrorsProps) {
+export function SourceErrors({ errors }: SourceErrorsProps) {
+	const sources = useSources();
 	if (errors.length === 0) return null;
 	return (
 		<div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -19,8 +19,9 @@ export function SourceErrors({ errors, nameOf }: SourceErrorsProps) {
 					title={error.message}
 				>
 					<CircleAlert className="size-3.5 text-destructive" />
-					{nameOf(error.integrationId) ?? error.integrationId}:{" "}
-					{error.kind.replace("_", " ")}
+					{(error.integrationId && sources[error.integrationId]?.name) ??
+						error.integrationId}
+					: {error.kind.replace("_", " ")}
 				</span>
 			))}
 		</div>

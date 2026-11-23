@@ -1,5 +1,6 @@
 import type { IntegrationBackend } from "#/core/integration";
 import { createGitHubApi } from "./api/client";
+import { reviewRequestsToAttention } from "./attention";
 import { GITHUB_ID } from "./constants";
 import { createGitHubOAuth, GITHUB_OAUTH_CLIENT } from "./oauth";
 import { createGitHubReleaseService } from "./releases";
@@ -30,6 +31,11 @@ export const githubBackend: IntegrationBackend = {
 			service.myPullRequests("created"),
 		]);
 		return [...reviews, ...mine];
+	},
+
+	async getAttentionItems({ accessToken }, now) {
+		const reviews = await githubService(accessToken).reviewRequests();
+		return reviewRequestsToAttention(reviews, now);
 	},
 
 	getReleases: ({ accessToken }, query) =>

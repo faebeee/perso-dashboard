@@ -1,4 +1,5 @@
 import type { WidgetDefinition } from "#/core/widget";
+import { createAttentionWidget } from "#/features/attention/widget";
 import { createFeedWidget } from "#/features/feed/widget";
 import { createReleasesWidget } from "#/features/releases/widget";
 import {
@@ -11,8 +12,9 @@ import {
  * import each other, so they're wired together here instead.
  */
 export const widgetCatalog: readonly WidgetDefinition[] = [
-	createFeedWidget(integrationManifests),
-	createReleasesWidget(integrationManifests),
+	createAttentionWidget(),
+	createFeedWidget(),
+	createReleasesWidget(),
 	...integrationManifests.flatMap((manifest) => manifest.widgets),
 ];
 

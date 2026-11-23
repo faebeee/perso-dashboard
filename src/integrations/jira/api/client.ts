@@ -15,6 +15,7 @@ const SEARCH_FIELDS = [
 	"project",
 	"reporter",
 	"assignee",
+	"duedate",
 ];
 
 /** Thin wrapper over the Atlassian platform + Jira Cloud REST v3 APIs. */

@@ -12,18 +12,32 @@ export function toWorkItem(
 			(h) => h.name.toLowerCase() === name.toLowerCase(),
 		)?.value;
 
-	const accountPath = accountEmail ? encodeURIComponent(accountEmail) : "0";
 	return {
 		id: makeWorkItemId(GMAIL_ID, message.id),
 		source: GMAIL_ID,
 		kind: "email",
 		title: header("Subject")?.trim() || "(no subject)",
-		url: `https://mail.google.com/mail/u/${accountPath}/#inbox/${message.threadId}`,
+		url: gmailThreadUrl(message.threadId, accountEmail),
 		updatedAt: new Date(Number(message.internalDate)).toISOString(),
 		context: decodeEntities(message.snippet),
 		actor: { name: senderName(header("From") ?? "Unknown sender") },
 		tags: message.labelIds.includes("IMPORTANT") ? ["Important"] : [],
 	};
+}
+
+/**
+ * Web link to a conversation. `authuser` picks the right signed-in account
+ * (Gmail's account slot in the path only takes an index), and `#all/` finds
+ * the thread whatever its labels (starred or archived mail isn't in #inbox).
+ */
+export function gmailThreadUrl(
+	threadId: string,
+	accountEmail?: string,
+): string {
+	const url = new URL("https://mail.google.com/mail/");
+	if (accountEmail) url.searchParams.set("authuser", accountEmail);
+	url.hash = `all/${threadId}`;
+	return url.toString();
 }
 
 /** `"Jane Doe" <jane@x.com>` → `Jane Doe`; `jane@x.com` → `jane@x.com` */

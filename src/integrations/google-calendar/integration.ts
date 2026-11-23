@@ -1,6 +1,7 @@
 import type { IntegrationBackend } from "#/core/integration";
 import { GOOGLE_OAUTH_CLIENT } from "#/platform/oauth/google";
 import { createGoogleCalendarApi } from "./api/client";
+import { eventsToAttention } from "./attention";
 import { GOOGLE_CALENDAR_ID } from "./constants";
 import { createGoogleCalendarOAuth } from "./oauth";
 import { createGoogleCalendarService } from "./service";
@@ -22,4 +23,10 @@ export const googleCalendarBackend: IntegrationBackend = {
 			await createGoogleCalendarApi(accessToken).primaryCalendar();
 		return { label: calendar.id, meta: { email: calendar.id } };
 	},
+
+	getAttentionItems: async ({ accessToken }, now) =>
+		eventsToAttention(
+			await googleCalendarService(accessToken).upcoming("all"),
+			now,
+		),
 };

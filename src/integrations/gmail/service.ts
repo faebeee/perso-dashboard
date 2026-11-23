@@ -25,6 +25,8 @@ export function createGmailService(api: GmailApi, accountEmail?: string) {
 
 		starred: () => search(GMAIL_QUERIES.starred),
 
+		importantUnread: () => search(GMAIL_QUERIES.importantUnread),
+
 		async inboxStats(): Promise<GmailInboxStats> {
 			const [inbox, starred] = await Promise.all([
 				api.label("INBOX"),

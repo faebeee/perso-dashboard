@@ -1,10 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, ListTodo, PlugZap } from "lucide-react";
+import { LayoutDashboard, ListTodo, PlugZap, Siren } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { integrationManifests } from "#/integrations/registry";
 import { ThemeToggle } from "./theme-toggle";
+import { UrgentCount } from "./urgent-count";
 
 const MAIN_NAV = [
+	{ to: "/urgent", label: "Urgent", icon: Siren, badge: UrgentCount },
 	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
 	{ to: "/feed", label: "My Work", icon: ListTodo },
 ] as const;
@@ -12,13 +14,17 @@ const MAIN_NAV = [
 /** One entry per integration that ships an overview page. */
 const SOURCES = integrationManifests.filter((m) => m.overview);
 
+/** The app's only scroll container (the document itself never scrolls). */
+export const MAIN_SCROLL_ID = "main";
+
 const LINK_CLASS =
 	"flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/80 no-underline hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:bg-sidebar-accent data-[status=active]:font-medium data-[status=active]:text-sidebar-accent-foreground";
 
 export function AppShell({ children }: { children: ReactNode }) {
 	return (
-		<div className="flex min-h-dvh flex-col md:flex-row">
-			<aside className="flex shrink-0 items-center gap-1 border-b bg-sidebar px-3 py-2 md:sticky md:top-0 md:h-dvh md:w-56 md:flex-col md:items-stretch md:border-r md:border-b-0 md:px-3 md:py-4">
+		// Fixed frame: the shell fills the window, only <main> scrolls.
+		<div className="flex h-full flex-col overflow-hidden md:flex-row">
+			<aside className="flex shrink-0 items-center gap-1 border-b bg-sidebar px-3 py-2 md:w-56 md:flex-col md:items-stretch md:overflow-y-auto md:border-r md:border-b-0 md:px-3 md:py-4">
 				<div className="mr-2 flex items-center gap-2 px-2 font-semibold md:mr-0 md:mb-6">
 					<span className="grid size-7 place-items-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
 						PD
@@ -30,8 +36,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 					className="flex min-w-0 flex-1 gap-1 overflow-x-auto md:flex-none md:flex-col md:overflow-visible"
 					aria-label="Main"
 				>
-					{MAIN_NAV.map(({ to, label, icon }) => (
-						<NavLink key={to} to={to} label={label} icon={icon} />
+					{MAIN_NAV.map((item) => (
+						<NavLink
+							key={item.to}
+							to={item.to}
+							label={item.label}
+							icon={item.icon}
+							badge={"badge" in item ? item.badge : undefined}
+						/>
 					))}
 
 					{SOURCES.length > 0 && (
@@ -66,7 +78,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 				</div>
 			</aside>
 
-			<main className="min-w-0 flex-1 px-4 py-6 md:px-8">{children}</main>
+			<main
+				id={MAIN_SCROLL_ID}
+				data-scroll-restoration-id={MAIN_SCROLL_ID}
+				className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 md:px-8"
+			>
+				{children}
+			</main>
 		</div>
 	);
 }
@@ -75,10 +93,13 @@ function NavLink({
 	to,
 	label,
 	icon: Icon,
+	badge: Badge,
 }: {
-	to: "/" | "/feed" | "/settings/integrations";
+	to: "/" | "/urgent" | "/feed" | "/settings/integrations";
 	label: string;
 	icon: ComponentType<{ className?: string }>;
+	/** Rendered at the end of the link, e.g. a live count. */
+	badge?: ComponentType;
 }) {
 	return (
 		<Link
@@ -89,6 +110,7 @@ function NavLink({
 		>
 			<Icon className="size-4" />
 			<span className="hidden sm:inline">{label}</span>
+			{Badge && <Badge />}
 		</Link>
 	);
 }

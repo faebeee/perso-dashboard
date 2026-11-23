@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import type { AttentionItem } from "./attention";
 import type {
 	OAuthClientCredentials,
 	OAuthClientRef,
@@ -17,6 +18,8 @@ export interface IntegrationManifest {
 	name: string;
 	description: string;
 	icon: ComponentType<{ className?: string }>;
+	/** Brand colour (CSS colour) used to tint this source's items. */
+	accent?: string;
 	/** Where the user creates the OAuth app for this provider. */
 	setup: { url: string; label: string };
 	widgets: WidgetDefinition[];
@@ -60,6 +63,14 @@ export interface IntegrationBackend {
 	describeAccount(ctx: IntegrationContext): Promise<AccountInfo>;
 	/** Items for the unified feed. Omit when the data isn't "work" (e.g. calendar). */
 	getFeedItems?(ctx: IntegrationContext): Promise<WorkItem[]>;
+	/**
+	 * What needs the user's attention soon (urgent view). Omit if nothing from
+	 * this provider is ever urgent. `now` is injected for testability.
+	 */
+	getAttentionItems?(
+		ctx: IntegrationContext,
+		now: Date,
+	): Promise<AttentionItem[]>;
 	/** Releases for the combined releases widget. Omit if the provider has none. */
 	getReleases?(
 		ctx: IntegrationContext,

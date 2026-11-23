@@ -10,6 +10,7 @@ export const jiraManifest: IntegrationManifest = {
 	name: "Jira",
 	description: "Open Jira Cloud issues you're assigned to or reported.",
 	icon: SquareKanban,
+	accent: "#1868db",
 	setup: {
 		url: "https://developer.atlassian.com/console/myapps/",
 		label: "Atlassian Developer Console → OAuth 2.0 (3LO)",

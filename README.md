@@ -1,6 +1,15 @@
 # Productivity Dashboard
 
-A personal, local-first **desktop app** that brings work from **GitHub**, **Jira Cloud**, **Gmail** and **Google Calendar** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists.
+A personal, local-first **desktop app** that brings work from **GitHub**, **Jira Cloud**, **Gmail** and **Google Calendar** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists. The **Urgent** view (top of the sidebar, with a live count, also available as a widget) shows only what needs you soon:
+
+| Source | Urgent when… |
+|---|---|
+| Google Calendar | a meeting is on now or starts within 2h (≤15 min counts as *right now*), or an invitation for the next 48h is unanswered |
+| GitHub | your review is requested (escalated after 24h without activity) |
+| Jira | an issue assigned to you is overdue, due today, or Highest/Blocker/Critical/High priority, or a fix version is overdue |
+| Gmail | unread inbox mail marked Important from the last 2 days |
+
+Thresholds live in `ATTENTION_RULES` (`src/core/attention.ts`); each integration's rules are in its `attention.ts`.
 
 Built with Tauri 2 (Rust shell), React, TanStack Router + Query, Tailwind v4, shadcn/ui, Drizzle + SQLite.
 
@@ -68,7 +77,8 @@ src/
   components/    ui/ (shadcn), work-item/, release/, calendar/ (shared lists),
                  widget-kit/ (query states, widget factory, scope filter),
                  overview-kit/ (stat tiles, sections, breakdown bars)
-  features/      dashboard/, feed/, releases/, connections/, integration-overview/
+  features/      dashboard/, feed/, releases/, attention/ (urgent view), connections/,
+                 integration-overview/
   app/           Composition: query client, widget catalog, app shell, external links
   routes/        Thin TanStack Router files that only compose features
   main.tsx       Entry: picks the Host, mounts the router
@@ -111,6 +121,7 @@ integrations/github/
   fetchers.ts             entry points for the UI, return Result<T>
   queries.ts              TanStack Query options
   overview.tsx            the source's sidebar page (built from overview-kit)
+  attention.ts            pure rules: what from this source is urgent
   manifest.ts             name, icon, widgets, overview
   *.test.ts               mapper + service tests against fixtures
 ```
@@ -121,7 +132,7 @@ integrations/github/
 2. Add `linearManifest` to `integrations/registry.ts` and `linearBackend` to `integrations/runtime-registry.ts`.
 3. Allow its API and token hosts under `http:default` in `src-tauri/capabilities/default.json`.
 
-Connection handling, the OAuth flow, the credentials form, the feed, the dashboard and the sidebar pick it up through the registries. To give the source its own sidebar page, set `overview` in its manifest; it's served at `/apps/<id>`.
+Connection handling, the OAuth flow, the credentials form, the feed, the dashboard and the sidebar pick it up through the registries. To give the source its own sidebar page, set `overview` in its manifest; it's served at `/apps/<id>`. To feed the Urgent view, implement `getAttentionItems` on its backend.
 
 ### Swapping parts
 

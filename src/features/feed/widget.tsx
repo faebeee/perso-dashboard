@@ -1,14 +1,11 @@
 import { ListTodo } from "lucide-react";
-import type { IntegrationManifest } from "#/core/integration";
 import type { WidgetDefinition } from "#/core/widget";
 import { FeedView } from "./components/feed-view";
 
-/** Built-in "My Work" widget. Receives the integrations it should label. */
-export function createFeedWidget(
-	integrations: readonly IntegrationManifest[],
-): WidgetDefinition {
+/** Built-in "My Work" widget. */
+export function createFeedWidget(): WidgetDefinition {
 	function FeedWidget() {
-		return <FeedView integrations={integrations} compact />;
+		return <FeedView compact />;
 	}
 	return {
 		type: "core.feed",

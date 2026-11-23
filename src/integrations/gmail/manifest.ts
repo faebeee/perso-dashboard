@@ -10,6 +10,7 @@ export const gmailManifest: IntegrationManifest = {
 	name: "Gmail",
 	description: "Unread messages in your inbox (read-only access).",
 	icon: Mail,
+	accent: "#d93025",
 	setup: {
 		url: "https://console.cloud.google.com/apis/credentials",
 		label: "Google Cloud Console → Credentials (enable the Gmail API)",

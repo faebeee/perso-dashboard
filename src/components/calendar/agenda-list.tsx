@@ -1,7 +1,9 @@
 import { MapPin, Video } from "lucide-react";
+import { ItemIcon } from "#/components/source-kit/item-icon";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { type CalendarEvent, eventStartMs } from "#/core/calendar-event";
+import { localDayKey } from "#/lib/time";
 import { cn } from "#/lib/utils";
 
 interface AgendaListProps {
@@ -45,7 +47,11 @@ function AgendaRow({ event, now }: { event: CalendarEvent; now: number }) {
 				ongoing && "bg-primary/5",
 			)}
 		>
-			<div className="w-24 shrink-0 text-xs tabular-nums text-muted-foreground">
+			<ItemIcon
+				source={event.source}
+				kind={event.response === "needsAction" ? "invitation" : "event"}
+			/>
+			<div className="w-24 shrink-0 pt-1.5 text-xs tabular-nums text-muted-foreground">
 				{event.allDay
 					? "All day"
 					: `${formatTime(event.start)} – ${formatTime(event.end)}`}
@@ -104,12 +110,6 @@ const dayFormat = new Intl.DateTimeFormat(undefined, {
 });
 
 const formatTime = (iso: string) => timeFormat.format(new Date(iso));
-
-/** "YYYY-MM-DD" in the viewer's time zone. */
-export function localDayKey(ms: number): string {
-	const d = new Date(ms);
-	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 function dayLabel(key: string, now: number): string {
 	const today = localDayKey(now);

@@ -1,34 +1,25 @@
+import { ItemIcon } from "#/components/source-kit/item-icon";
 import { Badge } from "#/components/ui/badge";
-import type { WorkItemSource } from "#/components/work-item/work-item-list";
 import { type Release, releaseDateMs } from "#/core/release";
 import { formatRelative } from "#/lib/time";
 import { cn } from "#/lib/utils";
 
 interface ReleaseListProps {
 	releases: Release[];
-	sources: Record<string, WorkItemSource>;
 }
 
 /** Releases split into "Upcoming" and "Recently released". */
-export function ReleaseList({ releases, sources }: ReleaseListProps) {
+export function ReleaseList({ releases }: ReleaseListProps) {
 	const upcoming = releases.filter((r) => r.state === "upcoming");
 	const released = releases.filter((r) => r.state === "released");
 
 	return (
 		<div className="space-y-3 py-1">
 			{upcoming.length > 0 && (
-				<ReleaseSection
-					title="Upcoming"
-					releases={upcoming}
-					sources={sources}
-				/>
+				<ReleaseSection title="Upcoming" releases={upcoming} />
 			)}
 			{released.length > 0 && (
-				<ReleaseSection
-					title="Recently released"
-					releases={released}
-					sources={sources}
-				/>
+				<ReleaseSection title="Recently released" releases={released} />
 			)}
 		</div>
 	);
@@ -37,11 +28,9 @@ export function ReleaseList({ releases, sources }: ReleaseListProps) {
 function ReleaseSection({
 	title,
 	releases,
-	sources,
 }: {
 	title: string;
 	releases: Release[];
-	sources: Record<string, WorkItemSource>;
 }) {
 	return (
 		<section aria-label={title}>
@@ -51,7 +40,7 @@ function ReleaseSection({
 			<ul className="divide-y divide-border">
 				{releases.map((release) => (
 					<li key={release.id}>
-						<ReleaseRow release={release} source={sources[release.source]} />
+						<ReleaseRow release={release} />
 					</li>
 				))}
 			</ul>
@@ -59,14 +48,7 @@ function ReleaseSection({
 	);
 }
 
-function ReleaseRow({
-	release,
-	source,
-}: {
-	release: Release;
-	source?: WorkItemSource;
-}) {
-	const Icon = source?.icon;
+function ReleaseRow({ release }: { release: Release }) {
 	return (
 		<a
 			href={release.url}
@@ -74,12 +56,7 @@ function ReleaseRow({
 			rel="noreferrer"
 			className="group flex items-start gap-3 rounded-md px-1 py-2.5 text-inherit no-underline hover:bg-accent/60"
 		>
-			{Icon && (
-				<Icon
-					className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-					aria-label={source?.name}
-				/>
-			)}
+			<ItemIcon source={release.source} kind="release" className="mt-0.5" />
 			<div className="min-w-0 flex-1">
 				<p className="truncate text-sm font-medium text-foreground group-hover:underline underline-offset-2">
 					{release.name}

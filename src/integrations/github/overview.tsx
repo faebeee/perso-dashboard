@@ -19,10 +19,9 @@ import { WorkItemList } from "#/components/work-item/work-item-list";
 import { RECENT_RELEASE_DAYS, type Release } from "#/core/release";
 import { tally } from "#/lib/tally";
 import { formatRelative } from "#/lib/time";
-import { GITHUB_ID, SEARCH_PAGE_SIZE } from "./constants";
+import { SEARCH_PAGE_SIZE } from "./constants";
 import { githubQueries } from "./queries";
 
-const SOURCES = { [GITHUB_ID]: { name: "GitHub", icon: GitPullRequest } };
 const upcoming = (releases: Release[]) =>
 	releases.filter((r) => r.state === "upcoming");
 const shipped = (releases: Release[]) =>
@@ -116,7 +115,7 @@ export function GitHubOverview() {
 					isEmpty={(r) => r.length === 0}
 					emptyMessage={`No drafts and nothing shipped in the last ${RECENT_RELEASE_DAYS} days.`}
 				>
-					{(r) => <ReleaseList releases={r} sources={SOURCES} />}
+					{(r) => <ReleaseList releases={r} />}
 				</OverviewSection>
 			</div>
 		</div>

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FeedRouteImport } from './routes/feed'
+import { Route as UrgentRouteImport } from './routes/urgent'
 import { Route as AppsIntegrationIdRouteImport } from './routes/apps/$integrationId'
 import { Route as SettingsIntegrationsRouteImport } from './routes/settings/integrations'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const FeedRoute = FeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UrgentRoute = UrgentRouteImport.update({
+  id: '/urgent',
+  path: '/urgent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppsIntegrationIdRoute = AppsIntegrationIdRouteImport.update({
@@ -38,12 +44,14 @@ const SettingsIntegrationsRoute = SettingsIntegrationsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
+  '/urgent': typeof UrgentRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
+  '/urgent': typeof UrgentRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
 }
@@ -51,18 +59,30 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
+  '/urgent': typeof UrgentRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/feed' | '/apps/$integrationId' | '/settings/integrations'
+  fullPaths:
+    | '/'
+    | '/feed'
+    | '/urgent'
+    | '/apps/$integrationId'
+    | '/settings/integrations'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/feed' | '/apps/$integrationId' | '/settings/integrations'
+  to:
+    | '/'
+    | '/feed'
+    | '/urgent'
+    | '/apps/$integrationId'
+    | '/settings/integrations'
   id:
     | '__root__'
     | '/'
     | '/feed'
+    | '/urgent'
     | '/apps/$integrationId'
     | '/settings/integrations'
   fileRoutesById: FileRoutesById
@@ -70,6 +90,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FeedRoute: typeof FeedRoute
+  UrgentRoute: typeof UrgentRoute
   AppsIntegrationIdRoute: typeof AppsIntegrationIdRoute
   SettingsIntegrationsRoute: typeof SettingsIntegrationsRoute
 }
@@ -88,6 +109,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof FeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/urgent': {
+      id: '/urgent'
+      path: '/urgent'
+      fullPath: '/urgent'
+      preLoaderRoute: typeof UrgentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/apps/$integrationId': {
@@ -110,6 +138,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FeedRoute: FeedRoute,
+  UrgentRoute: UrgentRoute,
   AppsIntegrationIdRoute: AppsIntegrationIdRoute,
   SettingsIntegrationsRoute: SettingsIntegrationsRoute,
 }

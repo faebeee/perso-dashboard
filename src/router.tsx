@@ -1,6 +1,7 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { createQueryClient } from "./app/query-client";
+import { MAIN_SCROLL_ID } from "./app/shell/app-shell";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -10,6 +11,8 @@ export function getRouter() {
 		routeTree,
 		context: { queryClient },
 		scrollRestoration: true,
+		// <main> scrolls, not the window: reset it on navigation too.
+		scrollToTopSelectors: [`#${MAIN_SCROLL_ID}`],
 		defaultPreload: "intent",
 		defaultPreloadStaleTime: 0,
 		Wrap: ({ children }) => (

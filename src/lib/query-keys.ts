@@ -10,6 +10,7 @@ export const queryKeys = {
 	combined: ["combined"] as const,
 	feed: ["combined", "feed"] as const,
 	releases: ["combined", "releases"] as const,
+	attention: ["combined", "attention"] as const,
 };
 
 export const integrationQueryKey = (integrationId: string) =>
