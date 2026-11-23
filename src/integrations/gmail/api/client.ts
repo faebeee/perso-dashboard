@@ -6,6 +6,8 @@ import {
 	gmailMessageListSchema,
 	gmailMessageSchema,
 	gmailProfileSchema,
+	gmailThreadListSchema,
+	gmailThreadSchema,
 } from "./schemas";
 
 /** Thin wrapper over the Gmail REST API (users/me). */
@@ -35,6 +37,16 @@ export function createGmailApi(accessToken: string, fetch?: FetchFn) {
 				gmailFullMessageSchema,
 				{ format: "full" },
 			),
+
+		listThreads: (q: string, maxResults = MESSAGE_PAGE_SIZE) =>
+			http.get(`${base}/threads`, gmailThreadListSchema, { q, maxResults }),
+
+		/** All messages of a thread, headers only. */
+		getThreadMetadata: (id: string) =>
+			http.get(`${base}/threads/${encodeURIComponent(id)}`, gmailThreadSchema, {
+				format: "metadata",
+				metadataHeaders: ["From", "To", "Subject"],
+			}),
 
 		getMessageMetadata: (id: string) =>
 			http.get(

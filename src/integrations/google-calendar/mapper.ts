@@ -3,6 +3,15 @@ import type { GoogleEvent } from "./api/schemas";
 import { GOOGLE_CALENDAR_ID } from "./constants";
 
 const RESPONSES = new Set(["accepted", "tentative", "needsAction"]);
+const ATTENDEE_RESPONSES = new Set([
+	"accepted",
+	"tentative",
+	"declined",
+	"needsAction",
+]);
+type AttendeeResponse = NonNullable<
+	NonNullable<CalendarEvent["attendees"]>[number]["response"]
+>;
 
 /**
  * Pure: Google event → CalendarEvent. Returns null for events you won't
@@ -40,5 +49,14 @@ export function toCalendarEvent(event: GoogleEvent): CalendarEvent | null {
 			)?.uri,
 		isOrganizer,
 		response,
+		attendees: event.attendees
+			.filter((a) => !a.self && !a.resource && a.email)
+			.map((a) => ({
+				email: a.email ?? "",
+				name: a.displayName,
+				response: ATTENDEE_RESPONSES.has(a.responseStatus ?? "")
+					? (a.responseStatus as AttendeeResponse)
+					: undefined,
+			})),
 	};
 }

@@ -39,6 +39,9 @@ export const JIRA_SCOPE_CLAUSES = {
  */
 export const JIRA_DUE_ASSIGNED_JQL = `${JIRA_FILTERS.open} AND ${JIRA_SCOPE_CLAUSES.assigned} AND duedate <= endOfDay() ORDER BY duedate ASC`;
 
+/** Issues you reported that are open and still unassigned, oldest first. */
+export const JIRA_UNASSIGNED_REPORTED_JQL = `${JIRA_FILTERS.open} AND reporter = currentUser() AND assignee is EMPTY ORDER BY created ASC`;
+
 export function buildJql(...clauses: (string | undefined)[]): string {
 	return `${clauses.filter(Boolean).join(" AND ")} ORDER BY updated DESC`;
 }

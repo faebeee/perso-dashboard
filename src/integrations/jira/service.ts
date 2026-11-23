@@ -9,6 +9,7 @@ import {
 	JIRA_FILTERS,
 	JIRA_ID,
 	JIRA_SCOPE_CLAUSES,
+	JIRA_UNASSIGNED_REPORTED_JQL,
 } from "./constants";
 import { toIssueDetail } from "./detail";
 import { toWorkItem } from "./mapper";
@@ -48,6 +49,11 @@ export function createJiraService(api: JiraApi, site: JiraSite) {
 			}
 			return [...byId.values()];
 		},
+
+		/** Raw issues you reported that nobody picked up (Waiting page). */
+		unassignedReported: async () =>
+			(await api.searchIssues(site.cloudId, JIRA_UNASSIGNED_REPORTED_JQL))
+				.issues,
 
 		/** One issue for the detail view. */
 		issueDetail: async (key: string) =>

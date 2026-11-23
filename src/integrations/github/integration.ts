@@ -5,6 +5,7 @@ import { GITHUB_ID } from "./constants";
 import { createGitHubOAuth, GITHUB_OAUTH_CLIENT } from "./oauth";
 import { createGitHubReleaseService } from "./releases";
 import { createGitHubService } from "./service";
+import { awaitingReviewToWaiting } from "./waiting";
 
 export const githubService = (accessToken: string) =>
 	createGitHubService(createGitHubApi(accessToken));
@@ -44,6 +45,12 @@ export const githubBackend: IntegrationBackend = {
 			...prSignalsToAttention(mine),
 		];
 	},
+
+	getWaitingItems: async ({ accessToken }, now) =>
+		awaitingReviewToWaiting(
+			await githubService(accessToken).awaitingReview(),
+			now,
+		),
 
 	getReleases: ({ accessToken }, query) =>
 		githubReleaseService(accessToken).releases(query),

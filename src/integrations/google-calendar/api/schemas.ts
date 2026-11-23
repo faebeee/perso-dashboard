@@ -32,7 +32,11 @@ export const googleEventSchema = z.object({
 	attendees: z
 		.array(
 			z.object({
+				email: z.string().optional(),
+				displayName: z.string().optional(),
 				self: z.boolean().optional(),
+				/** Meeting rooms and other resources aren't people. */
+				resource: z.boolean().optional(),
 				responseStatus: z.string().optional(),
 			}),
 		)

@@ -13,6 +13,12 @@ export const githubSearchItemSchema = z.object({
 	title: z.string(),
 	html_url: z.string(),
 	updated_at: z.string(),
+	created_at: z.string().optional(),
+	closed_at: z.string().nullable().optional(),
+	/** Present on PRs; merged_at set once merged. */
+	pull_request: z
+		.object({ merged_at: z.string().nullable().optional() })
+		.optional(),
 	state: z.string(),
 	draft: z.boolean().optional(),
 	repository_url: z.string(),

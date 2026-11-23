@@ -63,6 +63,10 @@ export function createGitHubService(api: GitHubApi) {
 	return {
 		prsNeedingAction,
 
+		/** Raw (with created_at), for the Waiting page. */
+		awaitingReview: async () =>
+			(await api.searchIssues(GITHUB_QUERIES.awaitingReview)).items,
+
 		async reviewRequests(): Promise<WorkItem[]> {
 			return searchPrs(GITHUB_QUERIES.reviewRequests, "review_request");
 		},

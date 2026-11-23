@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import {
+	Hourglass,
 	LayoutDashboard,
 	ListTodo,
 	PlugZap,
@@ -17,6 +18,7 @@ import { UrgentCount } from "./urgent-count";
 const MAIN_NAV = [
 	{ to: "/today", label: "Today", icon: Sun },
 	{ to: "/urgent", label: "Urgent", icon: Siren, badge: UrgentCount },
+	{ to: "/waiting", label: "Waiting", icon: Hourglass },
 	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
 	{ to: "/feed", label: "My Work", icon: ListTodo },
 ] as const;
@@ -131,6 +133,7 @@ function NavLink({
 		| "/"
 		| "/today"
 		| "/urgent"
+		| "/waiting"
 		| "/feed"
 		| "/settings/integrations"
 		| "/settings/preferences";

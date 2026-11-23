@@ -7,6 +7,7 @@ import type {
 	OAuthProvider,
 } from "./oauth";
 import type { Release, ReleaseQuery } from "./release";
+import type { WaitingItem } from "./waiting";
 import type { WidgetDefinition } from "./widget";
 import type { WorkItem } from "./work-item";
 
@@ -83,6 +84,17 @@ export interface IntegrationBackend {
 		ctx: IntegrationContext,
 		now: Date,
 	): Promise<AttentionItem[]>;
+	/** What you're waiting on others for (Waiting page). */
+	getWaitingItems?(ctx: IntegrationContext, now: Date): Promise<WaitingItem[]>;
+	/**
+	 * Recent items involving these people (email addresses), for meeting
+	 * prep: e.g. conversations with the attendees.
+	 */
+	getRelatedToPeople?(
+		ctx: IntegrationContext,
+		people: string[],
+		since: Date,
+	): Promise<WorkItem[]>;
 	/** Your calendar between two moments (briefing, free time). Calendars only. */
 	getAgenda?(
 		ctx: IntegrationContext,

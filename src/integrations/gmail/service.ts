@@ -1,6 +1,6 @@
 import type { WorkItem } from "#/core/work-item";
 import type { GmailApi } from "./api/client";
-import { GMAIL_QUERIES } from "./constants";
+import { GMAIL_QUERIES, withPeopleQuery } from "./constants";
 import { toWorkItem } from "./mapper";
 import { toEmailDetail } from "./message";
 
@@ -27,6 +27,18 @@ export function createGmailService(api: GmailApi, accountEmail?: string) {
 		starred: () => search(GMAIL_QUERIES.starred),
 
 		importantUnread: () => search(GMAIL_QUERIES.importantUnread),
+
+		/** Recent conversations you wrote in, with all their messages' headers. */
+		async recentlySentThreads() {
+			const list = await api.listThreads(GMAIL_QUERIES.recentlySent);
+			return Promise.all(list.threads.map((t) => api.getThreadMetadata(t.id)));
+		},
+
+		/** Recent mail with any of these people (meeting prep). */
+		withPeople: (people: readonly string[], since: Date) =>
+			people.length === 0
+				? Promise.resolve([])
+				: search(withPeopleQuery(people, since)),
 
 		/** One message for the detail view. */
 		message: async (id: string) =>

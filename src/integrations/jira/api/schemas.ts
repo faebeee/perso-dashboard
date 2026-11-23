@@ -23,6 +23,9 @@ export const jiraIssueSchema = z.object({
 	fields: z.object({
 		summary: z.string(),
 		updated: z.string(),
+		created: z.string().optional(),
+		/** Set once the issue is resolved. */
+		resolutiondate: z.string().nullable().optional(),
 		/** YYYY-MM-DD */
 		duedate: z.string().nullable().optional(),
 		status: z.object({ name: z.string() }).nullable().optional(),

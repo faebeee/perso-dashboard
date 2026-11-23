@@ -9,6 +9,7 @@ import { JIRA_ID } from "./constants";
 import { ATLASSIAN_OAUTH_CLIENT, createJiraOAuth } from "./oauth";
 import { createJiraReleaseService } from "./releases";
 import { createJiraService, readJiraSite, resolveJiraSite } from "./service";
+import { unassignedToWaiting } from "./waiting";
 
 export const jiraService = (ctx: IntegrationContext) =>
 	createJiraService(createJiraApi(ctx.accessToken), readJiraSite(ctx.meta));
@@ -46,6 +47,15 @@ export const jiraBackend: IntegrationBackend = {
 			...issuesToAttention(issues, site.siteUrl, now),
 			...overdueReleasesToAttention(releases, now),
 		];
+	},
+
+	async getWaitingItems(ctx, now) {
+		const site = readJiraSite(ctx.meta);
+		return unassignedToWaiting(
+			await jiraService(ctx).unassignedReported(),
+			site.siteUrl,
+			now,
+		);
 	},
 
 	getReleases: (ctx, query) => jiraReleaseService(ctx).releases(query),

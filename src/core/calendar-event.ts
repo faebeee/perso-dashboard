@@ -22,6 +22,18 @@ export const calendarEventSchema = z.object({
 	isOrganizer: z.boolean(),
 	/** Your RSVP when invited. */
 	response: z.enum(["accepted", "tentative", "needsAction"]).optional(),
+	/** Other people invited (not you, not rooms). */
+	attendees: z
+		.array(
+			z.object({
+				email: z.string(),
+				name: z.string().optional(),
+				response: z
+					.enum(["accepted", "tentative", "declined", "needsAction"])
+					.optional(),
+			}),
+		)
+		.optional(),
 });
 
 export type CalendarEvent = z.infer<typeof calendarEventSchema>;

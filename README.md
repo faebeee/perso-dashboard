@@ -40,6 +40,19 @@ Then open **Integrations**, enter the OAuth client for each provider, and click 
 - **Morning briefing notification:** once per day, at the start of your workday.
 - Workday hours, the briefing and the shortcut are set in **Preferences**.
 
+## Waiting
+
+**Waiting** (sidebar) lists what you're waiting on *others* for, oldest first:
+
+| Source | Shows |
+|---|---|
+| GitHub | your ready PRs without any review yet |
+| Gmail | conversations from the last 14 days where your message is still the last one after 2+ days |
+| Jira | issues you reported that are still open and unassigned |
+| Google Calendar | meetings you organize in the next 7 days with invitees who haven't replied |
+
+**Meeting prep:** for your next meetings with other people (next 24h), it shows recent email conversations with the attendees. Integrations contribute through `getWaitingItems` and `getRelatedToPeople`; thresholds are in `WAITING_RULES` (`src/core/waiting.ts`).
+
 ## Desktop behaviour
 
 - **Menu bar:** an icon with the urgent count. Its menu lists the urgent items (click to open), plus *Open Urgent*, *Open Dashboard* and *Quit*. The same count shows on the **Dock badge**.

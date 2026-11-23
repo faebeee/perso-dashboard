@@ -26,4 +26,6 @@ export const GITHUB_QUERIES = {
 	changesRequested: `${MY_READY_PRS} review:changes_requested`,
 	/** Your PRs whose latest commit has failing checks or statuses. */
 	checksFailing: `${MY_READY_PRS} status:failure`,
+	/** Your ready PRs nobody has reviewed yet. */
+	awaitingReview: `${MY_READY_PRS} review:none`,
 } as const;

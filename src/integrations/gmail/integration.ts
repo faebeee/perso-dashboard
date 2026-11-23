@@ -8,6 +8,7 @@ import { importantMailToAttention } from "./attention";
 import { GMAIL_ID } from "./constants";
 import { createGmailOAuth } from "./oauth";
 import { createGmailService } from "./service";
+import { unansweredToWaiting } from "./waiting";
 
 export const gmailService = (ctx: IntegrationContext) =>
 	createGmailService(
@@ -31,6 +32,16 @@ export const gmailBackend: IntegrationBackend = {
 	},
 
 	getFeedItems: (ctx) => gmailService(ctx).unreadInbox(),
+
+	getWaitingItems: async (ctx, now) =>
+		unansweredToWaiting(
+			await gmailService(ctx).recentlySentThreads(),
+			typeof ctx.meta.email === "string" ? ctx.meta.email : undefined,
+			now,
+		),
+
+	getRelatedToPeople: (ctx, people, since) =>
+		gmailService(ctx).withPeople(people, since),
 
 	getAttentionItems: async (ctx, now) =>
 		importantMailToAttention(await gmailService(ctx).importantUnread(), now),

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as TodayRouteImport } from './routes/today'
 import { Route as UrgentRouteImport } from './routes/urgent'
+import { Route as WaitingRouteImport } from './routes/waiting'
 import { Route as AppsIntegrationIdRouteImport } from './routes/apps/$integrationId'
 import { Route as SettingsIntegrationsRouteImport } from './routes/settings/integrations'
 import { Route as SettingsPreferencesRouteImport } from './routes/settings/preferences'
@@ -37,6 +38,11 @@ const UrgentRoute = UrgentRouteImport.update({
   path: '/urgent',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WaitingRoute = WaitingRouteImport.update({
+  id: '/waiting',
+  path: '/waiting',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppsIntegrationIdRoute = AppsIntegrationIdRouteImport.update({
   id: '/apps/$integrationId',
   path: '/apps/$integrationId',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/feed': typeof FeedRoute
   '/today': typeof TodayRoute
   '/urgent': typeof UrgentRoute
+  '/waiting': typeof WaitingRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
   '/settings/preferences': typeof SettingsPreferencesRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/feed': typeof FeedRoute
   '/today': typeof TodayRoute
   '/urgent': typeof UrgentRoute
+  '/waiting': typeof WaitingRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
   '/settings/preferences': typeof SettingsPreferencesRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/feed': typeof FeedRoute
   '/today': typeof TodayRoute
   '/urgent': typeof UrgentRoute
+  '/waiting': typeof WaitingRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
   '/settings/preferences': typeof SettingsPreferencesRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/today'
     | '/urgent'
+    | '/waiting'
     | '/apps/$integrationId'
     | '/settings/integrations'
     | '/settings/preferences'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/today'
     | '/urgent'
+    | '/waiting'
     | '/apps/$integrationId'
     | '/settings/integrations'
     | '/settings/preferences'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/feed'
     | '/today'
     | '/urgent'
+    | '/waiting'
     | '/apps/$integrationId'
     | '/settings/integrations'
     | '/settings/preferences'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   FeedRoute: typeof FeedRoute
   TodayRoute: typeof TodayRoute
   UrgentRoute: typeof UrgentRoute
+  WaitingRoute: typeof WaitingRoute
   AppsIntegrationIdRoute: typeof AppsIntegrationIdRoute
   SettingsIntegrationsRoute: typeof SettingsIntegrationsRoute
   SettingsPreferencesRoute: typeof SettingsPreferencesRoute
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UrgentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/waiting': {
+      id: '/waiting'
+      path: '/waiting'
+      fullPath: '/waiting'
+      preLoaderRoute: typeof WaitingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/apps/$integrationId': {
       id: '/apps/$integrationId'
       path: '/apps/$integrationId'
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeedRoute: FeedRoute,
   TodayRoute: TodayRoute,
   UrgentRoute: UrgentRoute,
+  WaitingRoute: WaitingRoute,
   AppsIntegrationIdRoute: AppsIntegrationIdRoute,
   SettingsIntegrationsRoute: SettingsIntegrationsRoute,
   SettingsPreferencesRoute: SettingsPreferencesRoute,

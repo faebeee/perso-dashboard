@@ -16,8 +16,9 @@ const raw = (overrides: Record<string, unknown> = {}) => ({
 	hangoutLink: "https://meet.google.com/abc-defg-hij",
 	organizer: { email: "lead@x.com" },
 	attendees: [
-		{ email: "lead@x.com", responseStatus: "accepted" },
+		{ email: "lead@x.com", displayName: "Lead", responseStatus: "accepted" },
 		{ email: "me@x.com", self: true, responseStatus: "needsAction" },
+		{ email: "room-4@resource.x.com", resource: true },
 	],
 	...overrides,
 });
@@ -39,6 +40,8 @@ describe("google calendar mapper", () => {
 			meetingUrl: "https://meet.google.com/abc-defg-hij",
 			isOrganizer: false,
 			response: "needsAction",
+			// Not you, not the meeting room.
+			attendees: [{ email: "lead@x.com", name: "Lead", response: "accepted" }],
 		});
 	});
 

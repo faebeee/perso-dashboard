@@ -64,3 +64,15 @@ export const gmailFullMessageSchema = z.object({
 });
 
 export type GmailFullMessage = z.infer<typeof gmailFullMessageSchema>;
+
+export const gmailThreadListSchema = z.object({
+	threads: z.array(z.object({ id: z.string() })).default([]),
+});
+
+/** A thread with message headers only (format=metadata). */
+export const gmailThreadSchema = z.object({
+	id: z.string(),
+	messages: z.array(gmailMessageSchema).default([]),
+});
+
+export type GmailThread = z.infer<typeof gmailThreadSchema>;

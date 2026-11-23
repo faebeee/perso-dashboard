@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
 import {
 	CalendarPlus,
+	Hourglass,
 	LayoutDashboard,
 	ListTodo,
 	PlugZap,
@@ -53,6 +54,7 @@ const PAGES: {
 }[] = [
 	{ to: "/today", label: "Today", icon: Sun },
 	{ to: "/urgent", label: "Urgent", icon: Siren },
+	{ to: "/waiting", label: "Waiting", icon: Hourglass },
 	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
 	{ to: "/feed", label: "My Work", icon: ListTodo },
 	...integrationManifests
