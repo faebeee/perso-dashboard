@@ -1,3 +1,4 @@
+import { TTL, ttlByPath } from "#/platform/cache-ttl";
 import { createHttpClient, type FetchFn } from "#/platform/http";
 import { GOOGLE_CALENDAR_ID } from "../constants";
 import { googleCalendarSchema, googleEventListSchema } from "./schemas";
@@ -9,6 +10,7 @@ export function createGoogleCalendarApi(accessToken: string, fetch?: FetchFn) {
 		baseUrl: "https://www.googleapis.com",
 		accessToken,
 		fetch,
+		ttl: ttlByPath([[/\/calendars\/primary$/, TTL.stable]], TTL.list),
 	});
 
 	return {

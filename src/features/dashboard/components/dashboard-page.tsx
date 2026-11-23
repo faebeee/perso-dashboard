@@ -7,6 +7,7 @@ import { WorkScopeToggle } from "#/components/widget-kit/work-scope-toggle";
 import type { WidgetDefinition } from "#/core/widget";
 import type { WorkScope } from "#/core/work-scope";
 import { queryKeys } from "#/lib/query-keys";
+import { expireCachedData } from "#/platform/services";
 import {
 	addWidget,
 	applyPositions,
@@ -42,11 +43,13 @@ export function DashboardPage({
 		[catalog],
 	);
 
-	const refreshAll = () =>
-		Promise.all([
+	const refreshAll = async () => {
+		await expireCachedData();
+		await Promise.all([
 			queryClient.invalidateQueries({ queryKey: queryKeys.integrations }),
 			queryClient.invalidateQueries({ queryKey: queryKeys.combined }),
 		]);
+	};
 
 	return (
 		<WorkScopeProvider scope={scope}>

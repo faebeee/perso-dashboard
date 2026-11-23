@@ -1,3 +1,4 @@
+import { TTL, ttlByPath } from "#/platform/cache-ttl";
 import { createHttpClient, type FetchFn } from "#/platform/http";
 import { GMAIL_ID, MESSAGE_PAGE_SIZE } from "../constants";
 import {
@@ -17,6 +18,17 @@ export function createGmailApi(accessToken: string, fetch?: FetchFn) {
 		baseUrl: "https://gmail.googleapis.com",
 		accessToken,
 		fetch,
+		ttl: ttlByPath(
+			[
+				[/\/profile$/, TTL.stable],
+				// A message never changes (only its labels): fetched once per 10 min.
+				[/\/messages\/[^/]+$/, TTL.slow],
+				[/\/threads\/[^/]+$/, 5 * 60_000],
+				// The inbox list itself stays fresh.
+				[/\/messages$/, 60_000],
+			],
+			TTL.list,
+		),
 	});
 	const base = "/gmail/v1/users/me";
 

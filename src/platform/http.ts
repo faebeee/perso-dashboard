@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import { IntegrationFailure } from "#/core/result";
 import { type FetchFn, hostFetch } from "./host";
+import type { HttpCache } from "./http-cache";
 
 export type { FetchFn };
 
@@ -11,6 +12,15 @@ export interface HttpClientOptions {
 	headers?: Record<string, string>;
 	/** Defaults to the host's (CORS-free) fetch. Injectable for tests. */
 	fetch?: FetchFn;
+	/**
+	 * How long a response stays fresh (ms), per URL. Within it, repeat
+	 * requests are served from cache. Defaults to DEFAULT_TTL_MS.
+	 */
+	ttl?: number | ((url: URL) => number);
+	/** Rate-limit pool a URL belongs to (GitHub: "search" vs "core"). */
+	rateLimitBucket?: (url: URL) => string;
+	/** Defaults to the app-wide cache (see setDefaultHttpCache); none in tests. */
+	cache?: HttpCache | null;
 }
 
 export interface HttpClient {
@@ -21,14 +31,69 @@ export interface HttpClient {
 	): Promise<T>;
 }
 
+export const DEFAULT_TTL_MS = 60_000;
+
+let defaultCache: HttpCache | null = null;
+
+/** Set once by the composition root (platform/services.ts). */
+export function setDefaultHttpCache(cache: HttpCache | null): void {
+	defaultCache = cache;
+}
+
 /**
  * Minimal JSON-over-HTTP client shared by integrations. It adds bearer auth,
- * validates responses with zod and maps HTTP failures to typed
- * `IntegrationFailure`s.
+ * caches and deduplicates GETs (see http-cache.ts), validates responses with
+ * zod and maps HTTP failures to typed `IntegrationFailure`s.
  */
 export function createHttpClient(options: HttpClientOptions): HttpClient {
 	const fetchFn = options.fetch ?? hostFetch;
 	const { integrationId } = options;
+	// Injected fetch (tests) means "talk to this fetch", not to a shared cache.
+	const cache =
+		options.cache !== undefined
+			? options.cache
+			: options.fetch
+				? null
+				: defaultCache;
+
+	const send = async (url: URL, conditional: Record<string, string> = {}) => {
+		try {
+			return await fetchFn(url, {
+				headers: {
+					Accept: "application/json",
+					Authorization: `Bearer ${options.accessToken}`,
+					...options.headers,
+					...conditional,
+				},
+			});
+		} catch (cause) {
+			throw new IntegrationFailure({
+				kind: "network",
+				integrationId,
+				message: `Could not reach ${url.host}: ${(cause as Error).message}`,
+			});
+		}
+	};
+
+	async function loadText(url: URL): Promise<string> {
+		if (cache) {
+			const ttl =
+				typeof options.ttl === "function"
+					? options.ttl(url)
+					: (options.ttl ?? DEFAULT_TTL_MS);
+			return cache.get({
+				integrationId,
+				bucket: options.rateLimitBucket?.(url) ?? "default",
+				url: url.toString(),
+				ttlMs: ttl,
+				send: (conditional) => send(url, conditional),
+				toFailure: (response) => toFailure(response, integrationId),
+			});
+		}
+		const response = await send(url);
+		if (!response.ok) throw await toFailure(response, integrationId);
+		return response.text();
+	}
 
 	return {
 		async get(path, schema, query) {
@@ -40,28 +105,14 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
 				}
 			}
 
-			let response: Response;
+			const text = await loadText(url);
+			let json: unknown;
 			try {
-				response = await fetchFn(url, {
-					headers: {
-						Accept: "application/json",
-						Authorization: `Bearer ${options.accessToken}`,
-						...options.headers,
-					},
-				});
-			} catch (cause) {
-				throw new IntegrationFailure({
-					kind: "network",
-					integrationId,
-					message: `Could not reach ${url.host}: ${(cause as Error).message}`,
-				});
+				json = JSON.parse(text);
+			} catch {
+				json = undefined;
 			}
-
-			if (!response.ok) {
-				throw await toFailure(response, integrationId);
-			}
-
-			const parsed = schema.safeParse(await response.json());
+			const parsed = schema.safeParse(json);
 			if (!parsed.success) {
 				throw new IntegrationFailure({
 					kind: "unknown",
@@ -92,7 +143,11 @@ async function toFailure(
 	const rateLimited =
 		response.status === 429 ||
 		(response.status === 403 &&
-			response.headers.get("x-ratelimit-remaining") === "0");
+			(response.headers.get("x-ratelimit-remaining") === "0" ||
+				// Google APIs report quota errors as 403 with a reason.
+				/rateLimitExceeded|userRateLimitExceeded|quotaExceeded/.test(body) ||
+				// GitHub's secondary rate limit.
+				/secondary rate limit/i.test(body)));
 	if (rateLimited) {
 		return new IntegrationFailure({
 			kind: "rate_limited",
@@ -112,7 +167,14 @@ async function toFailure(
 function retryAfterSeconds(headers: Headers): number | undefined {
 	const retryAfter = headers.get("retry-after");
 	if (retryAfter && /^\d+$/.test(retryAfter)) return Number(retryAfter);
-	const reset = headers.get("x-ratelimit-reset");
+	if (retryAfter) {
+		const date = Date.parse(retryAfter); // HTTP-date form
+		if (!Number.isNaN(date))
+			return Math.max(0, Math.ceil((date - Date.now()) / 1000));
+	}
+	const reset =
+		headers.get("x-ratelimit-reset") ??
+		headers.get("x-sentry-rate-limit-reset");
 	if (reset && /^\d+$/.test(reset)) {
 		return Math.max(0, Number(reset) - Math.floor(Date.now() / 1000));
 	}

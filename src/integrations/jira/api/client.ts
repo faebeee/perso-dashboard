@@ -1,3 +1,4 @@
+import { TTL, ttlByPath } from "#/platform/cache-ttl";
 import { createHttpClient, type FetchFn } from "#/platform/http";
 import { JIRA_ID, SEARCH_PAGE_SIZE } from "../constants";
 import {
@@ -37,6 +38,15 @@ export function createJiraApi(accessToken: string, fetch?: FetchFn) {
 		baseUrl: "https://api.atlassian.com",
 		accessToken,
 		fetch,
+		ttl: ttlByPath(
+			[
+				[/accessible-resources$/, TTL.stable],
+				[/\/version$/, TTL.slow],
+				// An issue you just opened should show recent edits.
+				[/\/issue\/[^/]+$/, 60_000],
+			],
+			TTL.list,
+		),
 	});
 
 	return {

@@ -13,6 +13,7 @@ import {
 import type { ComponentType, ReactNode } from "react";
 import { integrationManifests } from "#/integrations/registry";
 import { useOpenCommandPalette } from "../command-palette";
+import { SyncIndicator } from "./sync-indicator";
 import { ThemeToggle } from "./theme-toggle";
 import { UrgentCount } from "./urgent-count";
 
@@ -100,6 +101,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 				</nav>
 
 				<div className="flex items-center gap-1 md:mt-auto md:flex-col md:items-stretch">
+					<SyncIndicator />
 					<NavLink
 						to="/settings/integrations"
 						label="Integrations"

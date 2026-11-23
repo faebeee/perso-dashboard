@@ -12,6 +12,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "#/components/ui/card";
+import { SyncLine } from "#/components/widget-kit/sync-status";
 import type { IntegrationManifest } from "#/core/integration";
 import {
 	ConnectError,
@@ -71,6 +72,7 @@ export function ConnectionCard({
 						</span>
 					</p>
 				)}
+				{connected && <SyncLine integrationId={integration.id} />}
 
 				{connect.isPending && (
 					<Alert>

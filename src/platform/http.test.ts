@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { createHttpClient, type FetchFn } from "./http";
+import { createHttpCache, createMemoryCacheStore } from "./http-cache";
 
 const schema = z.object({ ok: z.boolean() });
 
@@ -70,6 +71,46 @@ describe("createHttpClient", () => {
 		const fetch = vi.fn<FetchFn>(async () => json({ ok: "yes" }));
 		await expect(client(fetch).get("/x", schema)).rejects.toMatchObject({
 			error: { kind: "unknown", message: expect.stringMatching(/shape/) },
+		});
+	});
+});
+
+describe("createHttpClient rate limits and cache", () => {
+	it("maps Google's 403 quota errors to rate_limited", async () => {
+		const fetch = vi.fn<FetchFn>(async () =>
+			json(
+				{ error: { errors: [{ reason: "userRateLimitExceeded" }] } },
+				{ status: 403 },
+			),
+		);
+		await expect(client(fetch).get("/x", schema)).rejects.toMatchObject({
+			error: { kind: "rate_limited" },
+		});
+	});
+
+	it("goes through the cache with the client's TTL and rate-limit pool", async () => {
+		const fetch = vi.fn<FetchFn>(async () => json({ ok: true }));
+		const cache = createHttpCache({ store: createMemoryCacheStore() });
+		const get = vi.spyOn(cache, "get");
+		const http = createHttpClient({
+			integrationId: "test",
+			baseUrl: "https://api.example.com",
+			accessToken: "t",
+			fetch,
+			cache,
+			ttl: (url) => (url.pathname.startsWith("/search") ? 120_000 : 5_000),
+			rateLimitBucket: (url) =>
+				url.pathname.startsWith("/search") ? "search" : "core",
+		});
+
+		await http.get("/search", schema, { q: "a" });
+		await http.get("/search", schema, { q: "a" });
+
+		expect(fetch).toHaveBeenCalledTimes(1);
+		expect(get.mock.calls[0]?.[0]).toMatchObject({
+			bucket: "search",
+			ttlMs: 120_000,
+			url: "https://api.example.com/search?q=a",
 		});
 	});
 });

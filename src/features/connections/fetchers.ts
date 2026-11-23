@@ -8,6 +8,7 @@ import {
 	connectIntegration as runOAuthFlow,
 } from "#/platform/oauth/oauth-flow";
 import { getServices } from "#/platform/services";
+import { syncStatus } from "#/platform/sync-status";
 
 export interface IntegrationStatus {
 	integrationId: string;
@@ -78,6 +79,9 @@ export async function connectIntegration(integrationId: string): Promise<void> {
 		authorize: (url) => services.authorizeInBrowser(integrationId, url),
 		connections: services.connections,
 	});
+	// Possibly another account: never show the previous one's cached data.
+	await services.httpCache.clear(integrationId);
+	syncStatus.reset(integrationId);
 }
 
 /** Stops waiting for the browser; the pending connect rejects with "cancelled". */
@@ -88,7 +92,10 @@ export async function cancelConnect(): Promise<void> {
 export async function disconnectIntegration(
 	integrationId: string,
 ): Promise<void> {
-	await (await getServices()).connections.delete(integrationId);
+	const services = await getServices();
+	await services.connections.delete(integrationId);
+	await services.httpCache.clear(integrationId);
+	syncStatus.reset(integrationId);
 }
 
 export async function saveOAuthClient(

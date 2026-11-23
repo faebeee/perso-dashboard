@@ -36,6 +36,7 @@ import { feedQueries } from "#/features/feed/queries";
 import { releaseQueries } from "#/features/releases/queries";
 import { useAddToToday } from "#/features/today/queries";
 import { integrationManifests } from "#/integrations/registry";
+import { expireCachedData } from "#/platform/services";
 
 /**
  * ⌘K / Ctrl+K: jump to any page or search everything already loaded
@@ -184,7 +185,12 @@ function PaletteContent({ close }: { close: () => void }) {
 					))}
 					<PaletteItem
 						value="action refresh reload all data"
-						onSelect={() => run(() => queryClient.invalidateQueries())}
+						onSelect={() =>
+							run(async () => {
+								await expireCachedData();
+								await queryClient.invalidateQueries();
+							})
+						}
 					>
 						<span className="grid size-7 place-items-center rounded-md bg-muted">
 							<RefreshCw className="size-4" />

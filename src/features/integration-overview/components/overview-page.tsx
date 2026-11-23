@@ -7,6 +7,7 @@ import { WorkScopeToggle } from "#/components/widget-kit/work-scope-toggle";
 import type { IntegrationManifest } from "#/core/integration";
 import type { WorkScope } from "#/core/work-scope";
 import { integrationQueryKey } from "#/lib/query-keys";
+import { expireCachedData } from "#/platform/services";
 
 /** What the page needs to know about the connection. Supplied by the route. */
 export interface OverviewConnection {
@@ -59,11 +60,12 @@ export function OverviewPage({
 						<Button
 							variant="ghost"
 							size="sm"
-							onClick={() =>
-								queryClient.invalidateQueries({
+							onClick={async () => {
+								await expireCachedData(integration.id);
+								await queryClient.invalidateQueries({
 									queryKey: integrationQueryKey(integration.id),
-								})
-							}
+								});
+							}}
 						>
 							<RefreshCw /> Refresh
 						</Button>

@@ -1,3 +1,4 @@
+import { TTL, ttlByPath } from "#/platform/cache-ttl";
 import { createHttpClient, type FetchFn } from "#/platform/http";
 import { ISSUE_PAGE_SIZE, SENTRY_BASE_URL, SENTRY_ID } from "../constants";
 import { sentryIssueListSchema, sentryOrganizationListSchema } from "./schemas";
@@ -26,6 +27,7 @@ export function createSentryApi(accessToken: string, fetch?: FetchFn) {
 		baseUrl: SENTRY_BASE_URL,
 		accessToken,
 		fetch,
+		ttl: ttlByPath([[/\/organizations\/$/, TTL.stable]], TTL.list),
 	});
 
 	return {

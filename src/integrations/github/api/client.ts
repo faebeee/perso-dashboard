@@ -1,3 +1,4 @@
+import { TTL, ttlByPath } from "#/platform/cache-ttl";
 import { createHttpClient, type FetchFn } from "#/platform/http";
 import { GITHUB_ID, SEARCH_PAGE_SIZE } from "../constants";
 import {
@@ -14,6 +15,16 @@ export function createGitHubApi(accessToken: string, fetch?: FetchFn) {
 		accessToken,
 		headers: { "X-GitHub-Api-Version": "2022-11-28" },
 		fetch,
+		ttl: ttlByPath(
+			[
+				[/^\/user$/, TTL.stable],
+				[/\/releases$/, TTL.slow],
+			],
+			TTL.list,
+		),
+		// Search has its own, much smaller limit (30/min) than the core API.
+		rateLimitBucket: (url) =>
+			url.pathname.startsWith("/search/") ? "search" : "core",
 	});
 
 	return {

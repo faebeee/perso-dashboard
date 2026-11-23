@@ -59,3 +59,17 @@ export const todayItems = sqliteTable("today_items", {
 	doneAt: integer("done_at", { mode: "timestamp_ms" }),
 	createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
+
+/**
+ * Cached API responses (see platform/http-cache.ts). Bodies are encrypted:
+ * they contain mail, issues and calendar data.
+ */
+export const httpCache = sqliteTable("http_cache", {
+	key: text("key").primaryKey(),
+	integrationId: text("integration_id").notNull(),
+	/** Encrypted with SecretCipher. */
+	body: text("body").notNull(),
+	etag: text("etag"),
+	lastModified: text("last_modified"),
+	fetchedAt: integer("fetched_at").notNull(),
+});

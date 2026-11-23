@@ -3,7 +3,15 @@ import type { OAuthProvider } from "#/core/oauth";
 import { createAesGcmCipher } from "./crypto";
 import { createDatabase } from "./db/client";
 import { getHost, type Host } from "./host";
+import { setDefaultHttpCache } from "./http";
+import {
+	createHttpCache,
+	createMemoryCacheStore,
+	type HttpCache,
+	layeredCacheStore,
+} from "./http-cache";
 import { createTokenManager, type TokenManager } from "./oauth/token-manager";
+import { createDrizzleCacheStore } from "./repositories/cache-repository";
 import {
 	type ConnectionRepository,
 	createDrizzleConnectionRepository,
@@ -24,6 +32,7 @@ import {
 	createDrizzleTodayRepository,
 	type TodayRepository,
 } from "./repositories/today-repository";
+import { syncStatus } from "./sync-status";
 
 /**
  * Fixed loopback port for OAuth redirects. Providers like Atlassian match the
@@ -31,6 +40,9 @@ import {
  * the redirect URIs registered in every OAuth app.
  */
 export const OAUTH_LOOPBACK_PORT = 47390;
+
+/** Cached API responses older than this are deleted at startup. */
+const CACHE_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** Give up waiting for the browser after this long. */
 const OAUTH_TIMEOUT_SECONDS = 5 * 60;
@@ -46,6 +58,8 @@ export interface Services {
 	layouts: LayoutRepository;
 	dismissals: DismissalRepository;
 	today: TodayRepository;
+	/** API response cache: expire on manual refresh, clear on (dis)connect. */
+	httpCache: HttpCache;
 	tokenManager: TokenManager;
 	/** Redirect URI to register in the provider's OAuth app. */
 	oauthCallbackUrl(integrationId: string): string;
@@ -67,6 +81,18 @@ export async function createServices(host: Host): Promise<Services> {
 	const db = await createDatabase(driver);
 	const cipher = await createAesGcmCipher(key);
 	const connections = createDrizzleConnectionRepository(db, cipher);
+
+	// One cache for every integration's API calls, persisted (encrypted) so a
+	// restart starts warm. Week-old entries are dropped.
+	const persistentCache = createDrizzleCacheStore(db, cipher);
+	void persistentCache
+		.prune(Date.now() - CACHE_RETENTION_MS)
+		.catch((cause) => console.error("[cache] prune failed", cause));
+	const httpCache = createHttpCache({
+		store: layeredCacheStore(createMemoryCacheStore(), persistentCache),
+		onEvent: syncStatus.record,
+	});
+	setDefaultHttpCache(httpCache);
 	const oauthClients = createDrizzleOAuthClientRepository(db, cipher);
 
 	const oauthCallbackUrl = (integrationId: string) =>
@@ -88,6 +114,7 @@ export async function createServices(host: Host): Promise<Services> {
 		layouts: createDrizzleLayoutRepository(db),
 		dismissals: createDrizzleDismissalRepository(db),
 		today: createDrizzleTodayRepository(db),
+		httpCache,
 		tokenManager: createTokenManager({
 			connections,
 			resolveProvider: oauthProvider,
@@ -114,4 +141,12 @@ export function getServices(): Promise<Services> {
 		throw cause;
 	});
 	return instance;
+}
+
+/**
+ * Marks cached API responses stale so the next requests really refetch
+ * (manual "Refresh"). Rate-limit pauses still apply.
+ */
+export async function expireCachedData(integrationId?: string): Promise<void> {
+	await (await getServices()).httpCache.expire(integrationId);
 }

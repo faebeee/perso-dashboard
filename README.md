@@ -70,6 +70,17 @@ Then open **Integrations**, enter the OAuth client for each provider, and click 
 
 Integrations contribute through `getActivity` and `getMetrics`.
 
+## Sync & rate limits
+
+Every API call goes through one cache in the shared HTTP client (`src/platform/http-cache.ts`), so integrations get it for free:
+
+- **Fresh data is reused.** Each API client declares how long its endpoints stay fresh (`src/platform/cache-ttl.ts`): searches and lists 1–2 min, releases and thread metadata 5–10 min, profiles and organizations a day. Widgets, the feed, Urgent, Waiting and the menu bar all share one fetch, so the UI can refresh every minute cheaply.
+- **Concurrent identical requests** share one network call.
+- **Revalidation** uses ETag / Last-Modified. A 304 doesn't count against GitHub's rate limit.
+- **Rate-limit guard:** remaining/reset headers (GitHub, Sentry), `Retry-After`, and Google's 403 quota errors pause that API until it resets. GitHub's search and core pools are tracked separately. While paused, and when offline, the last cached data is shown instead of an error. The Integrations page and the sidebar show the state ("Synced 2 min ago", "Paused by rate limit until 14:05").
+- **Persisted and encrypted** in SQLite, so restarts start warm. Entries older than 7 days are pruned, and an integration's entries are cleared when you connect or disconnect it.
+- **Refresh** buttons (dashboard, source pages, ⌘K) mark data stale so they really refetch, still within the rate-limit guard.
+
 ## Desktop behaviour
 
 - **Menu bar:** an icon with the urgent count. Its menu lists the urgent items (click to open), plus *Open Urgent*, *Open Dashboard* and *Quit*. The same count shows on the **Dock badge**.
