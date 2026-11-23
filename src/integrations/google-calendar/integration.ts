@@ -1,4 +1,10 @@
-import { type IntegrationBackend, rulesOf } from "#/core/integration";
+import {
+	type ChoiceListSetting,
+	type IntegrationBackend,
+	type IntegrationContext,
+	rulesOf,
+	stringListSetting,
+} from "#/core/integration";
 import { GOOGLE_OAUTH_CLIENT } from "#/platform/oauth/google";
 import { createGoogleCalendarApi } from "./api/client";
 import { eventsToAttention } from "./attention";
@@ -8,8 +14,25 @@ import { createGoogleCalendarOAuth } from "./oauth";
 import { createGoogleCalendarService } from "./service";
 import { pendingRepliesToWaiting } from "./waiting";
 
-export const googleCalendarService = (accessToken: string) =>
-	createGoogleCalendarService(createGoogleCalendarApi(accessToken));
+/** Which calendars feed the app (Preferences → Google Calendar). */
+export const CALENDARS_SETTING: ChoiceListSetting = {
+	key: "calendars",
+	label: "Calendars",
+	description:
+		"Events from these calendars appear in your agenda, Today, Urgent, Waiting and Insights.",
+	type: "choice-list",
+	default: ["primary"],
+	minSelected: 1,
+};
+
+export const googleCalendarService = (ctx: IntegrationContext) =>
+	createGoogleCalendarService(
+		createGoogleCalendarApi(ctx.accessToken),
+		undefined,
+		{
+			calendarIds: stringListSetting(ctx.settings, CALENDARS_SETTING),
+		},
+	);
 
 /** No getFeedItems: future events aren't "work" for the newest-first feed. */
 export const googleCalendarBackend: IntegrationBackend = {
@@ -17,6 +40,13 @@ export const googleCalendarBackend: IntegrationBackend = {
 
 	/** Same Google OAuth client as Gmail. */
 	oauthClient: GOOGLE_OAUTH_CLIENT,
+
+	settings: [CALENDARS_SETTING],
+
+	loadSettingOptions: async (ctx, key) =>
+		key === CALENDARS_SETTING.key
+			? googleCalendarService(ctx).calendarOptions()
+			: [],
 
 	createOAuthProvider: createGoogleCalendarOAuth,
 
@@ -28,7 +58,7 @@ export const googleCalendarBackend: IntegrationBackend = {
 
 	getWaitingItems: async (ctx, now) =>
 		pendingRepliesToWaiting(
-			await googleCalendarService(ctx.accessToken).between(
+			await googleCalendarService(ctx).between(
 				now,
 				new Date(
 					now.getTime() +
@@ -37,16 +67,16 @@ export const googleCalendarBackend: IntegrationBackend = {
 			),
 		),
 
-	getActivity: async ({ accessToken }, { from, to }) =>
+	getActivity: async (ctx, { from, to }) =>
 		meetingActivity(
-			await googleCalendarService(accessToken).between(from, to, 250),
+			await googleCalendarService(ctx).between(from, to, 250),
 			from,
 			to,
 		),
 
-	getMetrics: async ({ accessToken }, weeks, now) =>
+	getMetrics: async (ctx, weeks, now) =>
 		meetingMetrics(
-			await googleCalendarService(accessToken).between(
+			await googleCalendarService(ctx).between(
 				weeks[0]?.start ?? now,
 				now,
 				2500, // Google's maximum: six weeks of meetings fit
@@ -55,12 +85,12 @@ export const googleCalendarBackend: IntegrationBackend = {
 			now,
 		),
 
-	getAgenda: ({ accessToken }, { from, to }) =>
-		googleCalendarService(accessToken).between(from, to),
+	getAgenda: (ctx, { from, to }) =>
+		googleCalendarService(ctx).between(from, to),
 
 	getAttentionItems: async (ctx, now) =>
 		eventsToAttention(
-			await googleCalendarService(ctx.accessToken).upcoming("all"),
+			await googleCalendarService(ctx).upcoming("all"),
 			now,
 			rulesOf(ctx).attention,
 		),

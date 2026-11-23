@@ -75,3 +75,23 @@ export const googleEventListSchema = z.object({
 });
 
 export type GoogleEvent = z.infer<typeof googleEventSchema>;
+
+/** GET /users/me/calendarList: every calendar in your Google Calendar list. */
+export const googleCalendarListSchema = z.object({
+	items: z
+		.array(
+			z.object({
+				id: z.string(),
+				summary: z.string().default(""),
+				/** Your own name for it, when you renamed it. */
+				summaryOverride: z.string().optional(),
+				primary: z.boolean().optional(),
+				backgroundColor: z.string().optional(),
+				/** owner | writer | reader | freeBusyReader */
+				accessRole: z.string().optional(),
+			}),
+		)
+		.default([]),
+});
+
+export type GoogleCalendarList = z.infer<typeof googleCalendarListSchema>;

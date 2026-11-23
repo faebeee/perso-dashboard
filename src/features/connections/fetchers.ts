@@ -19,6 +19,8 @@ export interface IntegrationStatus {
 	connectedAt: string | null;
 	/** Redirect URI to register in the provider's OAuth app settings. */
 	callbackUrl: string;
+	/** Labels of user-editable settings (shown under Preferences). */
+	settingLabels: string[];
 	oauthClient: {
 		id: string;
 		label: string;
@@ -45,6 +47,7 @@ export async function fetchIntegrationStatuses(): Promise<IntegrationStatus[]> {
 			accountLabel: connection?.accountLabel ?? null,
 			connectedAt: connection?.createdAt.toISOString() ?? null,
 			callbackUrl: services.oauthCallbackUrl(backend.id),
+			settingLabels: (backend.settings ?? []).map((s) => s.label),
 			oauthClient: {
 				...backend.oauthClient,
 				clientId: client?.clientId ?? null,

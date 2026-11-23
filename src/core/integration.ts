@@ -115,13 +115,42 @@ export function rulesOf(ctx: IntegrationContext): {
 	);
 }
 
-/** A user-editable, integration-specific setting (shown in Preferences). */
-export interface IntegrationSetting {
+interface SettingBase {
 	key: string;
 	label: string;
 	description: string;
-	type: "string-list";
+	/** Values stored as strings (both types). */
 	default: string[];
+}
+
+/** Free text values, edited as a comma-separated list. */
+export interface StringListSetting extends SettingBase {
+	type: "string-list";
+}
+
+/**
+ * Pick any of the provider's options (calendars, projects…). Options come
+ * from `IntegrationBackend.loadSettingOptions`, so the account must be
+ * connected to edit it.
+ */
+export interface ChoiceListSetting extends SettingBase {
+	type: "choice-list";
+	/** At least this many must stay selected. */
+	minSelected?: number;
+}
+
+/** A user-editable, integration-specific setting (shown in Preferences). */
+export type IntegrationSetting = StringListSetting | ChoiceListSetting;
+
+/** One choice of a `choice-list` setting. */
+export interface SettingOption {
+	value: string;
+	label: string;
+	description?: string;
+	/** CSS colour shown as a swatch (e.g. the calendar's colour). */
+	color?: string;
+	/** Short tag such as "Primary". */
+	badge?: string;
 }
 
 /** Reads a string-list setting's value, falling back to its default. */
@@ -151,6 +180,11 @@ export interface IntegrationBackend {
 	id: string;
 	/** User-editable settings for this integration (Preferences). */
 	settings?: IntegrationSetting[];
+	/** Options for a `choice-list` setting, read from the connected account. */
+	loadSettingOptions?(
+		ctx: IntegrationContext,
+		key: string,
+	): Promise<SettingOption[]>;
 	/** The OAuth app this integration authenticates with (may be shared). */
 	oauthClient: OAuthClientRef;
 	createOAuthProvider(

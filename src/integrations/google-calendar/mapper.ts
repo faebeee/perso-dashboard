@@ -1,6 +1,7 @@
 import type { CalendarEvent } from "#/core/calendar-event";
 import type { GoogleEvent } from "./api/schemas";
 import { GOOGLE_CALENDAR_ID } from "./constants";
+import { eventDetailRef } from "./detail";
 
 const RESPONSES = new Set(["accepted", "tentative", "needsAction"]);
 const ATTENDEE_RESPONSES = new Set([
@@ -17,7 +18,10 @@ type AttendeeResponse = NonNullable<
  * Pure: Google event → CalendarEvent. Returns null for events you won't
  * attend (cancelled, or declined).
  */
-export function toCalendarEvent(event: GoogleEvent): CalendarEvent | null {
+export function toCalendarEvent(
+	event: GoogleEvent,
+	calendarId = "primary",
+): CalendarEvent | null {
 	if (event.status === "cancelled") return null;
 
 	const self = event.attendees.find((a) => a.self);
@@ -27,7 +31,10 @@ export function toCalendarEvent(event: GoogleEvent): CalendarEvent | null {
 	const end = event.end.dateTime ?? event.end.date;
 	if (!start || !end) return null;
 
-	const isOrganizer = event.organizer?.self ?? self === undefined;
+	// On your own calendar, no "self" attendee means it's your event. On a
+	// shared/team calendar it means you're not involved: not yours to organize.
+	const isOrganizer =
+		event.organizer?.self ?? (calendarId === "primary" && self === undefined);
 	const response =
 		!isOrganizer && self?.responseStatus && RESPONSES.has(self.responseStatus)
 			? (self.responseStatus as CalendarEvent["response"])
@@ -41,7 +48,7 @@ export function toCalendarEvent(event: GoogleEvent): CalendarEvent | null {
 		start,
 		end,
 		allDay: !event.start.dateTime,
-		detailRef: event.id,
+		detailRef: eventDetailRef(calendarId, event.id),
 		location: event.location,
 		meetingUrl:
 			event.hangoutLink ??

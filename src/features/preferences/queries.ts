@@ -3,7 +3,10 @@ import {
 	useMutation,
 	useQueryClient,
 } from "@tanstack/react-query";
+import { unwrap } from "#/core/result";
+import { integrationQueryKey } from "#/lib/query-keys";
 import { getHost } from "#/platform/host";
+import { fetchSettingOptions } from "./fetchers";
 
 const keys = {
 	launchAtLogin: ["preferences", "launch-at-login"] as const,
@@ -12,6 +15,16 @@ const keys = {
 
 /** OS-owned settings: always read from the OS, never cached as app data. */
 export const preferenceQueries = {
+	/** Under the integration's key: reset when it's connected or disconnected. */
+	settingOptions: (integrationId: string, key: string) =>
+		queryOptions({
+			queryKey: [...integrationQueryKey(integrationId), "setting-options", key],
+			queryFn: async () =>
+				unwrap(await fetchSettingOptions(integrationId, key)),
+			staleTime: 5 * 60_000,
+			refetchInterval: false,
+		}),
+
 	launchAtLogin: () =>
 		queryOptions({
 			queryKey: keys.launchAtLogin,

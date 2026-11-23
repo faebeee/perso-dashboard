@@ -82,6 +82,12 @@ Pinned items that also show up as activity (e.g. a pinned PR that got merged) ar
 
 Integrations contribute through `getActivity` and `getMetrics`.
 
+## Calendars
+
+By default only your **primary** Google calendar is read. To add others (team calendars, calendars shared with you, subscriptions), go to **Preferences → Google Calendar** or click **Choose calendars** on the Integrations page, then tick them. Selected calendars feed the agenda, Today, Urgent, Waiting, Insights and meeting prep. A meeting that appears on several calendars is shown once. Events on shared calendars that you aren't invited to never count as "yours" (e.g. for pending replies).
+
+This uses a generic `choice-list` setting: an integration declares it in `settings` and serves the options through `loadSettingOptions`, and Preferences renders them as checkboxes.
+
 ## Commits
 
 Your pushed commits appear on the GitHub page ("Your commits", last 7 days, grouped by repo and branch), in Insights' Summary and in the Daily review. Standups condense them per branch: "5 commits to acme/web (feature/cart): Fix rounding".

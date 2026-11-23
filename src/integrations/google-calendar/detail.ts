@@ -1,6 +1,23 @@
 import { textToHtml } from "#/lib/text-to-html";
 import type { GoogleEventDetail } from "./api/schemas";
 
+/**
+ * detailRef of an event: the event id, prefixed with its calendar when it's
+ * not your primary one ("team@group.calendar.google.com|abc123").
+ */
+export const eventDetailRef = (calendarId: string, eventId: string) =>
+	calendarId === "primary" ? eventId : `${calendarId}|${eventId}`;
+
+export function parseEventDetailRef(ref: string): {
+	calendarId: string;
+	eventId: string;
+} {
+	const bar = ref.lastIndexOf("|");
+	return bar === -1
+		? { calendarId: "primary", eventId: ref }
+		: { calendarId: ref.slice(0, bar), eventId: ref.slice(bar + 1) };
+}
+
 export type AttendeeResponse =
 	| "accepted"
 	| "tentative"

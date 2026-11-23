@@ -22,6 +22,7 @@ import {
 	preferences,
 	setIntegrationSetting,
 } from "#/platform/preferences";
+import { ChoiceListRule } from "./choice-list-rule";
 
 type NumberKey<T> = {
 	[K in keyof T]: T[K] extends number ? K : never;
@@ -203,30 +204,45 @@ export function RulesSection() {
 			{withSettings.map((backend) => (
 				<RuleGroup
 					key={backend.id}
+					id={`integration-${backend.id}`}
 					title={nameOf(backend.id)}
 					description={`Settings for ${nameOf(backend.id)}.`}
 				>
-					{(backend.settings ?? []).map((setting) => (
-						<ListRule
-							key={setting.key}
-							label={setting.label}
-							hint={setting.description}
-							caseSensitive
-							value={stringListSetting(
-								integrationSettingsFor(backend, prefs),
-								setting,
-							)}
-							onCommit={(value) => {
-								setIntegrationSetting(
-									backend.id,
-									setting.key,
-									value.length > 0 ? value : setting.default,
-								);
-								void refresh();
-								return true;
-							}}
-						/>
-					))}
+					{(backend.settings ?? []).map((setting) => {
+						const value = stringListSetting(
+							integrationSettingsFor(backend, prefs),
+							setting,
+						);
+						const save = (next: string[]) => {
+							setIntegrationSetting(
+								backend.id,
+								setting.key,
+								next.length > 0 ? next : setting.default,
+							);
+							void refresh();
+						};
+						return setting.type === "choice-list" ? (
+							<ChoiceListRule
+								key={setting.key}
+								integrationId={backend.id}
+								setting={setting}
+								value={value}
+								onChange={save}
+							/>
+						) : (
+							<ListRule
+								key={setting.key}
+								label={setting.label}
+								hint={setting.description}
+								caseSensitive
+								value={value}
+								onCommit={(next) => {
+									save(next);
+									return true;
+								}}
+							/>
+						);
+					})}
 				</RuleGroup>
 			))}
 		</div>
@@ -234,12 +250,14 @@ export function RulesSection() {
 }
 
 function RuleGroup({
+	id,
 	title,
 	description,
 	onReset,
 	error,
 	children,
 }: {
+	id?: string;
 	title: string;
 	description: string;
 	onReset?: () => void;
@@ -248,6 +266,7 @@ function RuleGroup({
 }) {
 	return (
 		<section
+			id={id}
 			aria-label={`${title} rules`}
 			className="max-w-2xl rounded-xl border bg-card shadow-xs"
 		>

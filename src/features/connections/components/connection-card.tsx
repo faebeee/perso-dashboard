@@ -1,4 +1,5 @@
-import { CircleAlert, Loader2, Wand2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { CircleAlert, Loader2, Settings2, Wand2 } from "lucide-react";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
@@ -139,6 +140,19 @@ export function ConnectionCard({
 							{connected ? "Reconnect" : "Connect"}
 						</Button>
 					))}
+				{connected && status && status.settingLabels.length > 0 && (
+					<Button asChild variant="outline" size="sm">
+						<Link
+							to="/settings/preferences"
+							hash={`integration-${integration.id}`}
+						>
+							<Settings2 />
+							{status.settingLabels.length === 1
+								? `Choose ${status.settingLabels[0]?.toLowerCase()}`
+								: "Settings"}
+						</Link>
+					</Button>
+				)}
 				{connected && (
 					<Button
 						variant="ghost"
