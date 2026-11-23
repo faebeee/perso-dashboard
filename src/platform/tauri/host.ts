@@ -10,6 +10,7 @@ import {
 	type Host,
 } from "../host";
 import { createTauriDesktopShell } from "./desktop";
+import { withoutOrigin } from "./fetch";
 
 /**
  * Host implementation for the Tauri shell. The only module that imports
@@ -27,7 +28,7 @@ export interface TauriHostOptions {
 export function createTauriHost({ navigate }: TauriHostOptions): Host {
 	const openExternal = (url: string) => openUrl(url);
 	return {
-		fetch: tauriFetch,
+		fetch: withoutOrigin(tauriFetch),
 
 		async openDatabase() {
 			return createPluginSqlDriver(await Database.load(DATABASE_URL));
