@@ -13,6 +13,3 @@ export const WORK_SCOPE_LABELS: Record<WorkScope, string> = {
 	assigned: "Assigned to me",
 	created: "Created by me",
 };
-
-/** Input shape for fetchers that accept a scope. */
-export const scopedInputSchema = z.object({ scope: workScopeSchema });

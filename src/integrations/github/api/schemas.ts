@@ -39,5 +39,4 @@ export const githubReleaseSchema = z.object({
 export const githubReleaseListSchema = z.array(githubReleaseSchema);
 
 export type GitHubRelease = z.infer<typeof githubReleaseSchema>;
-export type GitHubUser = z.infer<typeof githubUserSchema>;
 export type GitHubSearchItem = z.infer<typeof githubSearchItemSchema>;

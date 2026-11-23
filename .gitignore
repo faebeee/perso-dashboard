@@ -1,16 +1,10 @@
 node_modules
 .DS_Store
 dist
-dist-ssr
 *.local
 .env
-.nitro
+# temp files of the TanStack Router generator
 .tanstack
-.wrangler
-.output
-.vinxi
-__unconfig*
-todos.json
 
 # legacy local data from the web version (SQLite DB with encrypted OAuth tokens)
 data/
