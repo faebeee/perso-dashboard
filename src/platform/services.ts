@@ -9,6 +9,10 @@ import {
 	createDrizzleConnectionRepository,
 } from "./repositories/connection-repository";
 import {
+	createDrizzleDismissalRepository,
+	type DismissalRepository,
+} from "./repositories/dismissal-repository";
+import {
 	createDrizzleLayoutRepository,
 	type LayoutRepository,
 } from "./repositories/layout-repository";
@@ -16,6 +20,10 @@ import {
 	createDrizzleOAuthClientRepository,
 	type OAuthClientRepository,
 } from "./repositories/oauth-client-repository";
+import {
+	createDrizzleTodayRepository,
+	type TodayRepository,
+} from "./repositories/today-repository";
 
 /**
  * Fixed loopback port for OAuth redirects. Providers like Atlassian match the
@@ -36,6 +44,8 @@ export interface Services {
 	connections: ConnectionRepository;
 	oauthClients: OAuthClientRepository;
 	layouts: LayoutRepository;
+	dismissals: DismissalRepository;
+	today: TodayRepository;
 	tokenManager: TokenManager;
 	/** Redirect URI to register in the provider's OAuth app. */
 	oauthCallbackUrl(integrationId: string): string;
@@ -76,6 +86,8 @@ export async function createServices(host: Host): Promise<Services> {
 		connections,
 		oauthClients,
 		layouts: createDrizzleLayoutRepository(db),
+		dismissals: createDrizzleDismissalRepository(db),
+		today: createDrizzleTodayRepository(db),
 		tokenManager: createTokenManager({
 			connections,
 			resolveProvider: oauthProvider,

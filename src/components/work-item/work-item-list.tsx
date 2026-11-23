@@ -1,4 +1,8 @@
 import { UserRound } from "lucide-react";
+import {
+	InjectedItemActions,
+	RowActions,
+} from "#/components/item-actions/item-actions";
 import { useItemClick } from "#/components/item-detail/item-detail-provider";
 import { ItemIcon } from "#/components/source-kit/item-icon";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
@@ -28,51 +32,56 @@ export function WorkItemList({ items, className }: WorkItemListProps) {
 function WorkItemRow({ item }: { item: WorkItem }) {
 	const onClick = useItemClick(item);
 	return (
-		<a
-			href={item.url}
-			target="_blank"
-			rel="noreferrer"
-			onClick={onClick}
-			className="group flex items-start gap-3 rounded-md px-1 py-2.5 text-inherit no-underline transition-colors hover:bg-accent/60"
-		>
-			<ItemIcon source={item.source} kind={item.kind} className="mt-0.5" />
+		<div className="group flex items-start gap-1 rounded-md transition-colors hover:bg-accent/60">
+			<a
+				href={item.url}
+				target="_blank"
+				rel="noreferrer"
+				onClick={onClick}
+				className="flex min-w-0 flex-1 items-start gap-3 px-1 py-2.5 text-inherit no-underline"
+			>
+				<ItemIcon source={item.source} kind={item.kind} className="mt-0.5" />
 
-			<div className="min-w-0 flex-1">
-				<p className="truncate text-sm font-medium text-foreground underline-offset-2 group-hover:underline">
-					{item.title}
-				</p>
-				<div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-					{item.actor && (
-						<>
-							<Actor person={item.actor} />
-							<span aria-hidden>·</span>
-						</>
-					)}
-					{item.context && <span className="truncate">{item.context}</span>}
-					{item.assignee !== undefined && (
-						<>
-							<span aria-hidden>·</span>
-							<Assignee person={item.assignee} />
-						</>
-					)}
-					<span aria-hidden>·</span>
-					<time dateTime={item.updatedAt} className="shrink-0">
-						{formatRelative(item.updatedAt)}
-					</time>
+				<div className="min-w-0 flex-1">
+					<p className="truncate text-sm font-medium text-foreground underline-offset-2 group-hover:underline">
+						{item.title}
+					</p>
+					<div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+						{item.actor && (
+							<>
+								<Actor person={item.actor} />
+								<span aria-hidden>·</span>
+							</>
+						)}
+						{item.context && <span className="truncate">{item.context}</span>}
+						{item.assignee !== undefined && (
+							<>
+								<span aria-hidden>·</span>
+								<Assignee person={item.assignee} />
+							</>
+						)}
+						<span aria-hidden>·</span>
+						<time dateTime={item.updatedAt} className="shrink-0">
+							{formatRelative(item.updatedAt)}
+						</time>
+					</div>
 				</div>
-			</div>
 
-			{(item.status || item.tags?.length) && (
-				<div className="hidden shrink-0 gap-1 sm:flex">
-					{item.status && <Badge variant="secondary">{item.status}</Badge>}
-					{item.tags?.slice(0, 2).map((tag) => (
-						<Badge key={tag} variant="outline">
-							{tag}
-						</Badge>
-					))}
-				</div>
-			)}
-		</a>
+				{(item.status || item.tags?.length) && (
+					<div className="hidden shrink-0 gap-1 sm:flex">
+						{item.status && <Badge variant="secondary">{item.status}</Badge>}
+						{item.tags?.slice(0, 2).map((tag) => (
+							<Badge key={tag} variant="outline">
+								{tag}
+							</Badge>
+						))}
+					</div>
+				)}
+			</a>
+			<RowActions className="self-center pr-1">
+				<InjectedItemActions item={item} />
+			</RowActions>
+		</div>
 	);
 }
 

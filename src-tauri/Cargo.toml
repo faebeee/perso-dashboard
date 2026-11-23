@@ -23,6 +23,7 @@ tauri-plugin-notification = "2"
 tauri-plugin-window-state = "2"
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
+tauri-plugin-global-shortcut = "2"
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
 tokio = { version = "1", features = ["net", "io-util", "time", "sync", "macros"] }
 serde = { version = "1", features = ["derive"] }

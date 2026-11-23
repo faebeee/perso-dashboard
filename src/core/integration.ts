@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import type { AttentionItem } from "./attention";
+import type { CalendarEvent } from "./calendar-event";
 import type {
 	OAuthClientCredentials,
 	OAuthClientRef,
@@ -82,6 +83,11 @@ export interface IntegrationBackend {
 		ctx: IntegrationContext,
 		now: Date,
 	): Promise<AttentionItem[]>;
+	/** Your calendar between two moments (briefing, free time). Calendars only. */
+	getAgenda?(
+		ctx: IntegrationContext,
+		range: { from: Date; to: Date },
+	): Promise<CalendarEvent[]>;
 	/** Releases for the combined releases widget. Omit if the provider has none. */
 	getReleases?(
 		ctx: IntegrationContext,

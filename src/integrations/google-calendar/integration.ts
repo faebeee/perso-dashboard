@@ -24,6 +24,9 @@ export const googleCalendarBackend: IntegrationBackend = {
 		return { label: calendar.id, meta: { email: calendar.id } };
 	},
 
+	getAgenda: ({ accessToken }, { from, to }) =>
+		googleCalendarService(accessToken).between(from, to),
+
 	getAttentionItems: async ({ accessToken }, now) =>
 		eventsToAttention(
 			await googleCalendarService(accessToken).upcoming("all"),

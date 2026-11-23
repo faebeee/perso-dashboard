@@ -1,10 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { attentionQueries } from "#/features/attention/queries";
+import { useAttention } from "#/features/attention/queries";
 import { cn } from "#/lib/utils";
 
 /** Live count for the sidebar; red when something needs you right now. */
 export function UrgentCount() {
-	const { data } = useQuery(attentionQueries.all());
+	const { data } = useAttention();
 	const count = data?.items.length ?? 0;
 	if (count === 0) return null;
 	const now = data?.items.some((item) => item.urgency === "now");

@@ -15,16 +15,23 @@ export function createGoogleCalendarService(
 	api: GoogleCalendarApi,
 	now: () => Date = () => new Date(),
 ) {
+	/** Events you'll attend in [from, to): declined and cancelled ones are dropped. */
+	async function between(from: Date, to: Date): Promise<CalendarEvent[]> {
+		const res = await api.listEvents(from, to);
+		return sortByStart(
+			res.items
+				.map(toCalendarEvent)
+				.filter((e): e is CalendarEvent => e !== null),
+		);
+	}
+
 	return {
+		between,
+
 		async upcoming(scope: WorkScope): Promise<CalendarEvent[]> {
 			const from = now();
 			const to = new Date(from.getTime() + UPCOMING_DAYS * DAY_MS);
-			const res = await api.listEvents(from, to);
-			const events = res.items
-				.map(toCalendarEvent)
-				.filter((e): e is CalendarEvent => e !== null)
-				.filter((e) => matchesScope(e, scope));
-			return sortByStart(events);
+			return (await between(from, to)).filter((e) => matchesScope(e, scope));
 		},
 	};
 }

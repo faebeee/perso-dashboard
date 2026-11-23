@@ -1,13 +1,24 @@
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useId, useSyncExternalStore } from "react";
 import { Button } from "#/components/ui/button";
+import { Input } from "#/components/ui/input";
 import { Switch } from "#/components/ui/switch";
-import { preferences } from "#/platform/preferences";
+import {
+	minutesOfDay,
+	preferences,
+	QUICK_CAPTURE_SHORTCUT,
+} from "#/platform/preferences";
 import {
 	preferenceQueries,
 	useRequestNotificationPermission,
 	useSetLaunchAtLogin,
 } from "../queries";
+
+const isMac = /Mac/.test(navigator.userAgent);
+/** "Control+Alt+Space" → "⌃⌥Space" on macOS. */
+const shortcutLabel = isMac
+	? QUICK_CAPTURE_SHORTCUT.replace("Control+", "⌃").replace("Alt+", "⌥")
+	: QUICK_CAPTURE_SHORTCUT.replace("Control", "Ctrl");
 
 export function PreferencesPage() {
 	const prefs = useSyncExternalStore(preferences.subscribe, preferences.get);
@@ -15,6 +26,15 @@ export function PreferencesPage() {
 	const setLaunchAtLogin = useSetLaunchAtLogin();
 	const permission = useQuery(preferenceQueries.notificationPermission());
 	const requestPermission = useRequestNotificationPermission();
+
+	/** Only accept a workday that ends after it starts. */
+	const setWorkday = (key: "workdayStart" | "workdayEnd", value: string) => {
+		if (!/^\d{2}:\d{2}$/.test(value)) return;
+		const next = { ...prefs, [key]: value };
+		if (minutesOfDay(next.workdayEnd) <= minutesOfDay(next.workdayStart))
+			return;
+		preferences.set(key, value);
+	};
 
 	const toggleNotifications = (enabled: boolean) => {
 		preferences.set("notifications", enabled);
@@ -70,6 +90,56 @@ export function PreferencesPage() {
 						</div>
 					)}
 			</Row>
+			<Row
+				title="Workday"
+				description="Used for free time on Today, the morning briefing and “tomorrow morning” snoozes."
+				control={(id) => (
+					<div className="flex items-center gap-2">
+						<Input
+							id={id}
+							type="time"
+							className="h-8 w-28"
+							value={prefs.workdayStart}
+							aria-label="Workday starts"
+							onChange={(e) => setWorkday("workdayStart", e.target.value)}
+						/>
+						<span className="text-muted-foreground">–</span>
+						<Input
+							type="time"
+							className="h-8 w-28"
+							value={prefs.workdayEnd}
+							aria-label="Workday ends"
+							onChange={(e) => setWorkday("workdayEnd", e.target.value)}
+						/>
+					</div>
+				)}
+			/>
+			<Row
+				title="Morning briefing"
+				description="Once a day, at the start of your workday: meetings, free time, what's due and what's waiting on you. Needs notifications."
+				control={(id) => (
+					<Switch
+						id={id}
+						checked={prefs.morningBriefing}
+						onCheckedChange={(enabled) =>
+							preferences.set("morningBriefing", enabled)
+						}
+					/>
+				)}
+			/>
+			<Row
+				title="Quick capture shortcut"
+				description={`Press ${shortcutLabel} anywhere, even with the app in the background, to add a note to Today.`}
+				control={(id) => (
+					<Switch
+						id={id}
+						checked={prefs.quickCaptureShortcut}
+						onCheckedChange={(enabled) =>
+							preferences.set("quickCaptureShortcut", enabled)
+						}
+					/>
+				)}
+			/>
 			<div className="p-4 text-xs text-muted-foreground">
 				Closing the window keeps the app running in the menu bar. Quit with{" "}
 				<kbd className="rounded border px-1">⌘Q</kbd> or from the menu bar icon.

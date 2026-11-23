@@ -31,3 +31,31 @@ export const dashboardLayouts = sqliteTable("dashboard_layouts", {
 	items: text("items", { mode: "json" }).$type<unknown>().notNull(),
 	updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
+
+/**
+ * Urgent items you marked done or snoozed. A "done" item comes back when its
+ * fingerprint changes (it escalated); a snoozed one when `until` passes.
+ */
+export const itemDismissals = sqliteTable("item_dismissals", {
+	itemId: text("item_id").primaryKey(),
+	mode: text("mode", { enum: ["done", "snoozed"] }).notNull(),
+	until: integer("until", { mode: "timestamp_ms" }),
+	fingerprint: text("fingerprint").notNull(),
+	createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+/** Your personal list for the day: pinned items and quick notes. */
+export const todayItems = sqliteTable("today_items", {
+	id: text("id").primaryKey(),
+	kind: text("kind", { enum: ["note", "item"] }).notNull(),
+	title: text("title").notNull(),
+	/** Pinned item only: where it came from and how to open it. */
+	source: text("source"),
+	itemKind: text("item_kind"),
+	itemId: text("item_id"),
+	url: text("url"),
+	detailRef: text("detail_ref"),
+	done: integer("done", { mode: "boolean" }).notNull().default(false),
+	doneAt: integer("done_at", { mode: "timestamp_ms" }),
+	createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});

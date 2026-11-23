@@ -52,6 +52,16 @@ export interface DesktopShell {
 	notify(notification: { title: string; body: string }): Promise<void>;
 	getLaunchAtLogin(): Promise<boolean>;
 	setLaunchAtLogin(enabled: boolean): Promise<void>;
+	/** Brings the (possibly hidden) main window to the front. */
+	showWindow(): Promise<void>;
+	/**
+	 * A system-wide shortcut that works while the app is in the background,
+	 * e.g. "Control+Alt+Space". Resolves with a function that removes it.
+	 */
+	registerGlobalShortcut(
+		accelerator: string,
+		onPress: () => void,
+	): Promise<() => Promise<void>>;
 }
 
 /** Failure kinds of `Host.authorizeInBrowser`. */

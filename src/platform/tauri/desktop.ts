@@ -4,6 +4,11 @@ import { TrayIcon } from "@tauri-apps/api/tray";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import {
+	isRegistered,
+	register,
+	unregister,
+} from "@tauri-apps/plugin-global-shortcut";
+import {
 	isPermissionGranted,
 	requestPermission,
 	sendNotification,
@@ -103,5 +108,18 @@ export function createTauriDesktopShell({
 		getLaunchAtLogin: () => isEnabled(),
 
 		setLaunchAtLogin: (enabled) => (enabled ? enable() : disable()),
+
+		showWindow: async () => {
+			await showWindow();
+		},
+
+		async registerGlobalShortcut(accelerator, onPress) {
+			// Re-registering (dev hot reload, StrictMode) must not fail.
+			if (await isRegistered(accelerator)) await unregister(accelerator);
+			await register(accelerator, (event) => {
+				if (event.state === "Pressed") onPress();
+			});
+			return () => unregister(accelerator);
+		},
 	};
 }

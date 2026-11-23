@@ -1,3 +1,5 @@
+import type { AttentionItem } from "#/core/attention";
+import { attentionFingerprint, type Dismissal } from "#/core/dismissal";
 import { unwrap } from "#/core/result";
 import { integrationBackends } from "#/integrations/runtime-registry";
 import { withIntegration } from "#/platform/integration-runner";
@@ -24,4 +26,25 @@ export async function fetchAttention(): Promise<AttentionResult> {
 		};
 	});
 	return aggregateAttention(sources);
+}
+
+export async function fetchDismissals(): Promise<Dismissal[]> {
+	return (await getServices()).dismissals.list(new Date());
+}
+
+/** Clears an urgent item until it escalates ("done") or until a time. */
+export async function dismissItem(
+	item: AttentionItem,
+	until: Date | null,
+): Promise<void> {
+	await (await getServices()).dismissals.save({
+		itemId: item.id,
+		mode: until ? "snoozed" : "done",
+		until,
+		fingerprint: attentionFingerprint(item),
+	});
+}
+
+export async function restoreItem(itemId: string): Promise<void> {
+	await (await getServices()).dismissals.delete(itemId);
 }

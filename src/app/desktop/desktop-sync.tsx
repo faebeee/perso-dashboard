@@ -3,12 +3,21 @@ import { useEffect, useSyncExternalStore } from "react";
 import { useSources } from "#/components/source-kit/source-context";
 import type { AttentionItem } from "#/core/attention";
 import { selectAlerts } from "#/features/attention/alerts";
-import { attentionQueries } from "#/features/attention/queries";
+import { useAttention } from "#/features/attention/queries";
+import {
+	briefingSummary,
+	buildBriefing,
+	workdayOn,
+} from "#/features/today/briefing";
+import { todayQueries } from "#/features/today/queries";
+import { localDayKey } from "#/lib/time";
 import { getHost } from "#/platform/host";
-import { preferences } from "#/platform/preferences";
+import { minutesOfDay, preferences } from "#/platform/preferences";
 
 /** Persisted so restarting the app doesn't repeat notifications. */
 const SEEN_KEY = "attention.notified";
+/** Day (YYYY-MM-DD) the morning briefing was last sent. */
+const BRIEFING_KEY = "briefing.lastDay";
 /** More than this at once collapses into one summary notification. */
 const MAX_INDIVIDUAL_ALERTS = 3;
 
@@ -18,12 +27,34 @@ const MAX_INDIVIDUAL_ALERTS = 3;
  * the window is hidden.
  */
 export function DesktopSync() {
-	const { data } = useQuery(attentionQueries.all());
+	const { data } = useAttention();
 	const sources = useSources();
-	const { notifications } = useSyncExternalStore(
-		preferences.subscribe,
-		preferences.get,
-	);
+	const prefs = useSyncExternalStore(preferences.subscribe, preferences.get);
+	const { notifications } = prefs;
+	const agenda = useQuery(todayQueries.agenda());
+
+	// Morning briefing: once a day, the first time we have data during work hours.
+	useEffect(() => {
+		if (!data || !agenda.data) return;
+		if (!notifications || !prefs.morningBriefing) return;
+		const now = new Date();
+		const workday = workdayOn(
+			now,
+			minutesOfDay(prefs.workdayStart),
+			minutesOfDay(prefs.workdayEnd),
+		);
+		if (now < workday.start || now >= workday.end) return;
+		const today = localDayKey(now.getTime());
+		if (readKey(BRIEFING_KEY) === today) return;
+		writeKey(BRIEFING_KEY, today);
+
+		const summary = briefingSummary(
+			buildBriefing(agenda.data.items, data.items, workday, now),
+		);
+		getHost()
+			.desktop.notify({ title: "Your day", body: summary })
+			.catch((cause) => console.error("Notification failed", cause));
+	}, [data, agenda.data, notifications, prefs]);
 
 	useEffect(() => {
 		if (!data) return;
@@ -84,6 +115,22 @@ function loadSeen(): Set<string> | null {
 function saveSeen(seen: Set<string>) {
 	try {
 		localStorage.setItem(SEEN_KEY, JSON.stringify([...seen]));
+	} catch {
+		// best effort
+	}
+}
+
+function readKey(key: string): string | null {
+	try {
+		return localStorage.getItem(key);
+	} catch {
+		return null;
+	}
+}
+
+function writeKey(key: string, value: string) {
+	try {
+		localStorage.setItem(key, value);
 	} catch {
 		// best effort
 	}

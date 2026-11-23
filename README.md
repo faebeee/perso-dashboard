@@ -27,6 +27,19 @@ Then open **Integrations**, enter the OAuth client for each provider, and click 
 
 `npm run build` produces installers under `src-tauri/target/release/bundle/`.
 
+## Plan your day
+
+- **Today** (top of the sidebar) shows:
+  - A briefing with headline tiles: meetings, free time left, what's due or overdue, and what's waiting on you.
+  - Your day as a timeline: meetings interleaved with free blocks within your workday.
+  - **Your list:** pinned items and quick notes. Unfinished items carry over to the next day.
+  - What needs you.
+- **Pin anything:** the calendar icon on any row (widgets, My Work, Urgent, source pages) adds it to Today.
+- **Quick capture:** ⌃⌥Space (Ctrl+Alt+Space) works from anywhere, even with the app in the background. In ⌘K, type and choose *Add “…” to Today*.
+- **Done / Snooze** on urgent items: *Done* hides an item until it escalates. *Snooze* hides it for 1h, 3h, until tomorrow morning or next week. Cleared items leave the badge, the menu bar and notifications too; restore them under *Done & snoozed*.
+- **Morning briefing notification:** once per day, at the start of your workday.
+- Workday hours, the briefing and the shortcut are set in **Preferences**.
+
 ## Desktop behaviour
 
 - **Menu bar:** an icon with the urgent count. Its menu lists the urgent items (click to open), plus *Open Urgent*, *Open Dashboard* and *Quit*. The same count shows on the **Dock badge**.

@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
 import {
+	CalendarPlus,
 	LayoutDashboard,
 	ListTodo,
 	PlugZap,
@@ -9,6 +10,7 @@ import {
 	Search,
 	Settings2,
 	Siren,
+	Sun,
 } from "lucide-react";
 import {
 	type ComponentType,
@@ -27,9 +29,10 @@ import {
 import { ItemIcon } from "#/components/source-kit/item-icon";
 import { useSources } from "#/components/source-kit/source-context";
 import { KIND_FOR_REASON } from "#/features/attention/kinds";
-import { attentionQueries } from "#/features/attention/queries";
+import { useAttention } from "#/features/attention/queries";
 import { feedQueries } from "#/features/feed/queries";
 import { releaseQueries } from "#/features/releases/queries";
+import { useAddToToday } from "#/features/today/queries";
 import { integrationManifests } from "#/integrations/registry";
 
 /**
@@ -48,6 +51,7 @@ const PAGES: {
 	label: string;
 	icon: ComponentType<{ className?: string }>;
 }[] = [
+	{ to: "/today", label: "Today", icon: Sun },
 	{ to: "/urgent", label: "Urgent", icon: Siren },
 	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
 	{ to: "/feed", label: "My Work", icon: ListTodo },
@@ -97,10 +101,12 @@ function PaletteContent({ close }: { close: () => void }) {
 	const { openItem, openExternal } = useItemDetail();
 	const sources = useSources();
 	// Usually already cached; only fetched here if the user never opened them.
-	const urgent = useQuery(attentionQueries.all());
+	const urgent = useAttention();
 	const feed = useQuery(feedQueries.all());
 	const releases = useQuery(releaseQueries.all());
 	const loading = urgent.isPending || feed.isPending || releases.isPending;
+	const [search, setSearch] = useState("");
+	const addToToday = useAddToToday();
 
 	const run = (action: () => void) => {
 		close();
@@ -125,6 +131,8 @@ function PaletteContent({ close }: { close: () => void }) {
 				<Search className="size-4 shrink-0 text-muted-foreground" />
 				<Command.Input
 					autoFocus
+					value={search}
+					onValueChange={setSearch}
 					placeholder="Search pages, PRs, issues, mail, releases…"
 					className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
 				/>
@@ -136,6 +144,26 @@ function PaletteContent({ close }: { close: () => void }) {
 				<Command.Empty className="py-8 text-center text-sm text-muted-foreground">
 					{loading ? "Loading…" : "No results."}
 				</Command.Empty>
+
+				{search.trim() && (
+					<Command.Group heading="Today">
+						<PaletteItem
+							value={`add to today ${search}`}
+							forceMount
+							onSelect={() =>
+								run(() => addToToday.mutate({ kind: "note", title: search }))
+							}
+						>
+							<span className="grid size-7 place-items-center rounded-md bg-muted">
+								<CalendarPlus className="size-4" />
+							</span>
+							<Label
+								title={`Add “${search.trim()}” to Today`}
+								detail="New note on your Today list"
+							/>
+						</PaletteItem>
+					</Command.Group>
+				)}
 
 				<Command.Group heading="Go to">
 					{PAGES.map(({ to, label, icon: Icon }) => (
@@ -230,16 +258,20 @@ function PaletteContent({ close }: { close: () => void }) {
 function PaletteItem({
 	value,
 	onSelect,
+	forceMount,
 	children,
 }: {
 	value: string;
 	onSelect: () => void;
+	/** Show regardless of the search filter. */
+	forceMount?: boolean;
 	children: ReactNode;
 }) {
 	return (
 		<Command.Item
 			value={value}
 			onSelect={onSelect}
+			forceMount={forceMount}
 			className="flex cursor-default items-center gap-3 rounded-md px-2 py-1.5 text-sm select-none data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground"
 		>
 			{children}

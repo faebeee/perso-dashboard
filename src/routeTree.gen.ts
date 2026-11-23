@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FeedRouteImport } from './routes/feed'
+import { Route as TodayRouteImport } from './routes/today'
 import { Route as UrgentRouteImport } from './routes/urgent'
 import { Route as AppsIntegrationIdRouteImport } from './routes/apps/$integrationId'
 import { Route as SettingsIntegrationsRouteImport } from './routes/settings/integrations'
@@ -24,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
 const FeedRoute = FeedRouteImport.update({
   id: '/feed',
   path: '/feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TodayRoute = TodayRouteImport.update({
+  id: '/today',
+  path: '/today',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UrgentRoute = UrgentRouteImport.update({
@@ -50,6 +56,7 @@ const SettingsPreferencesRoute = SettingsPreferencesRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
+  '/today': typeof TodayRoute
   '/urgent': typeof UrgentRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
+  '/today': typeof TodayRoute
   '/urgent': typeof UrgentRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
+  '/today': typeof TodayRoute
   '/urgent': typeof UrgentRoute
   '/apps/$integrationId': typeof AppsIntegrationIdRoute
   '/settings/integrations': typeof SettingsIntegrationsRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/feed'
+    | '/today'
     | '/urgent'
     | '/apps/$integrationId'
     | '/settings/integrations'
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/feed'
+    | '/today'
     | '/urgent'
     | '/apps/$integrationId'
     | '/settings/integrations'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/feed'
+    | '/today'
     | '/urgent'
     | '/apps/$integrationId'
     | '/settings/integrations'
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FeedRoute: typeof FeedRoute
+  TodayRoute: typeof TodayRoute
   UrgentRoute: typeof UrgentRoute
   AppsIntegrationIdRoute: typeof AppsIntegrationIdRoute
   SettingsIntegrationsRoute: typeof SettingsIntegrationsRoute
@@ -122,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/feed'
       fullPath: '/feed'
       preLoaderRoute: typeof FeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/today': {
+      id: '/today'
+      path: '/today'
+      fullPath: '/today'
+      preLoaderRoute: typeof TodayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/urgent': {
@@ -158,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FeedRoute: FeedRoute,
+  TodayRoute: TodayRoute,
   UrgentRoute: UrgentRoute,
   AppsIntegrationIdRoute: AppsIntegrationIdRoute,
   SettingsIntegrationsRoute: SettingsIntegrationsRoute,

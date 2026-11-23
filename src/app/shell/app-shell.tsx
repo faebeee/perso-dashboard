@@ -6,6 +6,7 @@ import {
 	Search,
 	Settings2,
 	Siren,
+	Sun,
 } from "lucide-react";
 import type { ComponentType, ReactNode } from "react";
 import { integrationManifests } from "#/integrations/registry";
@@ -14,6 +15,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { UrgentCount } from "./urgent-count";
 
 const MAIN_NAV = [
+	{ to: "/today", label: "Today", icon: Sun },
 	{ to: "/urgent", label: "Urgent", icon: Siren, badge: UrgentCount },
 	{ to: "/", label: "Dashboard", icon: LayoutDashboard },
 	{ to: "/feed", label: "My Work", icon: ListTodo },
@@ -127,6 +129,7 @@ function NavLink({
 }: {
 	to:
 		| "/"
+		| "/today"
 		| "/urgent"
 		| "/feed"
 		| "/settings/integrations"
