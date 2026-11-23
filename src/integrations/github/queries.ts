@@ -4,6 +4,7 @@ import type { WorkScope } from "#/core/work-scope";
 import { integrationQueryKey } from "#/lib/query-keys";
 import { GITHUB_ID } from "./constants";
 import {
+	fetchDependabotAlerts,
 	fetchGitHubCommits,
 	fetchGitHubMyPullRequests,
 	fetchGitHubPullRequest,
@@ -24,6 +25,15 @@ export const githubQueries = {
 		queryOptions({
 			queryKey: [...key, "my-pull-requests", scope],
 			queryFn: async () => unwrap(await fetchGitHubMyPullRequests(scope)),
+		}),
+
+	/** Open Dependabot alerts across repositories you can write to. */
+	dependabotAlerts: () =>
+		queryOptions({
+			queryKey: [...key, "dependabot"],
+			queryFn: async () => unwrap(await fetchDependabotAlerts()),
+			// Security alerts change slowly; the HTTP cache holds them 10 min too.
+			staleTime: 10 * 60_000,
 		}),
 
 	/** Your commits of the last days, on any repo and branch. */

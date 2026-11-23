@@ -62,6 +62,7 @@ describe("createTokenManager", () => {
 		const refresh = vi.fn();
 		const { manager, integration } = setup(connection(), { refresh });
 		await expect(manager.getContext(integration)).resolves.toEqual({
+			scopes: [],
 			accessToken: "old-access",
 			meta: { site: "x" },
 		});

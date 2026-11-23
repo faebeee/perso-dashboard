@@ -6,10 +6,12 @@ import {
 	githubCombinedStatusSchema,
 	githubCommitSchema,
 	githubCompareSchema,
+	githubDependabotAlertListSchema,
 	githubEventListSchema,
 	githubPullFileListSchema,
 	githubPullSchema,
 	githubReleaseListSchema,
+	githubRepoListSchema,
 	githubReviewListSchema,
 	githubSearchResponseSchema,
 	githubUserSchema,
@@ -35,6 +37,8 @@ export function createGitHubApi(accessToken: string, fetch?: FetchFn) {
 				// A commit never changes once pushed.
 				[/\/compare\/|\/commits\/[0-9a-f]{7,}$/, TTL.stable],
 				[/\/releases$/, TTL.slow],
+				// Security alerts and the repo list change slowly.
+				[/\/dependabot\/alerts$|^\/user\/repos$/, TTL.slow],
 			],
 			TTL.list,
 		),
@@ -53,6 +57,26 @@ export function createGitHubApi(accessToken: string, fetch?: FetchFn) {
 				order: "desc",
 				per_page: perPage,
 			}),
+
+		/** Repositories you can access, most recently pushed first. */
+		userRepos: (page = 1) =>
+			http.get("/user/repos", githubRepoListSchema, {
+				affiliation: "owner,collaborator,organization_member",
+				sort: "pushed",
+				per_page: 100,
+				page,
+			}),
+
+		/** Open Dependabot alerts of one repository. */
+		dependabotAlerts: (repoFullName: string) =>
+			http.get(
+				`${repoPath(repoFullName)}/dependabot/alerts`,
+				githubDependabotAlertListSchema,
+				{
+					state: "open",
+					per_page: 100,
+				},
+			),
 
 		/** Your recent activity (all repos and branches, incl. private ones). */
 		userEvents: (login: string, page = 1) =>

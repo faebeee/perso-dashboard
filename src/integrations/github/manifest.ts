@@ -1,7 +1,8 @@
-import { GitPullRequest, GitPullRequestDraft } from "lucide-react";
+import { GitPullRequest, GitPullRequestDraft, ShieldAlert } from "lucide-react";
 import { createWorkItemWidget } from "#/components/widget-kit/create-work-item-widget";
 import type { IntegrationManifest } from "#/core/integration";
 import { GITHUB_ID } from "./constants";
+import { DependabotWidget } from "./dependabot-view";
 import { GitHubOverview } from "./overview";
 import { PullRequestDetailView } from "./pull-request-detail-view";
 import { githubQueries } from "./queries";
@@ -40,5 +41,16 @@ export const githubManifest: IntegrationManifest = {
 			query: githubQueries.myPullRequests,
 			emptyMessage: "No open pull requests for this filter.",
 		}),
+		{
+			type: "github.dependabot",
+			title: "Dependabot alerts",
+			description:
+				"Open security alerts across the repositories you can write to.",
+			integrationId: GITHUB_ID,
+			icon: ShieldAlert,
+			defaultSize: { w: 4, h: 10 },
+			minSize: { w: 3, h: 5 },
+			Component: DependabotWidget,
+		},
 	],
 };

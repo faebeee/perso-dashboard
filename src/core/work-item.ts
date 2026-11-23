@@ -24,6 +24,8 @@ export const workItemSchema = z.object({
 		"email",
 		/** An error/crash group from an error tracker (Sentry issue). */
 		"error",
+		/** A vulnerable dependency (Dependabot alert). */
+		"security_alert",
 	]),
 	title: z.string(),
 	url: z.string(),

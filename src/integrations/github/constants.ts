@@ -1,6 +1,10 @@
 export const GITHUB_ID = "github";
 
-export const GITHUB_SCOPES = ["repo", "read:user"];
+/** security_events: Dependabot alerts on private repos (added later: reconnect). */
+export const GITHUB_SCOPES = ["repo", "read:user", "security_events"];
+
+/** Repos checked for Dependabot alerts (one request each, cached 10 min). */
+export const DEPENDABOT_REPO_LIMIT = 50;
 
 /** Results per search request: lists are capped at this size. */
 export const SEARCH_PAGE_SIZE = 30;

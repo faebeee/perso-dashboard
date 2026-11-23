@@ -165,3 +165,54 @@ export const githubCompareSchema = z.object({
 
 export type GitHubEventList = z.infer<typeof githubEventListSchema>;
 export type GitHubCommit = z.infer<typeof githubCommitSchema>;
+
+/** GET /user/repos: repositories you can access, with your permissions. */
+export const githubRepoListSchema = z.array(
+	z.object({
+		full_name: z.string(),
+		archived: z.boolean().default(false),
+		pushed_at: z.string().nullable().optional(),
+		permissions: z
+			.object({
+				admin: z.boolean().default(false),
+				push: z.boolean().default(false),
+			})
+			.partial()
+			.optional(),
+	}),
+);
+
+/** GET /repos/{o}/{r}/dependabot/alerts (only the fields we show). */
+export const githubDependabotAlertListSchema = z.array(
+	z.object({
+		number: z.number(),
+		state: z.string(),
+		html_url: z.string(),
+		created_at: z.string(),
+		dependency: z.object({
+			package: z.object({ ecosystem: z.string(), name: z.string() }),
+			manifest_path: z.string().optional(),
+			scope: z.string().nullable().optional(),
+		}),
+		security_advisory: z.object({
+			ghsa_id: z.string(),
+			cve_id: z.string().nullable().optional(),
+			summary: z.string(),
+			severity: z.string(),
+		}),
+		security_vulnerability: z
+			.object({
+				vulnerable_version_range: z.string().optional(),
+				first_patched_version: z
+					.object({ identifier: z.string() })
+					.nullable()
+					.optional(),
+			})
+			.optional(),
+	}),
+);
+
+export type GitHubRepoList = z.infer<typeof githubRepoListSchema>;
+export type GitHubDependabotAlertList = z.infer<
+	typeof githubDependabotAlertListSchema
+>;

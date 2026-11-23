@@ -48,7 +48,11 @@ export function createTokenManager({
 		const needsRefresh =
 			expiresAt !== undefined && expiresAt - refreshSkewMs <= now();
 		if (!needsRefresh) {
-			return { accessToken: connection.accessToken, meta: connection.meta };
+			return {
+				accessToken: connection.accessToken,
+				meta: connection.meta,
+				scopes: connection.scopes,
+			};
 		}
 
 		const provider = await resolveProvider(integration);
@@ -66,7 +70,11 @@ export function createTokenManager({
 		try {
 			const tokens = await provider.refresh(connection.refreshToken);
 			await connections.updateTokens(id, tokens);
-			return { accessToken: tokens.accessToken, meta: connection.meta };
+			return {
+				accessToken: tokens.accessToken,
+				meta: connection.meta,
+				scopes: tokens.scopes,
+			};
 		} catch (cause) {
 			if (cause instanceof IntegrationFailure) throw cause;
 			throw unauthorized(

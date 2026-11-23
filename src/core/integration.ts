@@ -96,6 +96,8 @@ export interface IntegrationContext {
 	accessToken: string;
 	/** Integration-specific data captured at connect time (e.g. Jira cloudId). */
 	meta: Record<string, unknown>;
+	/** OAuth scopes granted to the token (to detect a needed reconnect). */
+	scopes?: string[];
 	/** The user's current rules (Preferences); defaults when absent. */
 	rules?: { attention: AttentionRules; waiting: WaitingRules };
 	/** Values of this integration's `settings`, resolved with defaults. */

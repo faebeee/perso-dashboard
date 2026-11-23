@@ -5,6 +5,7 @@ import {
 	GitPullRequest,
 	GitPullRequestDraft,
 	Rocket,
+	ShieldAlert,
 	Tag,
 } from "lucide-react";
 import {
@@ -22,6 +23,7 @@ import type { WorkItem } from "#/core/work-item";
 import { tally } from "#/lib/tally";
 import { formatRelative } from "#/lib/time";
 import { SEARCH_PAGE_SIZE } from "./constants";
+import { DependabotAlerts } from "./dependabot-view";
 import { RECENT_COMMIT_DAYS } from "./fetchers";
 import { githubQueries } from "./queries";
 import { RecentCommits } from "./recent-commits";
@@ -54,6 +56,7 @@ export function GitHubOverview() {
 	const mine = useQuery(githubQueries.myPullRequests(scope));
 	const releases = useQuery(githubQueries.releases());
 	const commits = useQuery(githubQueries.recentCommits());
+	const dependabot = useQuery(githubQueries.dependabotAlerts());
 
 	return (
 		<div className="space-y-6">
@@ -135,6 +138,15 @@ export function GitHubOverview() {
 					emptyMessage={`No drafts and nothing shipped in the last ${RECENT_RELEASE_DAYS} days.`}
 				>
 					{(r) => <ReleaseList releases={r} />}
+				</OverviewSection>
+				<OverviewSection
+					title="Dependabot alerts"
+					icon={ShieldAlert}
+					query={dependabot}
+					count={(r) => r.items.length}
+					className="xl:col-span-2"
+				>
+					{(r) => <DependabotAlerts result={r} />}
 				</OverviewSection>
 				<OverviewSection
 					title={`Your commits (last ${RECENT_COMMIT_DAYS} days)`}
