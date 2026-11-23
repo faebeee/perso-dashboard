@@ -33,6 +33,8 @@ export interface IntegrationManifest {
 	accent?: string;
 	/** Where the user creates the OAuth app for this provider. */
 	setup: { url: string; label: string };
+	/** Step-by-step instructions for creating the OAuth app (setup wizard). */
+	setupGuide?: SetupGuide;
 	widgets: WidgetDefinition[];
 	/** Full-page overview, listed in the sidebar. Omit for no page. */
 	overview?: IntegrationOverview;
@@ -47,6 +49,39 @@ export interface IntegrationManifest {
  */
 export interface ItemDetailView {
 	Component: ComponentType<{ detailRef: string }>;
+}
+
+/** One step of creating a provider's OAuth app. */
+export interface SetupStep {
+	title: string;
+	/** Plain text; blank lines separate paragraphs. */
+	text: string;
+	links?: { label: string; url: string }[];
+	/** Values to paste into the provider's form. `{redirectUri}` is filled in. */
+	copy?: { label: string; value: string }[];
+}
+
+export interface SetupGuide {
+	steps: SetupStep[];
+}
+
+/** Placeholder in guide values for this app's OAuth redirect URI. */
+export const REDIRECT_URI_PLACEHOLDER = "{redirectUri}";
+
+/** Pure: fills in the redirect URI wherever a guide asks for it. */
+export function resolveSetupGuide(
+	guide: SetupGuide,
+	redirectUri: string,
+): SetupGuide {
+	const fill = (text: string) =>
+		text.split(REDIRECT_URI_PLACEHOLDER).join(redirectUri);
+	return {
+		steps: guide.steps.map((step) => ({
+			...step,
+			text: fill(step.text),
+			copy: step.copy?.map((c) => ({ ...c, value: fill(c.value) })),
+		})),
+	};
 }
 
 /** A source's own page: headline numbers plus detailed sections. */

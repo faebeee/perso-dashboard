@@ -12,7 +12,10 @@ interface OAuthClientFormProps {
 	sharedWithNames: string[];
 	/** Pre-filled when editing existing credentials. */
 	currentClientId: string | null;
-	onDone?: () => void;
+	/** Called after the credentials were saved. */
+	onSaved?: () => void;
+	/** Shows a Cancel button when given. */
+	onCancel?: () => void;
 }
 
 /** Client id + secret of the user's own OAuth app, stored encrypted locally. */
@@ -22,7 +25,8 @@ export function OAuthClientForm({
 	integrationIds,
 	sharedWithNames,
 	currentClientId,
-	onDone,
+	onSaved,
+	onCancel,
 }: OAuthClientFormProps) {
 	const id = useId();
 	const [clientId, setClientId] = useState(currentClientId ?? "");
@@ -36,7 +40,7 @@ export function OAuthClientForm({
 			{
 				onSuccess: () => {
 					setClientSecret("");
-					onDone?.();
+					onSaved?.();
 				},
 			},
 		);
@@ -81,8 +85,8 @@ export function OAuthClientForm({
 				>
 					Save
 				</Button>
-				{onDone && (
-					<Button type="button" size="sm" variant="ghost" onClick={onDone}>
+				{onCancel && (
+					<Button type="button" size="sm" variant="ghost" onClick={onCancel}>
 						Cancel
 					</Button>
 				)}

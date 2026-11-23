@@ -1,4 +1,4 @@
-import { CircleAlert, Loader2 } from "lucide-react";
+import { CircleAlert, Loader2, Wand2 } from "lucide-react";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "#/components/ui/alert";
 import { Badge } from "#/components/ui/badge";
@@ -14,14 +14,12 @@ import {
 } from "#/components/ui/card";
 import { SyncLine } from "#/components/widget-kit/sync-status";
 import type { IntegrationManifest } from "#/core/integration";
-import {
-	ConnectError,
-	type ConnectErrorCode,
-} from "#/platform/oauth/oauth-flow";
+import { describeConnectError, isCancelled } from "../connect-errors";
 import type { IntegrationStatus } from "../fetchers";
 import { useConnectIntegration, useDisconnectIntegration } from "../queries";
 import { OAuthClientForm } from "./oauth-client-form";
 import { OAuthSetupHint } from "./oauth-setup-hint";
+import { SetupWizard } from "./setup-wizard";
 
 interface ConnectionCardProps {
 	integration: IntegrationManifest;
@@ -38,6 +36,7 @@ export function ConnectionCard({
 	const connect = useConnectIntegration(integration.id);
 	const disconnect = useDisconnectIntegration();
 	const [editingClient, setEditingClient] = useState(false);
+	const [wizardOpen, setWizardOpen] = useState(false);
 	const Icon = integration.icon;
 	const connected = status?.connected ?? false;
 	const configured = status?.configured ?? false;
@@ -88,7 +87,9 @@ export function ConnectionCard({
 					<Alert variant="destructive">
 						<CircleAlert />
 						<AlertTitle>Could not connect {integration.name}</AlertTitle>
-						<AlertDescription>{describeError(connect.error)}</AlertDescription>
+						<AlertDescription>
+							{describeConnectError(connect.error)}
+						</AlertDescription>
 					</Alert>
 				)}
 
@@ -99,7 +100,8 @@ export function ConnectionCard({
 						integrationIds={[integration.id, ...client.sharedWith]}
 						sharedWithNames={client.sharedWith.map(nameOf)}
 						currentClientId={client.clientId}
-						onDone={configured ? () => setEditingClient(false) : undefined}
+						onSaved={() => setEditingClient(false)}
+						onCancel={configured ? () => setEditingClient(false) : undefined}
 					/>
 				)}
 
@@ -114,6 +116,15 @@ export function ConnectionCard({
 			</CardContent>
 
 			<CardFooter className="flex-wrap gap-2">
+				{!connected && integration.setupGuide && status && (
+					<Button
+						variant={configured ? "outline" : "default"}
+						size="sm"
+						onClick={() => setWizardOpen(true)}
+					>
+						<Wand2 /> Guided setup
+					</Button>
+				)}
 				{configured &&
 					(connect.isPending ? (
 						<Button variant="outline" size="sm" onClick={connect.cancel}>
@@ -149,26 +160,15 @@ export function ConnectionCard({
 					</Button>
 				)}
 			</CardFooter>
+			{status && wizardOpen && (
+				<SetupWizard
+					integration={integration}
+					status={status}
+					nameOf={nameOf}
+					open={wizardOpen}
+					onOpenChange={setWizardOpen}
+				/>
+			)}
 		</Card>
 	);
-}
-
-const isCancelled = (error: Error) =>
-	error instanceof ConnectError && error.code === "cancelled";
-
-const ERROR_MESSAGES: Partial<Record<ConnectErrorCode, string>> = {
-	not_configured: "Add the OAuth client ID and secret first.",
-	access_denied: "Access was denied on the provider's consent screen.",
-	invalid_state: "The login response didn't match this request. Try again.",
-	timeout: "Timed out waiting for the browser. Try again.",
-	port_unavailable:
-		"The local OAuth callback port is in use by another program. Close it and try again.",
-	browser: "Could not open the system browser.",
-};
-
-function describeError(error: Error): string {
-	if (error instanceof ConnectError) {
-		return ERROR_MESSAGES[error.code] ?? error.message;
-	}
-	return error.message;
 }

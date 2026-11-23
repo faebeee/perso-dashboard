@@ -5,6 +5,7 @@ import { SENTRY_ID } from "./constants";
 import { SentryErrorDetailView } from "./error-detail-view";
 import { SentryOverview } from "./overview";
 import { sentryQueries } from "./queries";
+import { sentrySetupGuide } from "./setup-guide";
 
 export const sentryManifest: IntegrationManifest = {
 	id: SENTRY_ID,
@@ -17,6 +18,7 @@ export const sentryManifest: IntegrationManifest = {
 		url: "https://sentry.io/settings/account/api/applications/",
 		label: "Sentry → User Settings → API → Applications",
 	},
+	setupGuide: sentrySetupGuide,
 	details: { Component: SentryErrorDetailView },
 	overview: { Component: SentryOverview },
 	widgets: [

@@ -115,6 +115,8 @@ Migrations in `drizzle/` are bundled into the app and applied on startup.
 
 ## Setting up the OAuth apps
 
+**Easiest:** on the Integrations page, click **Guided setup** on a source. It walks you through creating the OAuth app step by step, with links, the exact values to paste (copy buttons included) and the redirect URI. Then you enter the credentials and connect. The table below has the same information.
+
 The app uses the desktop OAuth flow from [RFC 8252](https://www.rfc-editor.org/rfc/rfc8252). It opens your system browser, and the provider redirects to a short-lived listener on **`http://127.0.0.1:47390`**. PKCE is used where the provider supports it. Each integration card shows the exact redirect URI to register, with a copy button.
 
 | Integration | Where | Redirect URI | Notes |

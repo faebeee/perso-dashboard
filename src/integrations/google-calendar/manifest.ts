@@ -1,5 +1,6 @@
 import { CalendarDays } from "lucide-react";
 import type { IntegrationManifest } from "#/core/integration";
+import { GOOGLE_SETUP_GUIDE } from "#/platform/oauth/google";
 import { GOOGLE_CALENDAR_ID, UPCOMING_DAYS } from "./constants";
 import { EventDetailView } from "./event-detail-view";
 import { GoogleCalendarOverview } from "./overview";
@@ -16,6 +17,7 @@ export const googleCalendarManifest: IntegrationManifest = {
 		label:
 			"Google Cloud Console → enable the Calendar API (uses the Google OAuth client)",
 	},
+	setupGuide: GOOGLE_SETUP_GUIDE,
 	details: { Component: EventDetailView },
 	overview: { Component: GoogleCalendarOverview, scoped: true },
 	widgets: [

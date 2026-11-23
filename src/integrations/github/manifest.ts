@@ -5,6 +5,7 @@ import { GITHUB_ID } from "./constants";
 import { GitHubOverview } from "./overview";
 import { PullRequestDetailView } from "./pull-request-detail-view";
 import { githubQueries } from "./queries";
+import { githubSetupGuide } from "./setup-guide";
 
 export const githubManifest: IntegrationManifest = {
 	id: GITHUB_ID,
@@ -16,6 +17,7 @@ export const githubManifest: IntegrationManifest = {
 		url: "https://github.com/settings/developers",
 		label: "GitHub → Developer settings → OAuth Apps",
 	},
+	setupGuide: githubSetupGuide,
 	details: { Component: PullRequestDetailView },
 	overview: { Component: GitHubOverview, scoped: true },
 	widgets: [

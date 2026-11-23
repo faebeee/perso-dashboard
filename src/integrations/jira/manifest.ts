@@ -5,6 +5,7 @@ import { JIRA_ID } from "./constants";
 import { JiraIssueDetailView } from "./issue-detail-view";
 import { JiraOverview } from "./overview";
 import { jiraQueries } from "./queries";
+import { jiraSetupGuide } from "./setup-guide";
 
 export const jiraManifest: IntegrationManifest = {
 	id: JIRA_ID,
@@ -16,6 +17,7 @@ export const jiraManifest: IntegrationManifest = {
 		url: "https://developer.atlassian.com/console/myapps/",
 		label: "Atlassian Developer Console → OAuth 2.0 (3LO)",
 	},
+	setupGuide: jiraSetupGuide,
 	details: { Component: JiraIssueDetailView },
 	overview: { Component: JiraOverview, scoped: true },
 	widgets: [
