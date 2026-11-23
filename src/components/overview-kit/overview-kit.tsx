@@ -40,7 +40,7 @@ export function StatTile<T>({
 				{Icon && <Icon className="size-3.5 shrink-0" />}
 				<span className="truncate">{label}</span>
 			</p>
-			<div className="mt-2 truncate text-2xl font-semibold tracking-tight tabular-nums">
+			<div className="mt-2 truncate font-display text-2xl font-semibold tracking-tight tabular-nums">
 				{query.isPending ? (
 					<Skeleton className="h-8 w-14" />
 				) : query.isError ? (
@@ -134,7 +134,7 @@ export function BreakdownList({
 					</div>
 					<div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
 						<div
-							className="h-full rounded-full bg-primary/70"
+							className="meter-fill h-full rounded-full bg-primary/70"
 							style={{ width: `${(row.value / max) * 100}%` }}
 						/>
 					</div>

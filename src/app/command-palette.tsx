@@ -8,6 +8,8 @@ import {
 	Hourglass,
 	LayoutDashboard,
 	ListTodo,
+	Moon,
+	Palette,
 	PlugZap,
 	RefreshCw,
 	Search,
@@ -25,6 +27,8 @@ import {
 	useMemo,
 	useState,
 } from "react";
+import { appearance } from "#/components/appearance/appearance";
+import { THEMES } from "#/components/appearance/themes";
 import {
 	type OpenableItem,
 	useItemDetail,
@@ -198,6 +202,44 @@ function PaletteContent({ close }: { close: () => void }) {
 							<RefreshCw className="size-4" />
 						</span>
 						Refresh all data
+					</PaletteItem>
+				</Command.Group>
+
+				<Command.Group heading="Appearance">
+					{THEMES.map((theme) => (
+						<PaletteItem
+							key={theme.id}
+							value={`theme appearance ${theme.name} ${theme.description}`}
+							onSelect={() => run(() => appearance.setTheme(theme.id))}
+						>
+							<span className="grid size-7 place-items-center rounded-md bg-muted">
+								<Palette className="size-4" />
+							</span>
+							<Label
+								title={`Theme: ${theme.name}`}
+								detail={theme.description}
+							/>
+						</PaletteItem>
+					))}
+					<PaletteItem
+						value="appearance dark light mode toggle"
+						onSelect={() =>
+							run(() =>
+								appearance.setMode(
+									document.documentElement.classList.contains("dark")
+										? "light"
+										: "dark",
+								),
+							)
+						}
+					>
+						<span className="grid size-7 place-items-center rounded-md bg-muted">
+							<Moon className="size-4" />
+						</span>
+						<Label
+							title="Toggle dark mode"
+							detail="Switch between light and dark"
+						/>
 					</PaletteItem>
 				</Command.Group>
 

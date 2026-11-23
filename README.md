@@ -99,6 +99,19 @@ Every API call goes through one cache in the shared HTTP client (`src/platform/h
 - **Persisted and encrypted** in SQLite, so restarts start warm. Entries older than 7 days are pruned, and an integration's entries are cleared when you connect or disconnect it.
 - **Refresh** buttons (dashboard, source pages, ⌘K) mark data stale so they really refetch, still within the rate-limit guard.
 
+## Themes
+
+**Preferences → Appearance** (or ⌘K → "Theme: …") offers four themes, each with a light and a dark variant:
+
+| Theme | Look |
+|---|---|
+| Default | neutral and quiet, the original look |
+| Technical | monospace (JetBrains Mono), tight corners, faint blueprint grid, terminal green |
+| Business | Inter, generous rounding, soft layered surfaces, a calm corporate blue |
+| Dot | monochrome with one red signal colour, dot-matrix display type (Doto) for headings and numbers, dotted canvas, chart bars drawn as dots |
+
+Themes are token overrides in `src/themes.css` (`:root[data-theme="…"]` plus `.dark`). Components only opt in through `font-display` (headings and big numbers) and `chart-bar` / `meter-fill`. Fonts are bundled (OFL) because the app works offline. The stored mode and theme are applied before first paint. To add a theme, add its id to `APPEARANCE_IDS`, its tokens to `themes.css` and its preview to `src/components/appearance/themes.ts`; a test checks the preview colours match the CSS.
+
 ## Desktop behaviour
 
 - **Menu bar:** an icon with the urgent count. Its menu lists the urgent items (click to open), plus *Open Urgent*, *Open Dashboard* and *Quit*. The same count shows on the **Dock badge**.

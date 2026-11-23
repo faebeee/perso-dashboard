@@ -3,7 +3,7 @@ import { devtools } from "@tanstack/devtools-vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
-import { themeInitScript } from "./src/app/shell/theme-init.ts";
+import { themeInitScript } from "./src/components/appearance/theme-init.ts";
 
 /** Applies the stored theme before first paint (no flash of the wrong theme). */
 const themeInit = (): Plugin => ({

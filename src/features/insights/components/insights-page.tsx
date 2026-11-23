@@ -275,7 +275,7 @@ function MetricCard({
 				</div>
 			</header>
 			<p className="mt-3 text-xs text-muted-foreground">
-				<span className="text-base font-semibold text-foreground tabular-nums">
+				<span className="font-display text-base font-semibold text-foreground tabular-nums">
 					{formatMetric(lastWeek, series)}
 				</span>{" "}
 				last week

@@ -1,0 +1,262 @@
+/*
+ * Themes: each overrides the design tokens for light AND dark mode
+ * (`:root[data-theme]` and `:root[data-theme].dark`), plus a few theme
+ * details. Selected in Preferences → Appearance; applied before first paint
+ * by the inline script in src/app/shell/theme-init.ts. Unlayered, so these
+ * rules win over Tailwind's utility layer where they need to.
+ *
+ * Fonts are bundled (OFL): the app works offline and its CSP allows no
+ * remote fonts.
+ */
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource-variable/doto";
+
+/* ───────────── Technical: monospace, tight, blueprint grid, terminal green ───────────── */
+
+:root[data-theme="technical"] {
+	--app-font-sans: "JetBrains Mono Variable", ui-monospace, monospace;
+	--app-font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
+	--app-font-display: "JetBrains Mono Variable", ui-monospace, monospace;
+	--radius: 0.125rem;
+	--background: oklch(0.985 0.003 250);
+	--foreground: oklch(0.2 0.02 250);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.2 0.02 250);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.2 0.02 250);
+	--primary: oklch(0.52 0.14 155);
+	--primary-foreground: oklch(0.99 0 0);
+	--secondary: oklch(0.95 0.008 250);
+	--secondary-foreground: oklch(0.2 0.02 250);
+	--muted: oklch(0.95 0.008 250);
+	--muted-foreground: oklch(0.5 0.02 250);
+	--accent: oklch(0.94 0.02 155);
+	--accent-foreground: oklch(0.25 0.05 155);
+	--border: oklch(0.86 0.012 250);
+	--input: oklch(0.86 0.012 250);
+	--ring: oklch(0.62 0.14 155);
+	--sidebar: oklch(0.96 0.006 250);
+	--sidebar-foreground: oklch(0.2 0.02 250);
+	--sidebar-accent: oklch(0.92 0.02 155);
+	--sidebar-accent-foreground: oklch(0.25 0.05 155);
+	--sidebar-border: oklch(0.86 0.012 250);
+	--grid-line: color-mix(in oklab, var(--border) 55%, transparent);
+}
+
+:root[data-theme="technical"].dark {
+	--background: oklch(0.16 0.012 250);
+	--foreground: oklch(0.92 0.02 150);
+	--card: oklch(0.19 0.012 250);
+	--card-foreground: oklch(0.92 0.02 150);
+	--popover: oklch(0.19 0.012 250);
+	--popover-foreground: oklch(0.92 0.02 150);
+	--primary: oklch(0.8 0.18 150);
+	--primary-foreground: oklch(0.16 0.012 250);
+	--secondary: oklch(0.24 0.014 250);
+	--secondary-foreground: oklch(0.92 0.02 150);
+	--muted: oklch(0.24 0.014 250);
+	--muted-foreground: oklch(0.68 0.03 160);
+	--accent: oklch(0.27 0.04 155);
+	--accent-foreground: oklch(0.9 0.06 150);
+	--border: oklch(0.32 0.02 250);
+	--input: oklch(0.32 0.02 250);
+	--ring: oklch(0.7 0.16 150);
+	--sidebar: oklch(0.13 0.012 250);
+	--sidebar-foreground: oklch(0.92 0.02 150);
+	--sidebar-accent: oklch(0.25 0.04 155);
+	--sidebar-accent-foreground: oklch(0.9 0.06 150);
+	--sidebar-border: oklch(0.28 0.02 250);
+	--grid-line: color-mix(in oklab, var(--border) 45%, transparent);
+}
+
+/* Blueprint grid behind the content (cards stay solid on top). */
+:root[data-theme="technical"] main {
+	background-image:
+		linear-gradient(var(--grid-line) 1px, transparent 1px),
+		linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+	background-size: 24px 24px;
+	background-attachment: local;
+}
+
+:root[data-theme="technical"] {
+	font-feature-settings: "zero" 1; /* slashed zero */
+}
+
+:root[data-theme="technical"] h1 {
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+/* ───────────── Business: clean sans, roomy, soft surfaces, corporate blue ───────────── */
+
+:root[data-theme="business"] {
+	--app-font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+	--app-font-display: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+	--radius: 0.75rem;
+	--background: oklch(0.982 0.003 250);
+	--foreground: oklch(0.22 0.03 255);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.22 0.03 255);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.22 0.03 255);
+	--primary: oklch(0.48 0.16 255);
+	--primary-foreground: oklch(0.99 0 0);
+	--secondary: oklch(0.96 0.01 255);
+	--secondary-foreground: oklch(0.25 0.04 255);
+	--muted: oklch(0.96 0.008 255);
+	--muted-foreground: oklch(0.52 0.02 255);
+	--accent: oklch(0.95 0.02 255);
+	--accent-foreground: oklch(0.3 0.08 255);
+	--border: oklch(0.91 0.008 255);
+	--input: oklch(0.9 0.01 255);
+	--ring: oklch(0.65 0.12 255);
+	--sidebar: oklch(0.97 0.006 255);
+	--sidebar-foreground: oklch(0.25 0.03 255);
+	--sidebar-accent: oklch(0.93 0.03 255);
+	--sidebar-accent-foreground: oklch(0.3 0.1 255);
+	--sidebar-border: oklch(0.91 0.008 255);
+}
+
+:root[data-theme="business"].dark {
+	--background: oklch(0.18 0.02 255);
+	--foreground: oklch(0.96 0.005 255);
+	--card: oklch(0.215 0.02 255);
+	--card-foreground: oklch(0.96 0.005 255);
+	--popover: oklch(0.215 0.02 255);
+	--popover-foreground: oklch(0.96 0.005 255);
+	--primary: oklch(0.7 0.14 255);
+	--primary-foreground: oklch(0.15 0.02 255);
+	--secondary: oklch(0.27 0.02 255);
+	--secondary-foreground: oklch(0.96 0.005 255);
+	--muted: oklch(0.26 0.02 255);
+	--muted-foreground: oklch(0.72 0.02 255);
+	--accent: oklch(0.3 0.04 255);
+	--accent-foreground: oklch(0.95 0.02 255);
+	--border: oklch(0.3 0.02 255);
+	--input: oklch(0.32 0.02 255);
+	--ring: oklch(0.6 0.12 255);
+	--sidebar: oklch(0.16 0.02 255);
+	--sidebar-foreground: oklch(0.92 0.01 255);
+	--sidebar-accent: oklch(0.27 0.04 255);
+	--sidebar-accent-foreground: oklch(0.96 0.01 255);
+	--sidebar-border: oklch(0.27 0.02 255);
+}
+
+/* Softer, layered elevation instead of hairline shadows. */
+:root[data-theme="business"] .shadow-xs {
+	box-shadow:
+		0 1px 2px oklch(0.25 0.03 255 / 0.06),
+		0 4px 14px oklch(0.25 0.03 255 / 0.05);
+}
+
+:root[data-theme="business"].dark .shadow-xs {
+	box-shadow: 0 1px 2px oklch(0 0 0 / 0.3);
+}
+
+/* ───────────── Dot: monochrome, dot-matrix type and textures, one red accent ───────────── */
+
+:root[data-theme="dot"] {
+	--app-font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+	--app-font-display: "Doto Variable", ui-monospace, monospace;
+	--radius: 1rem;
+	--background: oklch(0.965 0 0);
+	--foreground: oklch(0.13 0 0);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.13 0 0);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.13 0 0);
+	--primary: oklch(0.13 0 0);
+	--primary-foreground: oklch(0.99 0 0);
+	--secondary: oklch(0.93 0 0);
+	--secondary-foreground: oklch(0.13 0 0);
+	--muted: oklch(0.93 0 0);
+	--muted-foreground: oklch(0.45 0 0);
+	--accent: oklch(0.92 0 0);
+	--accent-foreground: oklch(0.13 0 0);
+	--destructive: oklch(0.6 0.22 27);
+	--border: oklch(0.86 0 0);
+	--input: oklch(0.86 0 0);
+	/* The one accent colour. */
+	--ring: oklch(0.6 0.22 27);
+	--signal: oklch(0.6 0.22 27);
+	--sidebar: oklch(0.95 0 0);
+	--sidebar-foreground: oklch(0.13 0 0);
+	--sidebar-accent: oklch(0.9 0 0);
+	--sidebar-accent-foreground: oklch(0.13 0 0);
+	--sidebar-border: oklch(0.86 0 0);
+	--dot: color-mix(in oklab, var(--foreground) 16%, transparent);
+}
+
+:root[data-theme="dot"].dark {
+	--background: oklch(0.08 0 0);
+	--foreground: oklch(0.96 0 0);
+	--card: oklch(0.13 0 0);
+	--card-foreground: oklch(0.96 0 0);
+	--popover: oklch(0.13 0 0);
+	--popover-foreground: oklch(0.96 0 0);
+	--primary: oklch(0.96 0 0);
+	--primary-foreground: oklch(0.08 0 0);
+	--secondary: oklch(0.2 0 0);
+	--secondary-foreground: oklch(0.96 0 0);
+	--muted: oklch(0.2 0 0);
+	--muted-foreground: oklch(0.65 0 0);
+	--accent: oklch(0.22 0 0);
+	--accent-foreground: oklch(0.96 0 0);
+	--destructive: oklch(0.62 0.22 27);
+	--border: oklch(0.26 0 0);
+	--input: oklch(0.26 0 0);
+	--ring: oklch(0.62 0.22 27);
+	--signal: oklch(0.65 0.22 27);
+	--sidebar: oklch(0.06 0 0);
+	--sidebar-foreground: oklch(0.9 0 0);
+	--sidebar-accent: oklch(0.18 0 0);
+	--sidebar-accent-foreground: oklch(0.96 0 0);
+	--sidebar-border: oklch(0.2 0 0);
+	--dot: color-mix(in oklab, var(--foreground) 14%, transparent);
+}
+
+/* Dotted canvas behind the content. */
+:root[data-theme="dot"] main {
+	background-image: radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
+	background-size: 14px 14px;
+	background-attachment: local;
+}
+
+/* Dot-matrix display type: headings and big numbers. */
+:root[data-theme="dot"] .font-display,
+:root[data-theme="dot"] h1 {
+	font-family: var(--app-font-display);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+/* Chart bars and meters as dot columns (the partial-week hatch stays). */
+:root[data-theme="dot"] .chart-bar,
+:root[data-theme="dot"] .meter-fill {
+	background-color: transparent;
+	background-image: radial-gradient(
+		circle,
+		var(--primary) 42%,
+		transparent 48%
+	);
+	background-size: 6px 6px;
+	background-position: center bottom;
+}
+
+/* The active page gets the accent dot. */
+:root[data-theme="dot"] nav a[data-status="active"] {
+	position: relative;
+}
+:root[data-theme="dot"] nav a[data-status="active"]::after {
+	content: "";
+	position: absolute;
+	right: 0.5rem;
+	top: 50%;
+	width: 6px;
+	height: 6px;
+	margin-top: -3px;
+	border-radius: 9999px;
+	background: var(--signal);
+}

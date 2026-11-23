@@ -79,7 +79,7 @@ export function WaitingPage() {
 							<Icon className="size-3.5" />
 							<span className="truncate">{title}</span>
 						</p>
-						<div className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
+						<div className="mt-2 font-display text-2xl font-semibold tracking-tight tabular-nums">
 							{waiting.isPending ? (
 								<Skeleton className="h-8 w-10" />
 							) : (

@@ -67,7 +67,7 @@ export function MetricChart({
 							<span
 								className={cn(
 									"block w-full max-w-6 rounded-t-[4px] transition-opacity",
-									!partial && "bg-primary",
+									!partial && "chart-bar bg-primary",
 									active !== null && active !== i && "opacity-40",
 								)}
 								style={{

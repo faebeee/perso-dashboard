@@ -237,7 +237,7 @@ function Tile({
 			</p>
 			<div
 				className={cn(
-					"mt-2 truncate text-2xl font-semibold tracking-tight tabular-nums",
+					"mt-2 truncate font-display text-2xl font-semibold tracking-tight tabular-nums",
 					alert && "text-destructive",
 				)}
 			>
