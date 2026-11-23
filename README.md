@@ -1,6 +1,6 @@
 # Productivity Dashboard
 
-A personal, local-first **desktop app** that brings work from **GitHub**, **Jira Cloud**, **Gmail**, **Google Calendar**, **Outlook** (mail and calendar, Microsoft 365 or personal) and **Sentry** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists. The **Urgent** view (top of the sidebar, with a live count, also available as a widget) shows only what needs you soon:
+A personal, local-first **desktop app** (and a matching **web app**, see [Web app](#web-app)) that brings work from **GitHub**, **Jira Cloud**, **Gmail**, **Google Calendar**, **Outlook** (mail and calendar, Microsoft 365 or personal) and **Sentry** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists. The **Urgent** view (top of the sidebar, with a live count, also available as a widget) shows only what needs you soon:
 
 | Source | Urgent when… |
 |---|---|
@@ -11,9 +11,9 @@ A personal, local-first **desktop app** that brings work from **GitHub**, **Jira
 | Outlook | unread inbox mail marked high importance from the last 2 days |
 | Sentry | an unresolved issue assigned to you or your teams is escalating, regressed or fatal; a new one assigned to you personally |
 
-Thresholds live in `ATTENTION_RULES` (`src/core/attention.ts`); each integration's rules are in its `attention.ts`.
+Thresholds live in `ATTENTION_RULES` (`packages/core/src/attention.ts`); each integration's rules are in its `attention.ts`.
 
-Built with Tauri 2 (Rust shell), React, TanStack Router + Query, Tailwind v4, shadcn/ui, Drizzle + SQLite.
+Built with Tauri 2 (Rust shell), TanStack Start (web shell), React, TanStack Router + Query, Tailwind v4, shadcn/ui, Drizzle + SQLite, in an npm workspaces + Turborepo monorepo.
 
 ## Quick start
 
@@ -21,12 +21,39 @@ Prerequisites: Node 22+, Rust (stable), and the [Tauri system dependencies](http
 
 ```bash
 npm install
-npm run dev        # starts Vite on 127.0.0.1:3100 and opens the app window
+npm run dev        # desktop: starts Vite on 127.0.0.1:3100 and opens the app window
+npm run dev:web    # web: serves the app on http://127.0.0.1:47390
 ```
 
 Then open **Integrations**, enter the OAuth client for each provider, and click **Connect**. Login happens in your normal browser. There is no `.env` file.
 
-`npm run build` produces installers under `src-tauri/target/release/bundle/`.
+`npm run build` builds everything; the desktop installers land under `apps/desktop/src-tauri/target/release/bundle/`, the web build in `apps/web/dist/`.
+
+## Web app
+
+`apps/web` is the same app in the browser: every page, widget and integration comes from the shared packages, so there is no UI code of its own besides the HTML document. It's built with TanStack Start and meant to run **on your own machine** (single user, bound to `127.0.0.1`):
+
+```bash
+npm run dev:web                              # development
+npm run build && npm run start -w @dashboard/web   # production build, then serve it
+```
+
+What the desktop app gets from Rust, the web app gets from its own small server (`apps/web/src/server/`), behind the same `Host` port:
+
+| Host capability | Desktop (Tauri) | Web |
+|---|---|---|
+| Provider API calls without CORS | `plugin-http` | Server-side proxy, limited to the same allowlist (`packages/platform/src/http-allowlist.ts`) |
+| SQLite | `plugin-sql` | `node:sqlite` on the server, same migrations |
+| Encryption key | OS keychain | `encryption.key` (mode 0600) next to the database |
+| OAuth login | Loopback listener on `127.0.0.1:47390` | The server itself listens on port 47390 and relays `/oauth/<id>/callback` to the waiting page, so **the redirect URIs you registered for the desktop work unchanged** |
+| Menu bar count, Dock badge | Tray + badge | Tab title `(3) Productivity Dashboard`, app badge when installed as a PWA |
+| Notifications | Native | Web Notifications, while a tab is open |
+| Quick capture shortcut | System-wide | While the tab is focused |
+| Open at login | Yes | Hidden in Preferences |
+
+Because both use port 47390, sign in to a provider from one of them at a time (the desktop's listener only binds during a login).
+
+The host API refuses requests whose `Host` isn't the loopback address (DNS rebinding), that lack its custom header (so other websites can't reach it: the header forces a CORS preflight it never answers), or whose fetch metadata says cross-site. The server still holds your tokens' key: don't expose port 47390 to a network.
 
 ## Plan your day
 
@@ -35,7 +62,7 @@ Then open **Integrations**, enter the OAuth client for each provider, and click 
   - Your day as a timeline: meetings interleaved with free blocks within your workday.
   - **Your list:** pinned items and quick notes. Unfinished items carry over to the next day.
   - What needs you.
-- **Default dashboard:** new users start with a predefined layout (Urgent, reviews and calendar on top; your PRs, Jira issues and Sentry errors below; mail, My Work and Dependabot at the bottom). *Edit layout → Reset layout* brings it back. The preset lives in `src/app/catalog.ts` (`defaultDashboard`).
+- **Default dashboard:** new users start with a predefined layout (Urgent, reviews and calendar on top; your PRs, Jira issues and Sentry errors below; mail, My Work and Dependabot at the bottom). *Edit layout → Reset layout* brings it back. The preset lives in `packages/app/src/app/catalog.ts` (`defaultDashboard`).
 - **Pin anything:** the calendar icon on any row (widgets, My Work, Urgent, source pages) adds it to Today.
 - **Quick capture:** ⌃⌥Space (Ctrl+Alt+Space) works from anywhere, even with the app in the background. In ⌘K, type and choose *Add “…” to Today*.
 - **Done / Snooze** on urgent items: *Done* hides an item until it escalates. *Snooze* hides it for 1h, 3h, until tomorrow morning or next week. Cleared items leave the badge, the menu bar and notifications too; restore them under *Done & snoozed*.
@@ -67,7 +94,7 @@ Pinned items that also show up as activity (e.g. a pinned PR that got merged) ar
 | Jira | issues you reported that are still open and unassigned |
 | Google Calendar, Outlook Calendar | meetings you organize in the next 7 days with invitees who haven't replied |
 
-**Meeting prep:** for your next meetings with other people (next 24h), it shows recent email conversations with the attendees. Integrations contribute through `getWaitingItems` and `getRelatedToPeople`; thresholds are in `WAITING_RULES` (`src/core/waiting.ts`).
+**Meeting prep:** for your next meetings with other people (next 24h), it shows recent email conversations with the attendees. Integrations contribute through `getWaitingItems` and `getRelatedToPeople`; thresholds are in `WAITING_RULES` (`packages/core/src/waiting.ts`).
 
 ## Insights
 
@@ -96,7 +123,7 @@ This uses a generic `choice-list` setting: an integration declares it in `settin
 
 The GitHub page (and the *Dependabot alerts* widget) lists open Dependabot alerts across the repositories you can write to: the 50 most recently pushed, non-archived ones, cached for 10 minutes. It shows counts per severity, then the alerts sorted most severe and longest-open first, with package, advisory, CVE/GHSA id and the fixed version. Repos where Dependabot is off, or whose alerts you can't see, are counted as skipped. GitHub has no single "all my alerts" endpoint for users, so each repo is checked separately. Critical alerts also show up in **Urgent** (*today*); without repository access they are simply left out there.
 
-GitHub scopes are hierarchical: the `repo` scope you already granted includes `security_events`, so no reconnect is needed (see `src/integrations/github/scopes.ts`).
+GitHub scopes are hierarchical: the `repo` scope you already granted includes `security_events`, so no reconnect is needed (see `packages/app/src/integrations/github/scopes.ts`).
 
 ## Commits
 
@@ -106,9 +133,9 @@ They come from your GitHub activity events, which cover **every branch** of all 
 
 ## Sync & rate limits
 
-Every API call goes through one cache in the shared HTTP client (`src/platform/http-cache.ts`), so integrations get it for free:
+Every API call goes through one cache in the shared HTTP client (`packages/platform/src/http-cache.ts`), so integrations get it for free:
 
-- **Fresh data is reused.** Each API client declares how long its endpoints stay fresh (`src/platform/cache-ttl.ts`): searches and lists 1–2 min, releases and thread metadata 5–10 min, profiles and organizations a day. Widgets, the feed, Urgent, Waiting and the menu bar all share one fetch, so the UI can refresh every minute cheaply.
+- **Fresh data is reused.** Each API client declares how long its endpoints stay fresh (`packages/platform/src/cache-ttl.ts`): searches and lists 1–2 min, releases and thread metadata 5–10 min, profiles and organizations a day. Widgets, the feed, Urgent, Waiting and the menu bar all share one fetch, so the UI can refresh every minute cheaply.
 - **Concurrent identical requests** share one network call.
 - **Revalidation** uses ETag / Last-Modified. A 304 doesn't count against GitHub's rate limit.
 - **Rate-limit guard:** remaining/reset headers (GitHub, Sentry), `Retry-After`, and Google's 403 quota errors pause that API until it resets. GitHub's search and core pools are tracked separately. While paused, and when offline, the last cached data is shown instead of an error. The Integrations page and the sidebar show the state ("Synced 2 min ago", "Paused by rate limit until 14:05").
@@ -126,7 +153,7 @@ Every API call goes through one cache in the shared HTTP client (`src/platform/h
 | Business | Inter, generous rounding, soft layered surfaces, a calm corporate blue |
 | Dot | monochrome with one red signal colour, dot-matrix display type (Doto) for headings and numbers, dotted canvas, chart bars drawn as dots |
 
-Themes are token overrides in `src/themes.css` (`:root[data-theme="…"]` plus `.dark`). Components only opt in through `font-display` (headings and big numbers) and `chart-bar` / `meter-fill`. Fonts are bundled (OFL) because the app works offline. The stored mode and theme are applied before first paint. To add a theme, add its id to `APPEARANCE_IDS`, its tokens to `themes.css` and its preview to `src/components/appearance/themes.ts`; a test checks the preview colours match the CSS.
+Themes are token overrides in `packages/ui/src/themes.css` (`:root[data-theme="…"]` plus `.dark`). Components only opt in through `font-display` (headings and big numbers) and `chart-bar` / `meter-fill`. Fonts are bundled (OFL) because the app works offline. The stored mode and theme are applied before first paint. To add a theme, add its id to `APPEARANCE_IDS`, its tokens to `themes.css` and its preview to `packages/ui/src/appearance/themes.ts`; a test checks the preview colours match the CSS.
 
 ## Desktop behaviour
 
@@ -137,16 +164,16 @@ Themes are token overrides in `src/themes.css` (`:root[data-theme="…"]` plus `
 - **⌘K / Ctrl+K** searches pages, urgent items, My Work and releases.
 - The window remembers its size and position. On macOS, content runs under a transparent title bar.
 
-Code: native parts are in `src-tauri/src/desktop.rs`, the `Host.desktop` port in `src/platform/host.ts`, and its Tauri adapter in `src/platform/tauri/desktop.ts`. `src/app/desktop/desktop-sync.tsx` mirrors the urgent items to the menu bar, badge and notifications, and the notify rule lives in `src/features/attention/alerts.ts`.
+Code: native parts are in `apps/desktop/src-tauri/src/desktop.rs`, the `Host.desktop` port in `packages/platform/src/host.ts`, and its Tauri adapter in `apps/desktop/src/host/desktop.ts`. `packages/app/src/app/desktop/desktop-sync.tsx` mirrors the urgent items to the menu bar, badge and notifications, and the notify rule lives in `packages/app/src/features/attention/alerts.ts`.
 
 ## Where data lives
 
 | What | Where |
 |---|---|
-| SQLite DB (connections, OAuth clients, layout) | App config dir, e.g. `~/Library/Application Support/local.productivity-dashboard/dashboard.db` |
-| Key that encrypts tokens + client secrets (AES-256-GCM) | OS credential store: macOS Keychain, Windows Credential Manager, Linux Secret Service |
+| SQLite DB (connections, OAuth clients, layout) | Desktop: app config dir, e.g. `~/Library/Application Support/local.productivity-dashboard/dashboard.db`. Web: `~/Library/Application Support/local.productivity-dashboard-web/` (Linux `~/.local/share/…`, Windows `%APPDATA%\…`), or `$DASHBOARD_DATA_DIR` |
+| Key that encrypts tokens + client secrets (AES-256-GCM) | Desktop: OS credential store (macOS Keychain, Windows Credential Manager, Linux Secret Service). Web: `encryption.key` in its data dir, readable only by you |
 
-Migrations in `drizzle/` are bundled into the app and applied on startup.
+The desktop and web apps keep separate data, so connect each one once. Migrations in `packages/platform/drizzle/` are bundled into both apps and applied on startup.
 
 ## Setting up the OAuth apps
 
@@ -164,55 +191,79 @@ The app uses the desktop OAuth flow from [RFC 8252](https://www.rfc-editor.org/r
 
 Client secrets are stored encrypted on this device. Desktop apps are "public" OAuth clients, but GitHub, Atlassian, Google and Sentry still require the secret at the token endpoint (Microsoft is the exception: see above).
 
-> The port is fixed in `OAUTH_LOOPBACK_PORT` (`src/platform/services.ts`) because Atlassian matches redirect URIs exactly. If you change it, update the registered URIs.
+> The port is fixed in `OAUTH_LOOPBACK_PORT` (`packages/platform/src/services.ts`) because Atlassian matches redirect URIs exactly. If you change it, update the registered URIs.
 
 ## Scripts
+
+Run from the repo root; Turborepo runs each task in every workspace that has it, in dependency order, and caches the results.
 
 | | |
 |---|---|
 | `npm run dev` | Desktop app with hot reload (`tauri dev`) |
-| `npm run build` | Release build + installers (`tauri build`) |
-| `npm run dev:ui` / `build:ui` | Vite only (used by Tauri; the UI needs the Tauri runtime to work) |
-| `npm test` | Vitest unit tests (`cd src-tauri && cargo test` for the Rust side) |
-| `npm run check` | Biome lint/format check + `tsc --noEmit` |
+| `npm run dev:web` | Web app with hot reload on `127.0.0.1:47390` |
+| `npm run build` | Desktop release build + installers (`tauri build`) and the web build |
+| `npm run dev:ui -w @dashboard/desktop` / `build:ui` | The desktop's Vite only (used by Tauri; it needs the Tauri runtime to work) |
+| `npm run start -w @dashboard/web` | Serve the web build |
+| `npm test` | Vitest unit tests in every workspace (`cd apps/desktop/src-tauri && cargo test` for the Rust side) |
+| `npm run typecheck` | `tsc --noEmit` in every workspace |
+| `npm run check` | Biome lint/format check + typecheck |
 | `npm run format` | Apply Biome fixes |
-| `npm run db:generate` | Generate a migration after editing `src/platform/db/schema.ts` |
+| `npm run db:generate` | Generate a migration after editing `packages/platform/src/db/schema.ts` |
+
+Add a dependency to the workspace that uses it, e.g. `npm install date-fns -w @dashboard/app`.
 
 ## Architecture
 
 ```
-src/
-  core/          Domain types and contracts. No I/O, no React runtime.
-                 WorkItem, Result/IntegrationFailure, IntegrationBackend,
-                 IntegrationManifest, WidgetDefinition, OAuthProvider, layout schema
-  platform/      Infrastructure behind the Host port: crypto, DB + migrations,
-                 repositories, HTTP client, OAuth (client, flow, token manager),
-                 composition root (services.ts)
-    host.ts      The Host port: fetch, database, encryption key, browser OAuth, open links
-    tauri/       The Tauri adapter for Host (the only code importing @tauri-apps/*)
-  integrations/  One self-contained folder per provider + two registries;
-                 shared/ holds pure rules any calendar or mail provider reuses
-                 (urgent meetings, pending replies, meeting insights, mail rules)
-  components/    ui/ (shadcn), work-item/, release/, calendar/ (agenda, overview,
-                 event detail), mail/ (email detail),
-                 widget-kit/ (query states, widget factory, scope filter),
-                 overview-kit/ (stat tiles, sections, breakdown bars)
-  features/      dashboard/, feed/, releases/, attention/ (urgent view), connections/,
-                 integration-overview/
-  app/           Composition: query client, widget catalog, app shell, external links
-  routes/        Thin TanStack Router files that only compose features
-  main.tsx       Entry: picks the Host, mounts the router
-src-tauri/       Rust shell: plugins (sql, http, opener), keychain key, OAuth loopback listener
+packages/                 Shared code, consumed as TypeScript source (no build step)
+  core/        @dashboard/core      Domain types and contracts. No I/O, no React runtime.
+                                    WorkItem, Result/IntegrationFailure, IntegrationBackend,
+                                    IntegrationManifest, WidgetDefinition, OAuthProvider, layout schema
+  ui/          @dashboard/ui        Design system: shadcn/ui primitives (components/),
+                                    cn() (lib/utils), tokens + themes (styles.css, themes.css),
+                                    fonts, appearance (theme store, picker, pre-paint script)
+  platform/    @dashboard/platform  Infrastructure behind the Host port: crypto, DB + migrations
+                                    (drizzle/), repositories, HTTP client + cache, OAuth (client,
+                                    flow, token manager), provider allowlist, composition root
+                                    (services.ts), test doubles (testing/)
+    src/host.ts                     The Host port: fetch, database, encryption key, browser OAuth,
+                                    open links, desktop shell + its capabilities
+  app/         @dashboard/app       The whole product UI, shared by every shell:
+    src/integrations/               One self-contained folder per provider + two registries;
+                                    shared/ holds pure rules any calendar or mail provider reuses
+    src/components/                 work-item/, release/, calendar/, mail/, item-detail/,
+                                    widget-kit/, overview-kit/, source-kit/
+    src/features/                   dashboard/, feed/, today/, waiting/, insights/, attention/,
+                                    connections/, preferences/, integration-overview/
+    src/app/                        Composition: query client, widget catalog, app shell,
+                                    command palette, external links
+    src/routes/                     Code-based TanStack Router routes + route-tree.ts
+    src/router.tsx                  createAppRouter(): the one router every shell mounts
+apps/
+  desktop/     @dashboard/desktop   Tauri shell
+    src/main.tsx                    Entry: Tauri host, router, external links
+    src/host/                       The Tauri adapter for Host (the only code importing @tauri-apps/*)
+    src-tauri/                      Rust: plugins (sql, http, opener), keychain key, OAuth loopback
+  web/         @dashboard/web       TanStack Start shell
+    src/client.tsx                  Entry: web host, then hydrate
+    src/router.tsx, document.tsx    createAppRouter() inside an HTML document
+    src/host/                       The browser adapter for Host (talks to the server below)
+    src/server/                     Host API: provider proxy, SQLite, key, OAuth relay
+    src/server.ts                   Host API first, everything else to TanStack Start
 ```
 
-**Dependency direction:** `routes → app → features → integrations → components/platform → core`. Features don't import each other; `app/catalog.ts` wires them together.
+**Dependency direction:** `apps → app → (ui, platform) → core`, and inside `@dashboard/app`: `routes → app → features → integrations → components`. Features don't import each other; `app/catalog.ts` wires them together. Inside `@dashboard/app`, `#/…` imports point at its own `src/`; other packages are imported by name (`@dashboard/ui/components/button`).
 
-**Runtime model:** there's no server. Fetchers run in the webview and reach the OS only through `Host`:
+**Sharing UI between the shells:** both apps call `createAppRouter()` from `@dashboard/app/router` and mount the same code-based route tree. The desktop renders it into `index.html`; the web app adds its HTML document as the root's `shellComponent`. Each app's own code is only its `Host` adapter and entry point. Where the shells really differ (e.g. no login item in a browser), the shared UI reads `Host.desktop.capabilities` instead of forking. Tailwind scans the shared packages through `@source` in their `styles.css`, so apps just import `@dashboard/app/styles.css`.
+
+> TanStack Start builds its asset manifest from a file-based route tree, so `apps/web/src/routes/__root.tsx` is a placeholder for that; the generated `routeTree.gen.ts` isn't used.
+
+**Runtime model (desktop):** there's no server. Fetchers run in the webview and reach the OS only through `Host`:
 
 - `plugin-http` gives provider APIs and token endpoints a fetch without CORS.
 - `plugin-sql` provides SQLite.
-- `src-tauri/src/secrets.rs` provides the encryption key from the OS keychain.
-- `src-tauri/src/oauth_loopback.rs` handles the browser login.
+- `apps/desktop/src-tauri/src/secrets.rs` provides the encryption key from the OS keychain.
+- `apps/desktop/src-tauri/src/oauth_loopback.rs` handles the browser login.
 
 The Rust side stays thin on purpose, so all product logic is TypeScript and unit-testable.
 
@@ -225,7 +276,9 @@ The Rust side stays thin on purpose, so all product logic is TypeScript and unit
 2. `Host.authorizeInBrowser`: Rust binds `127.0.0.1:47390`, opens the browser and returns the redirect URL.
 3. Check `state`, exchange the code (`oauth2-client.ts`), then save the encrypted tokens.
 
-**Security:** tokens and client secrets are AES-256-GCM encrypted at rest, with a key held in the OS keychain. The window has a strict CSP. HTTP access is limited to the provider hosts listed in `src-tauri/capabilities/default.json`. The loopback listener binds to 127.0.0.1 only, for one flow at a time, and closes when the flow ends. Links to other sites open in the system browser.
+**Runtime model (web):** the same fetchers run in the browser; `Host` calls the app's own server for what a page can't do (see [Web app](#web-app)).
+
+**Security:** tokens and client secrets are AES-256-GCM encrypted at rest, with a key held in the OS keychain (desktop) or a private key file (web). The window has a strict CSP. HTTP access is limited to the provider URLs in `packages/platform/src/http-allowlist.ts`, enforced by `apps/desktop/src-tauri/capabilities/default.json` on the desktop (a test keeps the two in sync) and by the proxy on the web. The loopback listener binds to 127.0.0.1 only, for one flow at a time, and closes when the flow ends. Links to other sites open in the system browser.
 
 ### Anatomy of an integration
 
@@ -249,22 +302,25 @@ integrations/github/
 
 ### Adding a new integration (e.g. Linear)
 
-1. Copy `src/integrations/github/` to `src/integrations/linear/` and adapt the files above.
+1. Copy `packages/app/src/integrations/github/` to `packages/app/src/integrations/linear/` and adapt the files above.
 2. Add `linearManifest` to `integrations/registry.ts` and `linearBackend` to `integrations/runtime-registry.ts`.
-3. Allow its API and token hosts under `http:default` in `src-tauri/capabilities/default.json`.
+3. Allow its API and token URLs in `packages/platform/src/http-allowlist.ts` and under `http:default` in `apps/desktop/src-tauri/capabilities/default.json`.
 
-A calendar or mail provider maps into `CalendarEvent` / `EmailDetail` (`src/core/`) and reuses `integrations/shared/` plus `components/calendar` and `components/mail`, as Google and Outlook do. Providers whose integrations share one OAuth app put its config in `src/platform/oauth/` (see `google.ts`, `microsoft.ts`).
+Both apps pick it up; nothing in `apps/` changes.
+
+A calendar or mail provider maps into `CalendarEvent` / `EmailDetail` (`packages/core/src/`) and reuses `integrations/shared/` plus `components/calendar` and `components/mail`, as Google and Outlook do. Providers whose integrations share one OAuth app put its config in `packages/platform/src/oauth/` (see `google.ts`, `microsoft.ts`).
 
 Connection handling, the OAuth flow, the credentials form, the feed, the dashboard and the sidebar pick it up through the registries. To give the source its own sidebar page, set `overview` in its manifest; it's served at `/apps/<id>`. To feed the Urgent view, implement `getAttentionItems` on its backend. To open its items in the detail modal instead of the browser, set `details` in its manifest and a `detailRef` on its items.
 
-**Detail modal:** clicking a Jira issue or an email (in any list, the Urgent view or ⌘K) opens it in the app. ⌘/Ctrl/Shift/middle-click still opens the browser. Untrusted HTML (email bodies, Jira descriptions and comments) renders in a sandboxed iframe: no scripts, forms or navigation, plus a strict CSP. Remote images in email stay hidden until you click *Show images*, so senders can't track opens. See `src/components/item-detail/`.
+**Detail modal:** clicking a Jira issue or an email (in any list, the Urgent view or ⌘K) opens it in the app. ⌘/Ctrl/Shift/middle-click still opens the browser. Untrusted HTML (email bodies, Jira descriptions and comments) renders in a sandboxed iframe: no scripts, forms or navigation, plus a strict CSP. Remote images in email stay hidden until you click *Show images*, so senders can't track opens. See `packages/app/src/components/item-detail/`.
 
 ### Swapping parts
 
 | Replace | Touch only |
 |---|---|
-| Desktop shell (Tauri → something else) | a new `platform/<shell>/host.ts`, `main.tsx` |
+| Shell (Tauri, the web → something else) | a new `apps/<shell>/` with a `Host` adapter and an entry that calls `createAppRouter()` |
 | OAuth details of a provider | that integration's `oauth.ts` |
-| Database (SQLite → other) | `platform/db/*`, `platform/repositories/*`, `platform/services.ts` |
-| Grid engine (react-grid-layout) | `features/dashboard/components/dashboard-grid.tsx` |
-| Token storage / encryption | `platform/crypto.ts`, `platform/services.ts`, `src-tauri/src/secrets.rs` |
+| Database (SQLite → other) | `packages/platform/src/db/*`, `repositories/*`, `services.ts` |
+| Grid engine (react-grid-layout) | `packages/app/src/features/dashboard/components/dashboard-grid.tsx` |
+| Token storage / encryption | `packages/platform/src/crypto.ts`, `services.ts`, `apps/desktop/src-tauri/src/secrets.rs`, `apps/web/src/server/key.ts` |
+| A shadcn component | `packages/ui/` (run the shadcn CLI there; `components.json` is set up) |

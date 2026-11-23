@@ -1,19 +1,24 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"vcs": {
-		"enabled": false,
+		"enabled": true,
 		"clientKind": "git",
-		"useIgnoreFile": false
+		"useIgnoreFile": true
 	},
 	"files": {
 		"ignoreUnknown": false,
 		"includes": [
 			"**/src/**/*",
 			"**/.vscode/**/*",
-			"*.ts",
-			"!**/src/routeTree.gen.ts",
+			"**/*.ts",
+			"*.json",
+			"apps/*/*.json",
+			"packages/*/*.json",
+			"!**/routeTree.gen.ts",
+			"!**/src-tauri",
 			"!**/src/styles.css",
-			"!**/src/components/ui"
+			"!packages/ui/src/components",
+			"!packages/platform/drizzle"
 		]
 	},
 	"formatter": {

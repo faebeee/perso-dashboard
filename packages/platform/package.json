@@ -1,0 +1,27 @@
+{
+	"name": "@dashboard/platform",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"description": "Infrastructure behind the Host port: crypto, DB + migrations, repositories, HTTP, OAuth.",
+	"exports": {
+		"./*": "./src/*.ts"
+	},
+	"scripts": {
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit",
+		"db:generate": "drizzle-kit generate"
+	},
+	"dependencies": {
+		"@dashboard/core": "*",
+		"drizzle-orm": "^0.45.4",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@types/node": "^22.10.2",
+		"drizzle-kit": "^0.31.11",
+		"typescript": "^6.0.2",
+		"vite": "^8.0.0",
+		"vitest": "^5.1.1"
+	}
+}

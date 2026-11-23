@@ -1,0 +1,6 @@
+/* App styles: the design system plus what the shared features need. */
+@import '@dashboard/ui/styles.css';
+@import 'react-grid-layout/css/styles.css';
+
+/* Scan the shared app for class names (apps import this file from elsewhere). */
+@source './';
