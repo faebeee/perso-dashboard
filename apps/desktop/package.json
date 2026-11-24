@@ -11,7 +11,8 @@
 		"build:ui": "vite build",
 		"tauri": "tauri",
 		"test": "vitest run",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"install-app": "scripts/install-app.sh"
 	},
 	"dependencies": {
 		"@dashboard/app": "*",

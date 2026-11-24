@@ -17,7 +17,8 @@
 		"lint": "biome check",
 		"format": "biome check --write",
 		"check": "biome check && turbo run typecheck",
-		"db:generate": "npm run db:generate -w @dashboard/platform"
+		"db:generate": "npm run db:generate -w @dashboard/platform",
+		"install-app": "npm run install-app -w @dashboard/desktop --"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.5",

@@ -29,6 +29,8 @@ Then open **Integrations**, enter the OAuth client for each provider, and click 
 
 `npm run build` builds everything; the desktop installers land under `apps/desktop/src-tauri/target/release/bundle/`, the web build in `apps/web/dist/`.
 
+To install the desktop app on macOS, run `npm run install-app`. It copies the last build into `/Applications` (building first if there is none), and quits and replaces a running copy. Your data stays. Options: `--build` rebuilds first (only the `.app`, no DMG), `--user` installs into `~/Applications`, `--dir <path>` installs elsewhere, `--open` launches it afterwards. Pass them after `--`, e.g. `npm run install-app -- --build --open`.
+
 ## Web app
 
 `apps/web` is the same app in the browser: every page, widget and integration comes from the shared packages, so there is no UI code of its own besides the HTML document. It's built with TanStack Start and meant to run **on your own machine** (single user, bound to `127.0.0.1`):
@@ -204,6 +206,7 @@ Run from the repo root; Turborepo runs each task in every workspace that has it,
 | `npm run build` | Desktop release build + installers (`tauri build`) and the web build |
 | `npm run dev:ui -w @dashboard/desktop` / `build:ui` | The desktop's Vite only (used by Tauri; it needs the Tauri runtime to work) |
 | `npm run start -w @dashboard/web` | Serve the web build |
+| `npm run install-app` | Install the desktop app into `/Applications` (macOS; see Quick start) |
 | `npm test` | Vitest unit tests in every workspace (`cd apps/desktop/src-tauri && cargo test` for the Rust side) |
 | `npm run typecheck` | `tsc --noEmit` in every workspace |
 | `npm run check` | Biome lint/format check + typecheck |
