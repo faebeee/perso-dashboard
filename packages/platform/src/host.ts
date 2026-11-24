@@ -4,10 +4,9 @@ export type FetchFn = typeof fetch;
 
 /**
  * Everything the app needs from the machine it runs on. The rest of
- * `@dashboard/platform` depends only on this port. Each app adapts it:
- * `apps/desktop` to Tauri, `apps/web` to the browser plus a local server.
- * Another shell (Electron, a test harness…) only has to implement this
- * interface.
+ * `@dashboard/platform` depends only on this port. `apps/desktop` adapts
+ * it to Tauri; another shell (Electron, a test harness…) only has to
+ * implement this interface.
  */
 export interface Host {
 	/** fetch without browser CORS restrictions (provider APIs, token endpoints). */

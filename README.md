@@ -1,6 +1,6 @@
 # Productivity Dashboard
 
-A personal, local-first **desktop app** (and a matching **web app**, see [Web app](#web-app)) that brings work from **GitHub**, **Jira Cloud**, **Gmail**, **Google Calendar**, **Outlook** (mail and calendar, Microsoft 365 or personal) and **Sentry** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists. The **Urgent** view (top of the sidebar, with a live count, also available as a widget) shows only what needs you soon:
+A personal, local-first **desktop app** that brings work from **GitHub**, **Jira Cloud**, **Gmail**, **Google Calendar**, **Outlook** (mail and calendar, Microsoft 365 or personal) and **Sentry** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists. The **Urgent** view (top of the sidebar, with a live count, also available as a widget) shows only what needs you soon:
 
 | Source | Urgent when… |
 |---|---|
@@ -13,7 +13,7 @@ A personal, local-first **desktop app** (and a matching **web app**, see [Web ap
 
 Thresholds live in `ATTENTION_RULES` (`packages/core/src/attention.ts`); each integration's rules are in its `attention.ts`.
 
-Built with Tauri 2 (Rust shell), TanStack Start (web shell), React, TanStack Router + Query, Tailwind v4, shadcn/ui, Drizzle + SQLite, in an npm workspaces + Turborepo monorepo.
+Built with Tauri 2 (Rust shell), React, TanStack Router + Query, Tailwind v4, shadcn/ui, Drizzle + SQLite, in an npm workspaces + Turborepo monorepo.
 
 ## Quick start
 
@@ -21,41 +21,14 @@ Prerequisites: Node 22+, Rust (stable), and the [Tauri system dependencies](http
 
 ```bash
 npm install
-npm run dev        # desktop: starts Vite on 127.0.0.1:3100 and opens the app window
-npm run dev:web    # web: serves the app on http://127.0.0.1:47390
+npm run dev        # starts Vite on 127.0.0.1:3100 and opens the app window
 ```
 
 Then open **Integrations**, enter the OAuth client for each provider, and click **Connect**. Login happens in your normal browser. There is no `.env` file.
 
-`npm run build` builds everything; the desktop installers land under `apps/desktop/src-tauri/target/release/bundle/`, the web build in `apps/web/dist/`.
+`npm run build` builds everything; the installers land under `apps/desktop/src-tauri/target/release/bundle/`.
 
 To install the desktop app on macOS, run `npm run install-app`. It copies the last build into `/Applications` (building first if there is none), and quits and replaces a running copy. Your data stays. Options: `--build` rebuilds first (only the `.app`, no DMG), `--user` installs into `~/Applications`, `--dir <path>` installs elsewhere, `--open` launches it afterwards. Pass them after `--`, e.g. `npm run install-app -- --build --open`.
-
-## Web app
-
-`apps/web` is the same app in the browser: every page, widget and integration comes from the shared packages, so there is no UI code of its own besides the HTML document. It's built with TanStack Start and meant to run **on your own machine** (single user, bound to `127.0.0.1`):
-
-```bash
-npm run dev:web                              # development
-npm run build && npm run start -w @dashboard/web   # production build, then serve it
-```
-
-What the desktop app gets from Rust, the web app gets from its own small server (`apps/web/src/server/`), behind the same `Host` port:
-
-| Host capability | Desktop (Tauri) | Web |
-|---|---|---|
-| Provider API calls without CORS | `plugin-http` | Server-side proxy, limited to the same allowlist (`packages/platform/src/http-allowlist.ts`) |
-| SQLite | `plugin-sql` | `node:sqlite` on the server, same migrations |
-| Encryption key | OS keychain | `encryption.key` (mode 0600) next to the database |
-| OAuth login | Loopback listener on `127.0.0.1:47390` | The server itself listens on port 47390 and relays `/oauth/<id>/callback` to the waiting page, so **the redirect URIs you registered for the desktop work unchanged** |
-| Menu bar count, Dock badge | Tray + badge | Tab title `(3) Productivity Dashboard`, app badge when installed as a PWA |
-| Notifications | Native | Web Notifications, while a tab is open |
-| Quick capture shortcut | System-wide | While the tab is focused |
-| Open at login | Yes | Hidden in Preferences |
-
-Because both use port 47390, sign in to a provider from one of them at a time (the desktop's listener only binds during a login).
-
-The host API refuses requests whose `Host` isn't the loopback address (DNS rebinding), that lack its custom header (so other websites can't reach it: the header forces a CORS preflight it never answers), or whose fetch metadata says cross-site. The server still holds your tokens' key: don't expose port 47390 to a network.
 
 ## Plan your day
 
@@ -172,10 +145,10 @@ Code: native parts are in `apps/desktop/src-tauri/src/desktop.rs`, the `Host.des
 
 | What | Where |
 |---|---|
-| SQLite DB (connections, OAuth clients, layout) | Desktop: app config dir, e.g. `~/Library/Application Support/local.productivity-dashboard/dashboard.db`. Web: `~/Library/Application Support/local.productivity-dashboard-web/` (Linux `~/.local/share/…`, Windows `%APPDATA%\…`), or `$DASHBOARD_DATA_DIR` |
-| Key that encrypts tokens + client secrets (AES-256-GCM) | Desktop: OS credential store (macOS Keychain, Windows Credential Manager, Linux Secret Service). Web: `encryption.key` in its data dir, readable only by you |
+| SQLite DB (connections, OAuth clients, layout) | App config dir, e.g. `~/Library/Application Support/local.productivity-dashboard/dashboard.db` |
+| Key that encrypts tokens + client secrets (AES-256-GCM) | OS credential store (macOS Keychain, Windows Credential Manager, Linux Secret Service) |
 
-The desktop and web apps keep separate data, so connect each one once. Migrations in `packages/platform/drizzle/` are bundled into both apps and applied on startup.
+Migrations in `packages/platform/drizzle/` are bundled into the app and applied on startup.
 
 ## Setting up the OAuth apps
 
@@ -202,10 +175,8 @@ Run from the repo root; Turborepo runs each task in every workspace that has it,
 | | |
 |---|---|
 | `npm run dev` | Desktop app with hot reload (`tauri dev`) |
-| `npm run dev:web` | Web app with hot reload on `127.0.0.1:47390` |
-| `npm run build` | Desktop release build + installers (`tauri build`) and the web build |
+| `npm run build` | Desktop release build + installers (`tauri build`) |
 | `npm run dev:ui -w @dashboard/desktop` / `build:ui` | The desktop's Vite only (used by Tauri; it needs the Tauri runtime to work) |
-| `npm run start -w @dashboard/web` | Serve the web build |
 | `npm run install-app` | Install the desktop app into `/Applications` (macOS; see Quick start) |
 | `npm test` | Vitest unit tests in every workspace (`cd apps/desktop/src-tauri && cargo test` for the Rust side) |
 | `npm run typecheck` | `tsc --noEmit` in every workspace |
@@ -231,7 +202,7 @@ packages/                 Shared code, consumed as TypeScript source (no build s
                                     (services.ts), test doubles (testing/)
     src/host.ts                     The Host port: fetch, database, encryption key, browser OAuth,
                                     open links, desktop shell + its capabilities
-  app/         @dashboard/app       The whole product UI, shared by every shell:
+  app/         @dashboard/app       The whole product UI, independent of the shell:
     src/integrations/               One self-contained folder per provider + two registries;
                                     shared/ holds pure rules any calendar or mail provider reuses
     src/components/                 work-item/, release/, calendar/, mail/, item-detail/,
@@ -241,27 +212,19 @@ packages/                 Shared code, consumed as TypeScript source (no build s
     src/app/                        Composition: query client, widget catalog, app shell,
                                     command palette, external links
     src/routes/                     Code-based TanStack Router routes + route-tree.ts
-    src/router.tsx                  createAppRouter(): the one router every shell mounts
+    src/router.tsx                  createAppRouter(): the router the shell mounts
 apps/
   desktop/     @dashboard/desktop   Tauri shell
     src/main.tsx                    Entry: Tauri host, router, external links
     src/host/                       The Tauri adapter for Host (the only code importing @tauri-apps/*)
     src-tauri/                      Rust: plugins (sql, http, opener), keychain key, OAuth loopback
-  web/         @dashboard/web       TanStack Start shell
-    src/client.tsx                  Entry: web host, then hydrate
-    src/router.tsx, document.tsx    createAppRouter() inside an HTML document
-    src/host/                       The browser adapter for Host (talks to the server below)
-    src/server/                     Host API: provider proxy, SQLite, key, OAuth relay
-    src/server.ts                   Host API first, everything else to TanStack Start
 ```
 
 **Dependency direction:** `apps → app → (ui, platform) → core`, and inside `@dashboard/app`: `routes → app → features → integrations → components`. Features don't import each other; `app/catalog.ts` wires them together. Inside `@dashboard/app`, `#/…` imports point at its own `src/`; other packages are imported by name (`@dashboard/ui/components/button`).
 
-**Sharing UI between the shells:** both apps call `createAppRouter()` from `@dashboard/app/router` and mount the same code-based route tree. The desktop renders it into `index.html`; the web app adds its HTML document as the root's `shellComponent`. Each app's own code is only its `Host` adapter and entry point. Where the shells really differ (e.g. no login item in a browser), the shared UI reads `Host.desktop.capabilities` instead of forking. Tailwind scans the shared packages through `@source` in their `styles.css`, so apps just import `@dashboard/app/styles.css`.
+**Shell vs. shared UI:** the desktop app calls `createAppRouter()` from `@dashboard/app/router` and renders the code-based route tree into `index.html`. Its own code is only its `Host` adapter and entry point, so another shell would only need those two. Where a shell can't do something (e.g. no login item), the shared UI reads `Host.desktop.capabilities` instead of forking. Tailwind scans the shared packages through `@source` in their `styles.css`, so apps just import `@dashboard/app/styles.css`.
 
-> TanStack Start builds its asset manifest from a file-based route tree, so `apps/web/src/routes/__root.tsx` is a placeholder for that; the generated `routeTree.gen.ts` isn't used.
-
-**Runtime model (desktop):** there's no server. Fetchers run in the webview and reach the OS only through `Host`:
+**Runtime model:** there's no server. Fetchers run in the webview and reach the OS only through `Host`:
 
 - `plugin-http` gives provider APIs and token endpoints a fetch without CORS.
 - `plugin-sql` provides SQLite.
@@ -279,9 +242,7 @@ The Rust side stays thin on purpose, so all product logic is TypeScript and unit
 2. `Host.authorizeInBrowser`: Rust binds `127.0.0.1:47390`, opens the browser and returns the redirect URL.
 3. Check `state`, exchange the code (`oauth2-client.ts`), then save the encrypted tokens.
 
-**Runtime model (web):** the same fetchers run in the browser; `Host` calls the app's own server for what a page can't do (see [Web app](#web-app)).
-
-**Security:** tokens and client secrets are AES-256-GCM encrypted at rest, with a key held in the OS keychain (desktop) or a private key file (web). The window has a strict CSP. HTTP access is limited to the provider URLs in `packages/platform/src/http-allowlist.ts`, enforced by `apps/desktop/src-tauri/capabilities/default.json` on the desktop (a test keeps the two in sync) and by the proxy on the web. The loopback listener binds to 127.0.0.1 only, for one flow at a time, and closes when the flow ends. Links to other sites open in the system browser.
+**Security:** tokens and client secrets are AES-256-GCM encrypted at rest, with a key held in the OS keychain. The window has a strict CSP. HTTP access is limited to the provider URLs in `packages/platform/src/http-allowlist.ts`, enforced by `apps/desktop/src-tauri/capabilities/default.json` (a test keeps the two in sync). The loopback listener binds to 127.0.0.1 only, for one flow at a time, and closes when the flow ends. Links to other sites open in the system browser.
 
 ### Anatomy of an integration
 
@@ -321,9 +282,9 @@ Connection handling, the OAuth flow, the credentials form, the feed, the dashboa
 
 | Replace | Touch only |
 |---|---|
-| Shell (Tauri, the web → something else) | a new `apps/<shell>/` with a `Host` adapter and an entry that calls `createAppRouter()` |
+| Shell (Tauri → something else) | a new `apps/<shell>/` with a `Host` adapter and an entry that calls `createAppRouter()` |
 | OAuth details of a provider | that integration's `oauth.ts` |
 | Database (SQLite → other) | `packages/platform/src/db/*`, `repositories/*`, `services.ts` |
 | Grid engine (react-grid-layout) | `packages/app/src/features/dashboard/components/dashboard-grid.tsx` |
-| Token storage / encryption | `packages/platform/src/crypto.ts`, `services.ts`, `apps/desktop/src-tauri/src/secrets.rs`, `apps/web/src/server/key.ts` |
+| Token storage / encryption | `packages/platform/src/crypto.ts`, `services.ts`, `apps/desktop/src-tauri/src/secrets.rs` |
 | A shadcn component | `packages/ui/` (run the shadcn CLI there; `components.json` is set up) |

@@ -11,9 +11,8 @@ import { urgentRoute } from "./urgent";
 import { waitingRoute } from "./waiting";
 
 /**
- * Every page of the app, shared by the desktop and the web shell. Code-based
- * (not file-based) so both shells mount the very same tree without each
- * generating its own.
+ * Every page of the app. Code-based (not file-based), so any shell mounts
+ * the very same tree without generating its own.
  */
 export const routeTree = rootRoute.addChildren([
 	dashboardRoute,

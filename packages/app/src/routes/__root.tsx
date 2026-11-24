@@ -22,10 +22,7 @@ export interface RouterContext {
 	queryClient: QueryClient;
 }
 
-/**
- * The root of the shared route tree. Shells add what only they need (the web
- * app's HTML document and head) with `rootRoute.update()`, see `router.tsx`.
- */
+/** The root of the shared route tree. */
 export const rootRoute = createRootRouteWithContext<RouterContext>()({
 	component: RootLayout,
 });

@@ -10,7 +10,6 @@
 	],
 	"scripts": {
 		"dev": "turbo run dev --filter=@dashboard/desktop",
-		"dev:web": "turbo run dev --filter=@dashboard/web",
 		"build": "turbo run build",
 		"test": "turbo run test",
 		"typecheck": "turbo run typecheck",
