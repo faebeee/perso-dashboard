@@ -11,6 +11,7 @@ import {
 	githubPullFileListSchema,
 	githubPullSchema,
 	githubReleaseListSchema,
+	githubRepoActivityListSchema,
 	githubRepoListSchema,
 	githubRepoSchema,
 	githubReviewListSchema,
@@ -87,6 +88,18 @@ export function createGitHubApi(accessToken: string, fetch?: FetchFn) {
 				`/users/${encodeURIComponent(login)}/events`,
 				githubEventListSchema,
 				{ per_page: 100, page },
+			),
+
+		/** Pushes and branch changes of one repository by one person, newest first. */
+		repoActivity: (
+			repoFullName: string,
+			actor: string,
+			timePeriod: "day" | "week" | "month" | "quarter" | "year",
+		) =>
+			http.get(
+				`${repoPath(repoFullName)}/activity`,
+				githubRepoActivityListSchema,
+				{ actor, time_period: timePeriod, per_page: 100 },
 			),
 
 		/** Repository metadata (its default branch). */

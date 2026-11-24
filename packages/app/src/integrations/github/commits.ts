@@ -3,6 +3,8 @@ import type { GitHubApi } from "./api/client";
 import {
 	type GitHubCommit,
 	type GitHubEventList,
+	type GitHubRepoActivityList,
+	type GitHubRepoList,
 	githubPushPayloadSchema,
 } from "./api/schemas";
 
@@ -40,6 +42,8 @@ export const PUSH_LIMIT = 100;
 const CONCURRENCY = 6;
 /** Events pages read (100 each); GitHub keeps 90 days / 300 events. */
 const EVENT_PAGES = 3;
+/** Repositories whose push log is read per refresh, most recently pushed first. */
+export const REPO_LIMIT = 30;
 
 /** Starts `fn` for each item, at most `limit` at a time; one promise per item. */
 function mapWithLimit<T, R>(
@@ -91,6 +95,81 @@ export function pushesSince(events: GitHubEventList, since: Date): PushInfo[] {
 			},
 		];
 	});
+}
+
+/** Repository activity that moves a branch to commits someone pushed. */
+const PUSH_ACTIVITY = new Set([
+	"push",
+	"force_push",
+	"branch_creation",
+	"pr_merge",
+	"merge_queue_merge",
+]);
+
+/** Pure: one repository's branch pushes since `since` (from its push log). */
+export function pushesFromActivity(
+	repo: string,
+	activity: GitHubRepoActivityList,
+	since: Date,
+): PushInfo[] {
+	return activity.flatMap((a): PushInfo[] => {
+		if (!PUSH_ACTIVITY.has(a.activity_type)) return [];
+		if (!a.ref.startsWith("refs/heads/")) return [];
+		if (Date.parse(a.timestamp) < since.getTime()) return [];
+		return [
+			{
+				repo,
+				branch: a.ref.slice("refs/heads/".length),
+				before: a.before,
+				head: a.after,
+				at: a.timestamp,
+			},
+		];
+	});
+}
+
+/** Pure: repositories pushed to since `since`, most recent first. */
+export function reposPushedSince(repos: GitHubRepoList, since: Date): string[] {
+	return repos
+		.filter(
+			(r) =>
+				!r.archived &&
+				r.pushed_at &&
+				Date.parse(r.pushed_at) >= since.getTime(),
+		)
+		.sort(
+			(a, b) => Date.parse(b.pushed_at ?? "") - Date.parse(a.pushed_at ?? ""),
+		)
+		.map((r) => r.full_name);
+}
+
+/** Pure: the smallest activity window that still reaches back to `since`. */
+export function activityPeriod(
+	since: Date,
+	now: Date,
+): "day" | "week" | "month" | "quarter" | "year" {
+	const days = (now.getTime() - since.getTime()) / 86_400_000;
+	if (days <= 1) return "day";
+	if (days <= 7) return "week";
+	if (days <= 31) return "month";
+	if (days <= 92) return "quarter";
+	return "year";
+}
+
+/**
+ * Pure: each push once, newest first. The same push can come from the
+ * events feed and from the repository's push log; the feed's copy wins
+ * (old payloads list their commits).
+ */
+export function mergePushes(lists: readonly PushInfo[][]): PushInfo[] {
+	const byKey = new Map<string, PushInfo>();
+	for (const push of lists.flat()) {
+		const key = `${push.repo}\u0000${push.branch}\u0000${push.head}`;
+		if (!byKey.has(key)) byKey.set(key, push);
+	}
+	return [...byKey.values()].sort(
+		(a, b) => Date.parse(b.at) - Date.parse(a.at),
+	);
 }
 
 const toCommit = (
@@ -153,9 +232,35 @@ export function mergeCommits(lists: readonly CommitInfo[][]): CommitInfo[] {
 	);
 }
 
-/** Your commits since `since`, across all repos and branches you pushed to. */
+/**
+ * Your commits since `since`, across all repos and branches you pushed to.
+ *
+ * Pushes come from two places: your events feed, which GitHub thins out
+ * (pushes to whole branches go missing), and the push log of every
+ * repository pushed to in the period, filtered to you.
+ */
 export function createGitHubCommitService(api: GitHubApi) {
 	async function pushes(login: string, since: Date): Promise<PushInfo[]> {
+		const fromEvents = await eventPushes(login, since);
+		const repos = new Set([
+			// The repo list is a bonus: without it, the feed's repos still count.
+			...reposPushedSince(await api.userRepos().catch(() => []), since),
+			...fromEvents.map((p) => p.repo),
+		]);
+		const period = activityPeriod(since, new Date());
+		const fromLogs = await settleLeniently(
+			mapWithLimit([...repos].slice(0, REPO_LIMIT), CONCURRENCY, async (repo) =>
+				pushesFromActivity(
+					repo,
+					await api.repoActivity(repo, login, period),
+					since,
+				),
+			),
+		).catch(() => []);
+		return mergePushes([fromEvents, ...fromLogs]);
+	}
+
+	async function eventPushes(login: string, since: Date): Promise<PushInfo[]> {
 		const found: PushInfo[] = [];
 		for (let page = 1; page <= EVENT_PAGES; page++) {
 			const events = await api.userEvents(login, page);

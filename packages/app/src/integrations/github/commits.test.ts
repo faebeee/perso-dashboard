@@ -6,7 +6,9 @@ import {
 	commitsOfPush,
 	createGitHubCommitService,
 	mergeCommits,
+	pushesFromActivity,
 	pushesSince,
+	reposPushedSince,
 } from "./commits";
 
 const event = (
@@ -221,6 +223,132 @@ describe("commit service", () => {
 			["m1", "test"],
 			["c1", "feature/cart"],
 		]);
+	});
+});
+
+describe("pushesFromActivity", () => {
+	it("keeps branch pushes since a date, skipping deletions and tags", () => {
+		const activity = (
+			type: string,
+			ref: string,
+			timestamp: string,
+			after = "h",
+		) => ({ activity_type: type, ref, before: "b", after, timestamp });
+		const pushes = pushesFromActivity(
+			"acme/web",
+			[
+				activity("push", "refs/heads/feature/a", "2026-01-14T10:00:00Z", "h1"),
+				activity("force_push", "refs/heads/feature/b", "2026-01-14T09:00:00Z"),
+				activity("branch_deletion", "refs/heads/old", "2026-01-14T09:00:00Z"),
+				activity("push", "refs/tags/v1", "2026-01-14T09:00:00Z"),
+				activity("push", "refs/heads/main", "2026-01-01T09:00:00Z"),
+			],
+			new Date("2026-01-10T00:00:00Z"),
+		);
+		expect(pushes.map((p) => [p.repo, p.branch, p.head])).toEqual([
+			["acme/web", "feature/a", "h1"],
+			["acme/web", "feature/b", "h"],
+		]);
+	});
+});
+
+describe("reposPushedSince", () => {
+	it("keeps live repos pushed since a date, most recent first", () => {
+		expect(
+			reposPushedSince(
+				[
+					{
+						full_name: "a/old",
+						archived: false,
+						pushed_at: "2026-01-01T00:00:00Z",
+					},
+					{
+						full_name: "a/x",
+						archived: false,
+						pushed_at: "2026-01-12T00:00:00Z",
+					},
+					{
+						full_name: "a/y",
+						archived: false,
+						pushed_at: "2026-01-14T00:00:00Z",
+					},
+					{
+						full_name: "a/gone",
+						archived: true,
+						pushed_at: "2026-01-14T00:00:00Z",
+					},
+				],
+				new Date("2026-01-10T00:00:00Z"),
+			),
+		).toEqual(["a/y", "a/x"]);
+	});
+});
+
+describe("commit service, push logs", () => {
+	it("finds pushes the events feed dropped, on any branch, once each", async () => {
+		const fetch = fakeFetch({
+			// The feed only knows about the push to main.
+			"/users/ada/events": [
+				event("1", "2026-01-14T08:00:00Z", {
+					ref: "refs/heads/main",
+					head: "m1",
+					before: "m0",
+				}),
+			],
+			"/user/repos": [
+				{
+					full_name: "acme/api",
+					archived: false,
+					pushed_at: "2026-01-14T10:00:00Z",
+				},
+				{
+					full_name: "acme/web",
+					archived: false,
+					pushed_at: "2026-01-14T08:00:00Z",
+				},
+			],
+			"/repos/acme/web/activity": [
+				{
+					activity_type: "push",
+					ref: "refs/heads/main",
+					before: "m0",
+					after: "m1",
+					timestamp: "2026-01-14T08:00:00Z",
+				},
+			],
+			"/repos/acme/api/activity": (url: URL) => {
+				expect(url.searchParams.get("actor")).toBe("ada");
+				return [
+					{
+						activity_type: "push",
+						ref: "refs/heads/feature/login",
+						before: "f0",
+						after: "f1",
+						timestamp: "2026-01-14T10:00:00Z",
+					},
+				];
+			},
+			"/repos/acme/web/compare/m0...m1": {
+				commits: [commit("m1", "ada", "2026-01-14T07:50:00Z")],
+			},
+			"/repos/acme/api/compare/f0...f1": {
+				commits: [commit("f1", "ada", "2026-01-14T09:50:00Z")],
+			},
+		});
+		const api = createGitHubApi("t", fetch);
+		const commits = await createGitHubCommitService(api).recent(
+			"ada",
+			new Date("2026-01-14T00:00:00Z"),
+			new Date("2026-01-15T00:00:00Z"),
+		);
+		expect(commits.map((c) => [c.sha, c.repo, c.branch])).toEqual([
+			["f1", "acme/api", "feature/login"],
+			["m1", "acme/web", "main"],
+		]);
+		// The push known to both sources is expanded once.
+		expect(
+			fetch.mock.calls.filter(([u]) => String(u).includes("/compare/m0...m1")),
+		).toHaveLength(1);
 	});
 });
 

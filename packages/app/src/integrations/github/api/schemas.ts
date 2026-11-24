@@ -148,6 +148,24 @@ export const githubPushPayloadSchema = z.object({
 		.optional(),
 });
 
+/**
+ * GET /repos/{o}/{r}/activity: the repository's own push log. Unlike the
+ * user events feed, it doesn't drop events, so it backs up that feed.
+ */
+export const githubRepoActivityListSchema = z.array(
+	z.object({
+		activity_type: z.string(),
+		ref: z.string(),
+		before: z.string(),
+		after: z.string(),
+		timestamp: z.string(),
+	}),
+);
+
+export type GitHubRepoActivityList = z.infer<
+	typeof githubRepoActivityListSchema
+>;
+
 export const githubCommitSchema = z.object({
 	sha: z.string(),
 	html_url: z.string(),
