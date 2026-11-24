@@ -28,6 +28,7 @@ import {
 	RowActions,
 } from "#/components/item-actions/item-actions";
 import { useItemClick } from "#/components/item-detail/item-detail-provider";
+import { ItemInsightLine } from "#/components/item-insight/item-insight";
 import { ItemIcon } from "#/components/source-kit/item-icon";
 import { SourceErrors } from "#/components/widget-kit/source-errors";
 import { KIND_FOR_REASON } from "../kinds";
@@ -133,6 +134,7 @@ function AttentionRow({ item }: { item: AttentionItem }) {
 						</span>
 					)}
 				</div>
+				<ItemInsightLine id={item.id} />
 			</div>
 
 			<RowActions>

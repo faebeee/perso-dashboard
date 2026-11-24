@@ -17,7 +17,7 @@ export const anthropicProvider: LlmProviderDefinition = {
 		url: "https://platform.claude.com/settings/keys",
 	},
 	defaultModel: "claude-opus-5-5",
-	async complete({ system, prompt, model, signal }, { apiKey, fetch }) {
+	async complete({ system, prompt, model, signal, schema }, { apiKey, fetch }) {
 		const client = new Anthropic({
 			apiKey: requireKey(ID, LABEL, apiKey),
 			fetch,
@@ -35,7 +35,12 @@ export const anthropicProvider: LlmProviderDefinition = {
 					system,
 					messages: [{ role: "user", content: prompt }],
 					// A short summary needs little reasoning.
-					output_config: { effort: "low" },
+					output_config: {
+						effort: "low",
+						...(schema
+							? { format: { type: "json_schema", schema: schema.schema } }
+							: {}),
+					},
 					// If the model declines, the API retries on a suitable fallback.
 					betas: ["server-side-fallback-2026-07-01"],
 					fallbacks: "default",

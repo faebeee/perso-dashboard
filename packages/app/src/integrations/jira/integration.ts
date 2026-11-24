@@ -57,6 +57,9 @@ export const jiraBackend: IntegrationBackend = {
 
 	getFeedItems: (ctx) => jiraService(ctx).myIssues("assigned"),
 
+	getRelatedItems: (ctx, { keys, keywords, since }) =>
+		jiraService(ctx).related(keys, keywords, since),
+
 	async getAttentionItems(ctx, now) {
 		const site = readJiraSite(ctx.meta);
 		// Issues are essential; overdue versions are a bonus that may fail alone.

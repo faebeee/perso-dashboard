@@ -1,8 +1,10 @@
+import type { LlmRequest } from "@dashboard/core/llm";
 import { IntegrationFailure } from "@dashboard/core/result";
 import { getHost } from "@dashboard/platform/host";
 import { preferences } from "@dashboard/platform/preferences";
 import type { StoredAiSummary } from "@dashboard/platform/repositories/ai-summary-repository";
 import { getServices } from "@dashboard/platform/services";
+import { z } from "zod";
 import { getLlmProvider } from "#/llm/registry";
 
 /** The provider and model chosen in Preferences, or null when the AI summary is off. */
@@ -22,6 +24,7 @@ export async function complete(input: {
 	prompt: string;
 	providerId?: string;
 	signal?: AbortSignal;
+	schema?: LlmRequest["schema"];
 }): Promise<string> {
 	const chosen = input.providerId
 		? (() => {
@@ -47,9 +50,64 @@ export async function complete(input: {
 			prompt: input.prompt,
 			model,
 			signal: input.signal,
+			schema: input.schema,
 		},
 		{ apiKey, fetch: getHost().fetch },
 	);
+}
+
+/** Pure: a zod schema → the JSON Schema providers understand (no `$schema`). */
+export function jsonSchemaOf(
+	name: string,
+	schema: z.ZodType,
+): NonNullable<LlmRequest["schema"]> {
+	const { $schema: _, ...json } = z.toJSONSchema(schema) as Record<
+		string,
+		unknown
+	>;
+	return { name, schema: json };
+}
+
+/**
+ * A completion as validated JSON. Asks for structured output; a provider
+ * or model that still answers with invalid JSON gets one more try.
+ */
+export async function completeJson<T>(
+	input: { system: string; prompt: string; signal?: AbortSignal },
+	name: string,
+	schema: z.ZodType<T>,
+): Promise<T> {
+	const request = { ...input, schema: jsonSchemaOf(name, schema) };
+	let lastError = "";
+	for (let attempt = 0; attempt < 2; attempt++) {
+		const text = await complete(request);
+		const parsed = schema.safeParse(parseJsonLoosely(text));
+		if (parsed.success) return parsed.data;
+		lastError = parsed.error.issues[0]?.message ?? "invalid JSON";
+	}
+	throw new IntegrationFailure({
+		kind: "unknown",
+		message: `The model's answer didn't have the expected format (${lastError}). Try again or another model.`,
+	});
+}
+
+/** Pure: JSON from a model answer, also when wrapped in a ``` fence or prose. */
+export function parseJsonLoosely(text: string): unknown {
+	const trimmed = text.trim();
+	const candidates = [
+		trimmed,
+		trimmed.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1],
+		trimmed.slice(trimmed.indexOf("{"), trimmed.lastIndexOf("}") + 1),
+	];
+	for (const candidate of candidates) {
+		if (!candidate) continue;
+		try {
+			return JSON.parse(candidate);
+		} catch {
+			// try the next shape
+		}
+	}
+	return undefined;
 }
 
 export async function listSavedLlmKeys(): Promise<string[]> {

@@ -26,7 +26,10 @@ function createOllamaProvider(options: {
 		needsApiKey: options.needsApiKey,
 		apiKeyHelp: options.apiKeyHelp,
 		defaultModel: options.defaultModel,
-		async complete({ system, prompt, model, signal }, { apiKey, fetch }) {
+		async complete(
+			{ system, prompt, model, signal, schema },
+			{ apiKey, fetch },
+		) {
 			const headers: Record<string, string> = {
 				"Content-Type": "application/json",
 			};
@@ -40,6 +43,8 @@ function createOllamaProvider(options: {
 					body: JSON.stringify({
 						model,
 						stream: false,
+						// Ollama constrains the output to a JSON Schema via `format`.
+						...(schema ? { format: schema.schema } : {}),
 						messages: [
 							{ role: "system", content: system },
 							{ role: "user", content: prompt },

@@ -14,6 +14,11 @@ export interface LlmRequest {
 	prompt: string;
 	model: string;
 	signal?: AbortSignal;
+	/**
+	 * Ask for JSON matching this JSON Schema (structured output). Adapters
+	 * pass it to the provider's native mode; callers still validate.
+	 */
+	schema?: { name: string; schema: Record<string, unknown> };
 }
 
 export interface LlmContext {

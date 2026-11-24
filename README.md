@@ -77,6 +77,14 @@ Each provider remembers its own model (leave the field empty for the default) an
 
 Providers are pluggable: an adapter implements `LlmProviderDefinition` (`packages/core/src/llm.ts`) in `packages/app/src/llm/providers/` and is listed in `packages/app/src/llm/registry.ts`; its host goes into the HTTP allowlist (see Security).
 
+### More AI features
+
+They use the same provider and the same storage: a stored result is shown while its input is unchanged, a changed input shows the old result as outdated, and the model is only asked when you press the button.
+
+- **AI weekly report** (top of Insights): a status report for a 1:1 or a status mail, from last week's or this week's activity grouped by project plus your numbers (PRs merged, cycle time, reviews) compared with the weeks before. A finished week is written once.
+- **AI triage** (Urgent and My Work): a bar above the list offers to triage the items; each row then gets a one-line gist, a next step (Reply, Review, Fix, Decide, Delegate, Later, Ignore) and a reason on hover. Only title, sender, status and tags are sent, no mail bodies. Results are stored per item, so a later run sends only new or changed items (up to 40 per request). Meetings aren't triaged. Answers use each provider's structured-output mode (JSON Schema) and are validated; an invalid answer is retried once. Local models are slower here: a 12B model needs about a minute and a half for a handful of items.
+- **AI briefing** (Waiting → Meeting prep): for each meeting in the next 24 hours, **Prepare** writes what it's probably about, what's open with these people and talking points, from the meeting and its related items (see Waiting).
+
 ## Waiting
 
 **Waiting** (sidebar) lists what you're waiting on *others* for, oldest first:
@@ -88,7 +96,7 @@ Providers are pluggable: an adapter implements `LlmProviderDefinition` (`package
 | Jira | issues you reported that are still open and unassigned |
 | Google Calendar, Outlook Calendar | meetings you organize in the next 7 days with invitees who haven't replied |
 
-**Meeting prep:** for your next meetings with other people (next 24h), it shows recent email conversations with the attendees. Integrations contribute through `getWaitingItems` and `getRelatedToPeople`; thresholds are in `WAITING_RULES` (`packages/core/src/waiting.ts`).
+**Meeting prep:** for your next meetings with other people (next 24h), it shows related recent items: mail with the attendees (Gmail, Outlook), Jira issues with the ticket keys or distinctive title words of the meeting, and your GitHub PRs mentioning those keys. Integrations contribute through `getWaitingItems` and `getRelatedItems` (which gets the attendees, keys and keywords and uses what it can search by); thresholds are in `WAITING_RULES` (`packages/core/src/waiting.ts`).
 
 ## Insights
 

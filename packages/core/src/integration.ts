@@ -47,6 +47,17 @@ export interface IntegrationManifest {
  * button) is shared; this renders everything below it and fetches its own
  * data from `detailRef`.
  */
+/** What to look for when gathering items related to a meeting. */
+export interface RelatedQuery {
+	/** Attendees' email addresses (not you). */
+	people: string[];
+	/** Ticket keys mentioned, e.g. "EMI-6012". */
+	keys: string[];
+	/** Distinctive words of the title ("checkout", "migration"). */
+	keywords: string[];
+	since: Date;
+}
+
 export interface ItemDetailView {
 	Component: ComponentType<{ detailRef: string }>;
 }
@@ -219,13 +230,13 @@ export interface IntegrationBackend {
 	/** What you're waiting on others for (Waiting page). */
 	getWaitingItems?(ctx: IntegrationContext, now: Date): Promise<WaitingItem[]>;
 	/**
-	 * Recent items involving these people (email addresses), for meeting
-	 * prep: e.g. conversations with the attendees.
+	 * Recent items related to a meeting, for meeting prep: conversations
+	 * with the attendees, issues and PRs about its topic. Each source uses
+	 * what it can search by and ignores the rest.
 	 */
-	getRelatedToPeople?(
+	getRelatedItems?(
 		ctx: IntegrationContext,
-		people: string[],
-		since: Date,
+		query: RelatedQuery,
 	): Promise<WorkItem[]>;
 	/** Your calendar between two moments (briefing, free time). Calendars only. */
 	getAgenda?(

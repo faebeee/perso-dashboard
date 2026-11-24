@@ -1,5 +1,6 @@
 import { createRoute } from "@tanstack/react-router";
 import { PageHeader } from "#/app/shell/app-shell";
+import { WeeklyReportCard } from "#/app/weekly-report/weekly-report-card";
 import { InsightsPage } from "#/features/insights/components/insights-page";
 import { rootRoute } from "./__root";
 
@@ -16,7 +17,10 @@ function InsightsRoute() {
 				title="Insights"
 				description="What you got done, and how your weeks are trending."
 			/>
-			<InsightsPage />
+			<div className="space-y-6">
+				<WeeklyReportCard />
+				<InsightsPage />
+			</div>
 		</>
 	);
 }

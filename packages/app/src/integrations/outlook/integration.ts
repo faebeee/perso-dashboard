@@ -59,7 +59,7 @@ export const outlookBackend: IntegrationBackend = {
 		return mailMetrics({ received, sent });
 	},
 
-	getRelatedToPeople: (ctx, people, since) =>
+	getRelatedItems: (ctx, { people, since }) =>
 		outlookService(ctx).withPeople(people, since),
 
 	getAttentionItems: async (ctx, now) =>

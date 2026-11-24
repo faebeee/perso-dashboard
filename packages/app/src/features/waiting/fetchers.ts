@@ -5,19 +5,18 @@ import {
 import type { IntegrationBackend } from "@dashboard/core/integration";
 import { unwrap } from "@dashboard/core/result";
 import type { WaitingItem } from "@dashboard/core/waiting";
-import type { WorkItem } from "@dashboard/core/work-item";
+import { sortByUpdatedDesc, type WorkItem } from "@dashboard/core/work-item";
 import { withIntegration } from "@dashboard/platform/integration-runner";
 import { preferences } from "@dashboard/platform/preferences";
 import { getServices } from "@dashboard/platform/services";
 import { integrationBackends } from "#/integrations/runtime-registry";
 import { type Collected, collectFromSources } from "#/lib/collect-sources";
+import { relatedQuery } from "./related-query";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Meeting prep looks this far ahead, for at most this many meetings. */
 const PREP_WINDOW_MS = DAY_MS;
 const PREP_MEETING_LIMIT = 3;
-/** People per meeting used for the related search. */
-const PREP_PEOPLE_LIMIT = 10;
 
 async function connectedBackends(): Promise<IntegrationBackend[]> {
 	const connected = new Set(
@@ -47,14 +46,14 @@ export async function fetchWaiting(): Promise<Collected<WaitingItem>> {
 
 export interface MeetingPrep {
 	meeting: CalendarEvent;
-	/** Recent items with the attendees (e.g. email conversations). */
+	/** Recent items about it: mail with the attendees, issues and PRs on its topic. */
 	related: WorkItem[];
 }
 
 /**
- * Your next meetings with other people, each with recent items involving
- * the attendees. Composes `getAgenda` and `getRelatedToPeople` from any
- * sources that implement them.
+ * Your next meetings with other people, each with recent related items:
+ * mail with the attendees, issues and PRs on its topic. Composes
+ * `getAgenda` and `getRelatedItems` from any sources that implement them.
  */
 export async function fetchMeetingPrep(): Promise<Collected<MeetingPrep>> {
 	const now = new Date();
@@ -86,29 +85,25 @@ export async function fetchMeetingPrep(): Promise<Collected<MeetingPrep>> {
 		now.getTime() - preferences.get().waitingRules.relatedWindowDays * DAY_MS,
 	);
 	const relatedSources = backends.flatMap((backend) => {
-		const getRelated = backend.getRelatedToPeople;
+		const getRelated = backend.getRelatedItems;
 		return getRelated ? [{ backend, getRelated }] : [];
 	});
 	const errors = [...agenda.errors];
 
 	const items = await Promise.all(
 		meetings.map(async (meeting) => {
-			const people = (meeting.attendees ?? [])
-				.map((a) => a.email)
-				.slice(0, PREP_PEOPLE_LIMIT);
+			const query = relatedQuery(meeting, since);
 			const related = await collectFromSources(
 				relatedSources.map(({ backend, getRelated }) => ({
 					id: backend.id,
 					fetch: async () =>
 						unwrap(
-							await withIntegration(backend, (ctx) =>
-								getRelated(ctx, people, since),
-							),
+							await withIntegration(backend, (ctx) => getRelated(ctx, query)),
 						),
 				})),
 			);
 			errors.push(...related.errors);
-			return { meeting, related: related.items };
+			return { meeting, related: sortByUpdatedDesc(related.items) };
 		}),
 	);
 

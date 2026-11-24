@@ -15,10 +15,12 @@ import {
 	saveLlmKey,
 	summarize,
 } from "./fetchers";
+import { fingerprint, loadTriage, runTriage, type TriageItem } from "./triage";
 
 const keys = {
 	savedKeys: ["llm", "saved-keys"] as const,
 	summaries: ["ai-summary"] as const,
+	triage: ["ai-triage"] as const,
 };
 
 /** Includes provider and model: switching either looks up other summaries. */
@@ -35,6 +37,22 @@ const summaryQueryKey = (input: SummaryInput) => {
 };
 
 export const llmQueries = {
+	/** Stored triage of these items (local database only). */
+	triage: (items: readonly TriageItem[]) => {
+		const chosen = chosenLlm();
+		return queryOptions({
+			queryKey: [
+				...keys.triage,
+				chosen?.provider.id ?? null,
+				chosen?.model ?? null,
+				items.map(fingerprint),
+			],
+			queryFn: () => loadTriage(items),
+			staleTime: Number.POSITIVE_INFINITY,
+			refetchInterval: false,
+		});
+	},
+
 	/** Stored summaries of this review (local database only). */
 	summary: (input: SummaryInput) =>
 		queryOptions({
@@ -133,6 +151,30 @@ export function useSummarize() {
 					query.queryKey.join("|") !== summaryQueryKey(input).join("|"),
 			});
 		},
+	});
+	useEffect(() => () => controller.current?.abort(), []);
+	const { reset } = mutation;
+	return {
+		...mutation,
+		cancel: () => {
+			controller.current?.abort();
+			reset();
+		},
+	};
+}
+
+/** Triages the items without a stored result; cancellable. */
+export function useRunTriage() {
+	const queryClient = useQueryClient();
+	const controller = useRef<AbortController | null>(null);
+	const mutation = useMutation({
+		mutationFn: (items: readonly TriageItem[]) => {
+			controller.current?.abort();
+			const next = new AbortController();
+			controller.current = next;
+			return runTriage(items, next.signal);
+		},
+		onSettled: () => queryClient.invalidateQueries({ queryKey: keys.triage }),
 	});
 	useEffect(() => () => controller.current?.abort(), []);
 	const { reset } = mutation;

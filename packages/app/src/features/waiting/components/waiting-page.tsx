@@ -15,6 +15,7 @@ import {
 	RowActions,
 } from "#/components/item-actions/item-actions";
 import { useItemClick } from "#/components/item-detail/item-detail-provider";
+import { MeetingExtras } from "#/components/meeting-extras/meeting-extras";
 import { ItemIcon, type ItemKind } from "#/components/source-kit/item-icon";
 import { QueryState } from "#/components/widget-kit/query-state";
 import { SourceErrors } from "#/components/widget-kit/source-errors";
@@ -203,7 +204,7 @@ function MeetingPrepSection() {
 				<CalendarClock className="size-4 text-muted-foreground" />
 				<h2 className="flex-1 text-sm font-semibold">Meeting prep</h2>
 				<span className="text-xs text-muted-foreground">
-					Next 24 hours · recent conversations with the attendees
+					Next 24 hours · mail with the attendees, issues and PRs on the topic
 				</span>
 			</header>
 			<div className="px-3 py-2">
@@ -260,12 +261,13 @@ function MeetingCard({ prep: { meeting, related } }: { prep: MeetingPrep }) {
 			<div className="mt-2">
 				{related.length === 0 ? (
 					<p className="text-xs text-muted-foreground italic">
-						No recent conversations with these people.
+						Nothing recent with these people or on this topic.
 					</p>
 				) : (
-					<WorkItemList items={related.slice(0, 5)} />
+					<WorkItemList items={related.slice(0, 8)} />
 				)}
 			</div>
+			<MeetingExtras meeting={meeting} related={related} />
 		</article>
 	);
 }

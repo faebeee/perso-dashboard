@@ -32,6 +32,28 @@ export function createJiraService(
 	};
 
 	return {
+		/**
+		 * Issues related to a meeting: the ticket keys it mentions, plus issues
+		 * updated since `since` whose text matches its keywords. A key that
+		 * doesn't exist fails only its own search.
+		 */
+		async related(
+			keys: readonly string[],
+			keywords: readonly string[],
+			since: Date,
+		): Promise<WorkItem[]> {
+			const keysJql = relatedKeysJql(keys);
+			const textJql = relatedTextJql(keywords, since);
+			const [byKey, byText] = await Promise.all([
+				keysJql ? search(keysJql).catch(() => []) : [],
+				textJql ? search(textJql) : [],
+			]);
+			const seen = new Set<string>();
+			return [...byKey, ...byText]
+				.filter((item) => !seen.has(item.id) && seen.add(item.id))
+				.slice(0, RELATED_LIMIT);
+		},
+
 		/** Open issues I'm involved in; "all" = assigned to OR reported by me. */
 		myIssues: (scope: WorkScope) =>
 			search(
@@ -103,4 +125,28 @@ export async function resolveJiraSite(api: JiraApi): Promise<JiraSite> {
 		throw new Error("This Atlassian account has no accessible Jira site");
 	}
 	return { cloudId: site.id, siteUrl: site.url, siteName: site.name };
+}
+
+/** Issues listed per meeting. */
+const RELATED_LIMIT = 10;
+
+const jqlString = (text: string) =>
+	`"${text.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+
+/** Pure: JQL for the ticket keys a meeting mentions (null when none). */
+export function relatedKeysJql(keys: readonly string[]): string | null {
+	const valid = keys.filter((k) => /^[A-Z][A-Z0-9_]+-\d+$/.test(k));
+	return valid.length > 0
+		? `issuekey in (${valid.join(", ")}) ORDER BY updated DESC`
+		: null;
+}
+
+/** Pure: JQL for recent issues matching all keywords (null when none). */
+export function relatedTextJql(
+	keywords: readonly string[],
+	since: Date,
+): string | null {
+	if (keywords.length === 0) return null;
+	const day = since.toISOString().slice(0, 10);
+	return `text ~ ${jqlString(keywords.join(" "))} AND updated >= "${day}" ORDER BY updated DESC`;
 }

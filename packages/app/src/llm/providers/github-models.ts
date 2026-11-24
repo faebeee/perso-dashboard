@@ -27,7 +27,7 @@ export const githubModelsProvider: LlmProviderDefinition = {
 		url: "https://github.com/settings/personal-access-tokens/new",
 	},
 	defaultModel: "openai/gpt-4.1",
-	async complete({ system, prompt, model, signal }, { apiKey, fetch }) {
+	async complete({ system, prompt, model, signal, schema }, { apiKey, fetch }) {
 		const token = requireKey(ID, LABEL, apiKey);
 		const response = await send(ID, "Could not reach models.github.ai.", () =>
 			fetch("https://models.github.ai/inference/chat/completions", {
@@ -41,6 +41,18 @@ export const githubModelsProvider: LlmProviderDefinition = {
 				signal,
 				body: JSON.stringify({
 					model,
+					...(schema
+						? {
+								response_format: {
+									type: "json_schema",
+									json_schema: {
+										name: schema.name,
+										schema: schema.schema,
+										strict: true,
+									},
+								},
+							}
+						: {}),
 					messages: [
 						{ role: "system", content: system },
 						{ role: "user", content: prompt },

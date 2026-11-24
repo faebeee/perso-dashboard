@@ -92,6 +92,14 @@ export function createGitHubService(api: GitHubApi) {
 		},
 
 		/** Raw (with created_at), for the Waiting page. */
+		/** Your PRs (opened, assigned or to review) mentioning these ticket keys. */
+		async related(keys: readonly string[], since: Date): Promise<WorkItem[]> {
+			const q = relatedPrsQuery(keys, since);
+			return q
+				? (await searchPrs(q, "pull_request")).slice(0, RELATED_PR_LIMIT)
+				: [];
+		},
+
 		awaitingReview: async () =>
 			(await api.searchIssues(GITHUB_QUERIES.awaitingReview)).items,
 
@@ -125,4 +133,17 @@ export function createGitHubService(api: GitHubApi) {
 			return sortByUpdatedDesc([...unique.values()]);
 		},
 	};
+}
+
+const RELATED_PR_LIMIT = 5;
+
+/** Pure: search query for PRs mentioning ticket keys (null when none). */
+export function relatedPrsQuery(
+	keys: readonly string[],
+	since: Date,
+): string | null {
+	const valid = keys.filter((k) => /^[A-Z][A-Z0-9_]+-\d+$/.test(k)).slice(0, 5);
+	if (valid.length === 0) return null;
+	const day = since.toISOString().slice(0, 10);
+	return `is:pr involves:@me updated:>=${day} ${valid.join(" OR ")}`;
 }

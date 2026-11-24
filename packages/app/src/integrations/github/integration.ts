@@ -61,6 +61,9 @@ export const githubBackend: IntegrationBackend = {
 		return { label: `@${viewer.login}`, meta: { login: viewer.login } };
 	},
 
+	getRelatedItems: ({ accessToken }, { keys, since }) =>
+		githubService(accessToken).related(keys, since),
+
 	async getFeedItems({ accessToken }) {
 		const service = githubService(accessToken);
 		const [reviews, mine] = await Promise.all([

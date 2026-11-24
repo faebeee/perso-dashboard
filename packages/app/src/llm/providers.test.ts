@@ -209,3 +209,58 @@ describe("Claude", () => {
 		).toBe("unauthorized");
 	});
 });
+
+describe("structured output", () => {
+	const schema = {
+		name: "triage",
+		schema: { type: "object", properties: { ok: { type: "boolean" } } },
+	};
+
+	it("passes the JSON Schema in each provider's own field", async () => {
+		const ollama = stubFetch(() => json({ message: { content: "{}" } }));
+		await ollamaLocalProvider.complete(
+			{ ...request, schema },
+			{ fetch: ollama.fetch },
+		);
+		expect(ollama.calls[0]?.body.format).toEqual(schema.schema);
+
+		const github = stubFetch(() =>
+			json({ choices: [{ message: { content: "{}" } }] }),
+		);
+		await githubModelsProvider.complete(
+			{ ...request, schema },
+			{ fetch: github.fetch, apiKey: "ghp" },
+		);
+		expect(github.calls[0]?.body.response_format).toEqual({
+			type: "json_schema",
+			json_schema: { name: "triage", schema: schema.schema, strict: true },
+		});
+
+		const claude = stubFetch(() =>
+			json({
+				id: "msg_1",
+				type: "message",
+				role: "assistant",
+				model: "m1",
+				content: [{ type: "text", text: "{}" }],
+				stop_reason: "end_turn",
+				stop_details: null,
+				usage: { input_tokens: 1, output_tokens: 1 },
+			}),
+		);
+		await anthropicProvider.complete(
+			{ ...request, schema },
+			{ fetch: claude.fetch, apiKey: "sk" },
+		);
+		expect(claude.calls[0]?.body.output_config).toEqual({
+			effort: "low",
+			format: { type: "json_schema", schema: schema.schema },
+		});
+	});
+
+	it("sends no format without a schema", async () => {
+		const ollama = stubFetch(() => json({ message: { content: "x" } }));
+		await ollamaLocalProvider.complete(request, { fetch: ollama.fetch });
+		expect(ollama.calls[0]?.body).not.toHaveProperty("format");
+	});
+});

@@ -12,6 +12,7 @@ import {
 	RowActions,
 } from "#/components/item-actions/item-actions";
 import { useItemClick } from "#/components/item-detail/item-detail-provider";
+import { ItemInsightLine } from "#/components/item-insight/item-insight";
 import { ItemIcon } from "#/components/source-kit/item-icon";
 import { formatRelative } from "#/lib/time";
 
@@ -69,6 +70,7 @@ function WorkItemRow({ item }: { item: WorkItem }) {
 							{formatRelative(item.updatedAt)}
 						</time>
 					</div>
+					<ItemInsightLine id={item.id} />
 				</div>
 
 				{(item.status || item.tags?.length) && (

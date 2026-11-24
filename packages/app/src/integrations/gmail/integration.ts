@@ -60,7 +60,7 @@ export const gmailBackend: IntegrationBackend = {
 		return mailMetrics({ received, sent });
 	},
 
-	getRelatedToPeople: (ctx, people, since) =>
+	getRelatedItems: (ctx, { people, since }) =>
 		gmailService(ctx).withPeople(people, since),
 
 	getAttentionItems: async (ctx, now) =>
