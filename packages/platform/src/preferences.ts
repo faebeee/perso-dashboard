@@ -28,6 +28,13 @@ const preferencesSchema = z.object({
 	/** What counts as urgent / waiting. Invalid stored values fall back to defaults. */
 	attentionRules: attentionRulesSchema.catch(DEFAULT_ATTENTION_RULES),
 	waitingRules: waitingRulesSchema.catch(DEFAULT_WAITING_RULES),
+	/** AI summary: the chosen LLM provider (null = off) and a model per provider. */
+	llm: z
+		.object({
+			provider: z.string().nullable().catch(null),
+			models: z.record(z.string(), z.string()).catch({}),
+		})
+		.catch({ provider: null, models: {} }),
 	/** Per integration: values of its declared `settings`, by key. */
 	integrationSettings: z
 		.record(z.string(), z.record(z.string(), z.unknown()))

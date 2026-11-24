@@ -58,6 +58,21 @@
         },
         {
           "url": "https://*.sentry.io/api/*"
+        },
+        {
+          "url": "https://api.anthropic.com/v1/*"
+        },
+        {
+          "url": "https://ollama.com/api/*"
+        },
+        {
+          "url": "https://models.github.ai/inference/*"
+        },
+        {
+          "url": "http://127.0.0.1:11434/api/*"
+        },
+        {
+          "url": "http://localhost:11434/api/*"
         }
       ]
     }

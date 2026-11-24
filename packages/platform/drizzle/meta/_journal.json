@@ -36,6 +36,20 @@
       "when": 1795441145353,
       "tag": "0004_today_item_project",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1795503480111,
+      "tag": "0005_llm_credentials",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1795504391905,
+      "tag": "0006_ai_summaries",
+      "breakpoints": true
     }
   ]
 }

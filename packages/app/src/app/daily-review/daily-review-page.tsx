@@ -24,6 +24,7 @@ import { todayQueries } from "#/features/today/queries";
 import { waitingQueries } from "#/features/waiting/queries";
 import { formatStandup, type StandupFormat } from "#/lib/standup";
 import { localDayKey } from "#/lib/time";
+import { AiSummaryCard } from "./ai-summary-card";
 import {
 	buildDailyReview,
 	collectProjects,
@@ -32,6 +33,8 @@ import {
 	scopeHeading,
 	type TimelineEntry,
 } from "./build-review";
+import { Card } from "./review-card";
+import { summarySystemPrompt, summaryUserPrompt } from "./summary-prompt";
 
 const RANGES: { range: SummaryRange; label: string }[] = [
 	{ range: "since_last_workday", label: "Since last workday" },
@@ -135,6 +138,14 @@ export function DailyReviewPage() {
 	};
 
 	const stillLoading = [activity, waiting, todayList].some((q) => q.isPending);
+	const summaryPrompt = summaryUserPrompt({
+		// Date only: a time would change on every visit ("last 24 hours") and
+		// make the stored summary look outdated.
+		periodTitle: `${period.title} (since ${period.from.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })})`,
+		scope: heading,
+		review,
+		notes: noteLines,
+	});
 
 	return (
 		<div className="space-y-4">
@@ -195,6 +206,12 @@ export function DailyReviewPage() {
 				</Card>
 
 				<div className="grid gap-4">
+					<AiSummaryCard
+						system={summarySystemPrompt(format)}
+						prompt={summaryPrompt}
+						scope={`${range}|${JSON.stringify(filter)}`}
+						disabled={stillLoading}
+					/>
 					<Card title="Today" icon={ListChecks}>
 						<SectionLines
 							lines={review.today.lines}
@@ -336,29 +353,6 @@ function SectionLines({ lines, empty }: { lines: string[]; empty: string }) {
 				<li key={i}>{line}</li>
 			))}
 		</ul>
-	);
-}
-
-function Card({
-	title,
-	icon: Icon,
-	action,
-	children,
-}: {
-	title: string;
-	icon: React.ComponentType<{ className?: string }>;
-	action?: React.ReactNode;
-	children: React.ReactNode;
-}) {
-	return (
-		<section aria-label={title} className="rounded-xl border bg-card shadow-xs">
-			<header className="flex flex-wrap items-center gap-2 border-b px-4 py-2.5">
-				<Icon className="size-4 text-muted-foreground" />
-				<h2 className="flex-1 text-sm font-semibold">{title}</h2>
-				{action}
-			</header>
-			<div className="px-4 py-3">{children}</div>
-		</section>
 	);
 }
 

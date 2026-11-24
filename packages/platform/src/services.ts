@@ -11,6 +11,10 @@ import {
 	layeredCacheStore,
 } from "./http-cache";
 import { createTokenManager, type TokenManager } from "./oauth/token-manager";
+import {
+	type AiSummaryRepository,
+	createDrizzleAiSummaryRepository,
+} from "./repositories/ai-summary-repository";
 import { createDrizzleCacheStore } from "./repositories/cache-repository";
 import {
 	type ConnectionRepository,
@@ -24,6 +28,10 @@ import {
 	createDrizzleLayoutRepository,
 	type LayoutRepository,
 } from "./repositories/layout-repository";
+import {
+	createDrizzleLlmCredentialRepository,
+	type LlmCredentialRepository,
+} from "./repositories/llm-credential-repository";
 import {
 	createDrizzleOAuthClientRepository,
 	type OAuthClientRepository,
@@ -44,6 +52,9 @@ export const OAUTH_LOOPBACK_PORT = 47390;
 /** Cached API responses older than this are deleted at startup. */
 const CACHE_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
+/** AI summaries older than this are deleted at startup. */
+const SUMMARY_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+
 /** Give up waiting for the browser after this long. */
 const OAUTH_TIMEOUT_SECONDS = 5 * 60;
 
@@ -58,6 +69,10 @@ export interface Services {
 	layouts: LayoutRepository;
 	dismissals: DismissalRepository;
 	today: TodayRepository;
+	/** API keys of LLM providers (AI summary). */
+	llmCredentials: LlmCredentialRepository;
+	/** Generated Daily Review summaries, reused while the review is unchanged. */
+	aiSummaries: AiSummaryRepository;
 	/** API response cache: expire on manual refresh, clear on (dis)connect. */
 	httpCache: HttpCache;
 	tokenManager: TokenManager;
@@ -106,6 +121,10 @@ export async function createServices(host: Host): Promise<Services> {
 	});
 	setDefaultHttpCache(httpCache);
 	const oauthClients = createDrizzleOAuthClientRepository(db, cipher);
+	const aiSummaries = createDrizzleAiSummaryRepository(db, cipher);
+	void aiSummaries
+		.prune(new Date(Date.now() - SUMMARY_RETENTION_MS))
+		.catch((cause) => console.error("[ai-summary] prune failed", cause));
 
 	const oauthCallbackUrl = (
 		integration: Pick<IntegrationBackend, "id" | "oauthClient">,
@@ -128,6 +147,8 @@ export async function createServices(host: Host): Promise<Services> {
 		layouts: createDrizzleLayoutRepository(db),
 		dismissals: createDrizzleDismissalRepository(db),
 		today: createDrizzleTodayRepository(db),
+		llmCredentials: createDrizzleLlmCredentialRepository(db, cipher),
+		aiSummaries,
 		httpCache,
 		tokenManager: createTokenManager({
 			connections,

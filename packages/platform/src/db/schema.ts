@@ -26,6 +26,14 @@ export const oauthClients = sqliteTable("oauth_clients", {
 	updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
+/** API keys for LLM providers, keyed by provider id ("anthropic"…). */
+export const llmCredentials = sqliteTable("llm_credentials", {
+	providerId: text("provider_id").primaryKey(),
+	/** Encrypted with SecretCipher. */
+	apiKey: text("api_key").notNull(),
+	updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
+
 export const dashboardLayouts = sqliteTable("dashboard_layouts", {
 	id: text("id").primaryKey(),
 	items: text("items", { mode: "json" }).$type<unknown>().notNull(),
@@ -74,4 +82,20 @@ export const httpCache = sqliteTable("http_cache", {
 	etag: text("etag"),
 	lastModified: text("last_modified"),
 	fetchedAt: integer("fetched_at").notNull(),
+});
+
+/**
+ * Generated AI summaries of the Daily Review, keyed by a hash of what was
+ * sent (provider, model, instructions, review). Reused while the review is
+ * unchanged, so the model isn't asked twice for the same answer.
+ */
+export const aiSummaries = sqliteTable("ai_summaries", {
+	key: text("key").primaryKey(),
+	/** Which review it belongs to (period + filter), for "outdated" summaries. */
+	scope: text("scope").notNull(),
+	/** Encrypted with SecretCipher: it describes your work. */
+	text: text("text").notNull(),
+	providerId: text("provider_id").notNull(),
+	model: text("model").notNull(),
+	createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });

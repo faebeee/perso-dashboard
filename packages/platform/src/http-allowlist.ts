@@ -1,5 +1,6 @@
 /**
- * The only URLs the app may call: provider APIs and OAuth token endpoints.
+ * The only URLs the app may call: provider APIs, OAuth token endpoints and
+ * LLM providers (a local Ollama included).
  * Patterns use Tauri's syntax (`*` matches anything, including `/`).
  *
  * Enforced by the desktop app's HTTP capability
@@ -19,4 +20,10 @@ export const PROVIDER_URL_PATTERNS = [
 	"https://sentry.io/oauth/token/",
 	"https://sentry.io/api/*",
 	"https://*.sentry.io/api/*",
+	// LLM providers (AI summary)
+	"https://api.anthropic.com/v1/*",
+	"https://ollama.com/api/*",
+	"https://models.github.ai/inference/*",
+	"http://127.0.0.1:11434/api/*",
+	"http://localhost:11434/api/*",
 ] as const;

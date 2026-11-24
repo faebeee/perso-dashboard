@@ -58,6 +58,25 @@ Pinned items that also show up as activity (e.g. a pinned PR that got merged) ar
 
 **Project filter:** chips above the review list the repos and projects that appear in the period. Pick the ones you need and the timeline, Today, Blockers and the copied standup cover only those, with a `Projects: …` line on top. Meetings, mail and notes have no project; tick *Also show meetings, mail and notes* to keep them. The filter is remembered on this device. Pinned Today items remember their project.
 
+### AI summary
+
+The **AI summary** card turns the review into a short standup update: related work grouped (many commits on one branch become one point), ticket keys and PR numbers kept, your notes included, in the selected Markdown/Slack/plain format. Press **Summarize**, then **Copy**. The rule-based standup below stays as it is.
+
+Summaries are stored (encrypted, kept 14 days), keyed by a hash of exactly what the model would see: provider, model, instructions, the filtered review and your notes. Opening the page again with an unchanged review shows the stored summary **without a new request**. When the review changed (new activity, other notes, another model), the last summary of that period and filter is shown greyed out as outdated, and **Update** asks the model again. Nothing is regenerated automatically, so typing notes costs no tokens.
+
+Choose the provider in **Preferences → AI summary**:
+
+| Provider | What you need | Default model |
+|---|---|---|
+| Ollama (local) | [Ollama](https://ollama.com) running on this computer (`ollama serve`) and the model pulled (`ollama pull <model>`). Nothing leaves your machine. | `llama3.2` |
+| Ollama Cloud | An API key from ollama.com | `gpt-oss:120b` |
+| Claude | An API key from the Claude Console | `claude-opus-5-5` |
+| GitHub Copilot (GitHub Models) | A fine-grained GitHub token with **Models: read**. Requests count against your Copilot plan's model quota. | `openai/gpt-4.1` |
+
+Each provider remembers its own model (leave the field empty for the default) and its API key, stored encrypted like OAuth tokens. **Test** sends a one-line request. Only what the filtered review shows, plus your notes, is sent to the provider.
+
+Providers are pluggable: an adapter implements `LlmProviderDefinition` (`packages/core/src/llm.ts`) in `packages/app/src/llm/providers/` and is listed in `packages/app/src/llm/registry.ts`; its host goes into the HTTP allowlist (see Security).
+
 ## Waiting
 
 **Waiting** (sidebar) lists what you're waiting on *others* for, oldest first:
@@ -104,7 +123,7 @@ GitHub scopes are hierarchical: the `repo` scope you already granted includes `s
 
 Your pushed commits appear on the GitHub page ("Your commits", last 7 days, grouped by repo and branch), in Insights' Summary and in the Daily review. Standups condense them per branch: "5 commits to acme/web (feature/cart): Fix rounding".
 
-They come from your GitHub activity events, which cover **every branch** of all repos you pushed to (feature branches, `test`, `main`…), private ones included. Since October 2025 those events no longer list commits, so each push is expanded with the compare API: up to the 100 most recent pushes, six requests at a time, cached for a day since commits never change. A new branch contributes all its commits that aren't on the default branch. Work that reached several branches (a feature branch merged into `test`, then `main`) is listed once, on the branch you pushed it to first. Commits of other people that arrive in your pushes (e.g. merging main) are left out. GitHub keeps events for 90 days (300 at most) and may list them up to a few hours late.
+They come from two sources, which together cover **every branch** of all repos you pushed to (feature branches, `test`, `main`…), private ones included: your GitHub activity events, and, because GitHub drops some of those, the push log (`/repos/{repo}/activity`, filtered to you) of the 30 repos you pushed to most recently. A push found in both is counted once. Since October 2025 those events no longer list commits, so each push is expanded with the compare API: up to the 100 most recent pushes, six requests at a time, cached for a day since commits never change. A new branch contributes all its commits that aren't on the default branch. Work that reached several branches (a feature branch merged into `test`, then `main`) is listed once, on the branch you pushed it to first. Commits of other people that arrive in your pushes (e.g. merging main) are left out. GitHub keeps events for 90 days (300 at most) and may list them up to a few hours late.
 
 ## Sync & rate limits
 
@@ -145,8 +164,8 @@ Code: native parts are in `apps/desktop/src-tauri/src/desktop.rs`, the `Host.des
 
 | What | Where |
 |---|---|
-| SQLite DB (connections, OAuth clients, layout) | App config dir, e.g. `~/Library/Application Support/local.productivity-dashboard/dashboard.db` |
-| Key that encrypts tokens + client secrets (AES-256-GCM) | OS credential store (macOS Keychain, Windows Credential Manager, Linux Secret Service) |
+| SQLite DB (connections, OAuth clients, LLM API keys, AI summaries, layout) | App config dir, e.g. `~/Library/Application Support/local.productivity-dashboard/dashboard.db` |
+| Key that encrypts tokens, client secrets and LLM API keys (AES-256-GCM) | OS credential store (macOS Keychain, Windows Credential Manager, Linux Secret Service) |
 
 Migrations in `packages/platform/drizzle/` are bundled into the app and applied on startup.
 
@@ -242,7 +261,7 @@ The Rust side stays thin on purpose, so all product logic is TypeScript and unit
 2. `Host.authorizeInBrowser`: Rust binds `127.0.0.1:47390`, opens the browser and returns the redirect URL.
 3. Check `state`, exchange the code (`oauth2-client.ts`), then save the encrypted tokens.
 
-**Security:** tokens and client secrets are AES-256-GCM encrypted at rest, with a key held in the OS keychain. The window has a strict CSP. HTTP access is limited to the provider URLs in `packages/platform/src/http-allowlist.ts`, enforced by `apps/desktop/src-tauri/capabilities/default.json` (a test keeps the two in sync). The loopback listener binds to 127.0.0.1 only, for one flow at a time, and closes when the flow ends. Links to other sites open in the system browser.
+**Security:** tokens and client secrets are AES-256-GCM encrypted at rest, with a key held in the OS keychain. The window has a strict CSP. HTTP access is limited to the provider URLs in `packages/platform/src/http-allowlist.ts` (integrations, plus the LLM providers: `api.anthropic.com`, `ollama.com`, `models.github.ai` and a local Ollama on port 11434), enforced by `apps/desktop/src-tauri/capabilities/default.json` (a test keeps the two in sync). The loopback listener binds to 127.0.0.1 only, for one flow at a time, and closes when the flow ends. Links to other sites open in the system browser.
 
 ### Anatomy of an integration
 
@@ -284,6 +303,7 @@ Connection handling, the OAuth flow, the credentials form, the feed, the dashboa
 |---|---|
 | Shell (Tauri → something else) | a new `apps/<shell>/` with a `Host` adapter and an entry that calls `createAppRouter()` |
 | OAuth details of a provider | that integration's `oauth.ts` |
+| LLM provider (add or change one) | an adapter in `packages/app/src/llm/providers/`, `llm/registry.ts`, and its host in the HTTP allowlist |
 | Database (SQLite → other) | `packages/platform/src/db/*`, `repositories/*`, `services.ts` |
 | Grid engine (react-grid-layout) | `packages/app/src/features/dashboard/components/dashboard-grid.tsx` |
 | Token storage / encryption | `packages/platform/src/crypto.ts`, `services.ts`, `apps/desktop/src-tauri/src/secrets.rs` |

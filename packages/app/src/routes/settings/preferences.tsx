@@ -1,6 +1,7 @@
 import { ThemePicker } from "@dashboard/ui/appearance/theme-picker";
 import { createRoute } from "@tanstack/react-router";
 import { PageHeader } from "#/app/shell/app-shell";
+import { LlmSettings } from "#/features/ai-summary/components/llm-settings";
 import { PreferencesPage } from "#/features/preferences/components/preferences-page";
 import { RulesSection } from "#/features/preferences/components/rules-section";
 import { rootRoute } from "../__root";
@@ -29,6 +30,15 @@ function PreferencesRoute() {
 					<ThemePicker />
 				</section>
 				<PreferencesPage />
+				<section className="space-y-3">
+					<div>
+						<h2 className="text-base font-semibold">AI summary</h2>
+						<p className="text-sm text-muted-foreground">
+							Which language model summarizes your Daily Review.
+						</p>
+					</div>
+					<LlmSettings />
+				</section>
 				<section className="space-y-3">
 					<div>
 						<h2 className="text-base font-semibold">Rules</h2>
