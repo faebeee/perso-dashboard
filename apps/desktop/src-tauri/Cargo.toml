@@ -15,7 +15,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
-# unsafe-headers: lets requests drop the webview Origin header (see src/platform/tauri/fetch.ts)
+# unsafe-headers: lets requests drop the webview Origin header (see ../src/host/fetch.ts)
 tauri-plugin-http = { version = "2", features = ["unsafe-headers"] }
 tauri-plugin-opener = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
@@ -27,6 +27,8 @@ tauri-plugin-global-shortcut = "2"
 keyring = { version = "3", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
 tokio = { version = "1", features = ["net", "io-util", "time", "sync", "macros"] }
 serde = { version = "1", features = ["derive"] }
+# Needed by tauri::generate_context! for plugin config (plugins.http.scopeRedirects).
+serde_json = "1"
 base64 = "0.22"
 getrandom = "0.3"
 

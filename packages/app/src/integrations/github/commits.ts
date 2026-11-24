@@ -236,8 +236,9 @@ export function mergeCommits(lists: readonly CommitInfo[][]): CommitInfo[] {
  * Your commits since `since`, across all repos and branches you pushed to.
  *
  * Pushes come from two places: your events feed, which GitHub thins out
- * (pushes to whole branches go missing), and the push log of every
- * repository pushed to in the period, filtered to you.
+ * (pushes to whole branches go missing), and the push log, filtered to
+ * you, of the repositories pushed to in the period (by anyone; at most
+ * `REPO_LIMIT`, most recently pushed first, plus the feed's repos).
  */
 export function createGitHubCommitService(api: GitHubApi) {
 	async function pushes(login: string, since: Date): Promise<PushInfo[]> {

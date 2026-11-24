@@ -135,3 +135,75 @@ describe("createTokenManager", () => {
 		});
 	});
 });
+
+describe("token manager failure paths", () => {
+	const expired = () => connection({ expiresAt: new Date(NOW - 1000) });
+
+	it("reports missing OAuth client credentials when a refresh is needed", async () => {
+		const repo = {
+			get: vi.fn(async () => expired()),
+		} as unknown as ConnectionRepository;
+		const manager = createTokenManager({
+			connections: repo,
+			resolveProvider: async () => null,
+			now: () => NOW,
+		});
+		await expect(
+			manager.getContext({ id: "test" } as IntegrationBackend),
+		).rejects.toMatchObject({ error: { kind: "not_configured" } });
+	});
+
+	it("asks to reconnect when the provider can't refresh", async () => {
+		const { manager, integration } = setup(expired());
+		await expect(manager.getContext(integration)).rejects.toMatchObject({
+			error: { kind: "unauthorized" },
+		});
+	});
+
+	it("refreshes at the skew boundary", async () => {
+		const refresh = vi.fn(
+			async (): Promise<OAuthTokenSet> => ({
+				accessToken: "new",
+				refreshToken: null,
+				expiresAt: null,
+				scopes: [],
+			}),
+		);
+		const { manager, integration } = setup(
+			connection({ expiresAt: new Date(NOW + 60_000) }),
+			{ refresh },
+		);
+		expect((await manager.getContext(integration)).accessToken).toBe("new");
+	});
+
+	it("tries again after a failed refresh instead of caching the failure", async () => {
+		const refresh = vi
+			.fn<() => Promise<OAuthTokenSet>>()
+			.mockRejectedValueOnce(new Error("invalid_grant"))
+			.mockResolvedValueOnce({
+				accessToken: "new",
+				refreshToken: null,
+				expiresAt: null,
+				scopes: [],
+			});
+		const { manager, integration } = setup(expired(), { refresh });
+		await expect(manager.getContext(integration)).rejects.toMatchObject({
+			error: { kind: "unauthorized" },
+		});
+		expect((await manager.getContext(integration)).accessToken).toBe("new");
+		expect(refresh).toHaveBeenCalledTimes(2);
+	});
+
+	it("passes typed failures (offline) through unchanged", async () => {
+		const offline = new IntegrationFailure({
+			kind: "network",
+			message: "offline",
+		});
+		const { manager, integration } = setup(expired(), {
+			refresh: vi.fn(async () => {
+				throw offline;
+			}),
+		});
+		await expect(manager.getContext(integration)).rejects.toBe(offline);
+	});
+});

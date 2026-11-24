@@ -65,9 +65,11 @@ export function createOutlookService(
 
 		/** Recent mail with any of these people (meeting prep). */
 		async withPeople(people: readonly string[], since: Date) {
-			if (people.length === 0) return [];
+			// No usable address: no search (an empty one would match all mail).
+			const query = withPeopleSearch(people);
+			if (!query) return [];
 			// $search can't be combined with a date filter: filter here.
-			return items(await api.search(withPeopleSearch(people))).filter(
+			return items(await api.search(query)).filter(
 				(m) => Date.parse(m.updatedAt) >= since.getTime(),
 			);
 		},

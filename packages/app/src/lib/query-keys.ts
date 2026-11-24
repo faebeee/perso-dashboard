@@ -11,9 +11,11 @@ export const queryKeys = {
 	feed: ["combined", "feed"] as const,
 	releases: ["combined", "releases"] as const,
 	attention: ["combined", "attention"] as const,
+	stream: ["combined", "stream"] as const,
 	/** Local state, not provider data: never part of "combined" refreshes. */
 	dismissals: ["local", "dismissals"] as const,
 	today: ["local", "today"] as const,
+	streamDismissals: ["local", "stream-dismissals"] as const,
 };
 
 export const integrationQueryKey = (integrationId: string) =>

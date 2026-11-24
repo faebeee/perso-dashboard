@@ -28,5 +28,12 @@ export const MESSAGE_LIST_FIELDS = [
 export const odataString = (value: string) => `'${value.replace(/'/g, "''")}'`;
 
 /** Graph search query for mail with any of these people. */
-export const withPeopleSearch = (people: readonly string[]) =>
-	`"${people.map((p) => `participants:${p.replace(/"/g, "")}`).join(" OR ")}"`;
+/** Pure: a plain address ("ada@acme.test"), nothing KQL could parse as syntax. */
+const isPlainEmail = (value: string) =>
+	/^[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(value);
+
+/** Addresses come from calendar invites (anyone can send one): plain ones only. */
+export function withPeopleSearch(people: readonly string[]): string | null {
+	const terms = people.filter(isPlainEmail).map((p) => `participants:${p}`);
+	return terms.length > 0 ? `"${terms.join(" OR ")}"` : null;
+}

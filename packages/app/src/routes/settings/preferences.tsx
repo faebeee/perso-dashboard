@@ -32,9 +32,10 @@ function PreferencesRoute() {
 				<PreferencesPage />
 				<section className="space-y-3">
 					<div>
-						<h2 className="text-base font-semibold">AI summary</h2>
+						<h2 className="text-base font-semibold">AI</h2>
 						<p className="text-sm text-muted-foreground">
-							Which language model summarizes your Daily Review.
+							The language model behind the AI summary, weekly report, triage
+							and meeting briefings.
 						</p>
 					</div>
 					<LlmSettings />

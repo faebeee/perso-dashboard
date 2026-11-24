@@ -37,6 +37,10 @@ import {
 	type OAuthClientRepository,
 } from "./repositories/oauth-client-repository";
 import {
+	createDrizzleStreamDismissalRepository,
+	type StreamDismissalRepository,
+} from "./repositories/stream-dismissal-repository";
+import {
 	createDrizzleTodayRepository,
 	type TodayRepository,
 } from "./repositories/today-repository";
@@ -54,6 +58,8 @@ const CACHE_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** AI summaries older than this are deleted at startup. */
 const SUMMARY_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
+/** Longer than the Live stream's window, so cleared entries stay cleared. */
+const STREAM_DISMISSAL_RETENTION_MS = 14 * 24 * 60 * 60 * 1000;
 
 /** Give up waiting for the browser after this long. */
 const OAUTH_TIMEOUT_SECONDS = 5 * 60;
@@ -73,6 +79,8 @@ export interface Services {
 	llmCredentials: LlmCredentialRepository;
 	/** Generated Daily Review summaries, reused while the review is unchanged. */
 	aiSummaries: AiSummaryRepository;
+	/** Entries cleared from the Live stream. */
+	streamDismissals: StreamDismissalRepository;
 	/** API response cache: expire on manual refresh, clear on (dis)connect. */
 	httpCache: HttpCache;
 	tokenManager: TokenManager;
@@ -125,6 +133,10 @@ export async function createServices(host: Host): Promise<Services> {
 	void aiSummaries
 		.prune(new Date(Date.now() - SUMMARY_RETENTION_MS))
 		.catch((cause) => console.error("[ai-summary] prune failed", cause));
+	const streamDismissals = createDrizzleStreamDismissalRepository(db);
+	void streamDismissals
+		.prune(new Date(Date.now() - STREAM_DISMISSAL_RETENTION_MS))
+		.catch((cause) => console.error("[stream] prune failed", cause));
 
 	const oauthCallbackUrl = (
 		integration: Pick<IntegrationBackend, "id" | "oauthClient">,
@@ -149,6 +161,7 @@ export async function createServices(host: Host): Promise<Services> {
 		today: createDrizzleTodayRepository(db),
 		llmCredentials: createDrizzleLlmCredentialRepository(db, cipher),
 		aiSummaries,
+		streamDismissals,
 		httpCache,
 		tokenManager: createTokenManager({
 			connections,

@@ -15,7 +15,7 @@ import {
 const fieldClass =
 	"h-8 rounded-md border border-input bg-transparent px-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
-/** Preferences section: which LLM writes the Daily Review summary. */
+/** Preferences section: the LLM behind every AI feature. */
 export function LlmSettings() {
 	const prefs = useSyncExternalStore(preferences.subscribe, preferences.get);
 	const provider = getLlmProvider(prefs.llm.provider);
@@ -40,7 +40,7 @@ export function LlmSettings() {
 					</label>
 					<p className="mt-0.5 text-sm text-muted-foreground">
 						{provider?.description ??
-							"Summarize the Daily Review with a language model. Your activity is sent to the provider you choose."}
+							"Summaries, reports, triage and meeting briefings by a language model. Each feature sends what its page shows to the provider you choose, only when you press its button."}
 					</p>
 				</div>
 				<select

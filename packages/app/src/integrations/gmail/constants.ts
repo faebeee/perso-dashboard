@@ -22,15 +22,25 @@ export const GMAIL_QUERIES = {
 		`in:sent newer_than:${rules.noReplyWindowDays}d older_than:${rules.noReplyAfterDays}d -in:chats`,
 } as const;
 
+/** Pure: a plain address ("ada@acme.test"), nothing a search could parse as syntax. */
+export const isPlainEmail = (value: string) =>
+	/^[A-Za-z0-9._%+'-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(value);
+
 /**
  * Gmail search for conversations with any of these people since `since`:
  * `{from:a to:a cc:a from:b …} after:2026/01/01` (braces = OR).
+ * Null when no address is usable.
  */
 export function withPeopleQuery(
 	people: readonly string[],
 	since: Date,
-): string {
-	const terms = people.flatMap((p) => [`from:${p}`, `to:${p}`, `cc:${p}`]);
+): string | null {
+	// Addresses come from calendar invites (anyone can send one): only plain
+	// addresses, so a crafted one can't add search operators.
+	const terms = people
+		.filter(isPlainEmail)
+		.flatMap((p) => [`from:${p}`, `to:${p}`, `cc:${p}`]);
 	const day = `${since.getFullYear()}/${since.getMonth() + 1}/${since.getDate()}`;
+	if (terms.length === 0) return null;
 	return `{${terms.join(" ")}} after:${day} -in:chats`;
 }

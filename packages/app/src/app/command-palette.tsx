@@ -14,6 +14,7 @@ import {
 	Moon,
 	Palette,
 	PlugZap,
+	Radio,
 	RefreshCw,
 	Search,
 	Settings2,
@@ -59,6 +60,7 @@ const PAGES: {
 	label: string;
 	icon: ComponentType<{ className?: string }>;
 }[] = [
+	{ to: "/live", label: "Live stream", icon: Radio },
 	{ to: "/today", label: "Today", icon: Sun },
 	{ to: "/review", label: "Daily review (standup)", icon: History },
 	{ to: "/urgent", label: "Urgent", icon: Siren },

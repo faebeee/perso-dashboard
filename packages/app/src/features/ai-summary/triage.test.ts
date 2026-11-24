@@ -6,7 +6,7 @@ import { createMemorySqlDriver } from "@dashboard/platform/testing/memory-sql-dr
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { completeJson, jsonSchemaOf, parseJsonLoosely } from "./fetchers";
-import { loadTriage, runTriage, type TriageItem } from "./triage";
+import { loadTriage, runTriage, TRIAGE_BATCH, type TriageItem } from "./triage";
 
 const hostFetch = vi.fn();
 vi.mock("@dashboard/platform/host", () => ({
@@ -89,6 +89,42 @@ describe("triage", () => {
 		await runTriage([item("a"), item("b")]);
 		const results = await loadTriage([item("a"), item("b")]);
 		expect([...results.keys()]).toEqual(["a"]);
+	});
+});
+
+describe("triage batching and settings", () => {
+	it("splits large lists into batches", async () => {
+		const items = Array.from({ length: TRIAGE_BATCH + 1 }, (_, i) =>
+			item(`i${i}`),
+		);
+		hostFetch.mockImplementation(async (_url: unknown, init: RequestInit) => {
+			const prompt = JSON.parse(String(init.body)).messages[1]
+				.content as string;
+			const ids = prompt
+				.split("\n")
+				.slice(1)
+				.map((line) => JSON.parse(line).id);
+			return answer(triaged(ids));
+		});
+		expect(await runTriage(items)).toBe(TRIAGE_BATCH + 1);
+		expect(hostFetch).toHaveBeenCalledTimes(2);
+	});
+
+	it("does nothing without a provider", async () => {
+		preferences.set("llm", { provider: null, models: {} });
+		expect(await runTriage([item("a")])).toBe(0);
+		expect((await loadTriage([item("a")])).size).toBe(0);
+		expect(hostFetch).not.toHaveBeenCalled();
+	});
+
+	it("doesn't reuse results of another model", async () => {
+		hostFetch.mockImplementationOnce(async () => answer(triaged(["a"])));
+		await runTriage([item("a")]);
+		preferences.set("llm", {
+			provider: "ollama-local",
+			models: { "ollama-local": "other" },
+		});
+		expect((await loadTriage([item("a")])).size).toBe(0);
 	});
 });
 

@@ -114,3 +114,56 @@ describe("createHttpClient rate limits and cache", () => {
 		});
 	});
 });
+
+describe("secret hygiene", () => {
+	it("never puts the access token into cache keys", async () => {
+		const cache = createHttpCache({ store: createMemoryCacheStore() });
+		const spy = vi.spyOn(cache, "get");
+		const fetch = vi.fn<FetchFn>(async () => json({ ok: true }));
+		await createHttpClient({
+			integrationId: "test",
+			baseUrl: "https://api.example.com",
+			accessToken: "token-123",
+			fetch,
+			cache,
+		}).get("/x", schema, { q: "a" });
+		const request = spy.mock.calls[0]?.[0];
+		expect(JSON.stringify({ ...request, send: undefined })).not.toContain(
+			"token-123",
+		);
+	});
+
+	it("names only the host when the network fails", async () => {
+		const fetch = vi.fn<FetchFn>(async () => {
+			throw new TypeError("connection reset");
+		});
+		await expect(
+			client(fetch).get("/search", schema, { q: "secret topic" }),
+		).rejects.toMatchObject({
+			error: {
+				kind: "network",
+				message: "Could not reach api.example.com: connection reset",
+			},
+		});
+	});
+
+	it("keeps response bodies out of 401 messages and caps other details", async () => {
+		const unauthorized = vi.fn<FetchFn>(
+			async () => new Response("token-123 is invalid", { status: 401 }),
+		);
+		const error = await client(unauthorized)
+			.get("/x", schema)
+			.catch((e) => e.error);
+		expect(error.message).not.toContain("token-123");
+
+		const failing = vi.fn<FetchFn>(
+			async () => new Response("x".repeat(500), { status: 500 }),
+		);
+		const failure = await client(failing)
+			.get("/x", schema)
+			.catch((e) => e.error);
+		expect(failure.message.length).toBeLessThanOrEqual(
+			"Request failed with 500: ".length + 200,
+		);
+	});
+});

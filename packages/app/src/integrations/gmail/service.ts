@@ -38,10 +38,11 @@ export function createGmailService(api: GmailApi, accountEmail?: string) {
 		},
 
 		/** Recent mail with any of these people (meeting prep). */
-		withPeople: (people: readonly string[], since: Date) =>
-			people.length === 0
-				? Promise.resolve([])
-				: search(withPeopleQuery(people, since)),
+		withPeople: (people: readonly string[], since: Date) => {
+			// No usable address: no search (an empty one would match all mail).
+			const q = withPeopleQuery(people, since);
+			return q ? search(q) : Promise.resolve([]);
+		},
 
 		/** Messages you sent in [from, to) (latest page). */
 		sentBetween: (from: Date, to: Date) =>

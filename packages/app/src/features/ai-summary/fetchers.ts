@@ -7,7 +7,7 @@ import { getServices } from "@dashboard/platform/services";
 import { z } from "zod";
 import { getLlmProvider } from "#/llm/registry";
 
-/** The provider and model chosen in Preferences, or null when the AI summary is off. */
+/** The provider and model chosen in Preferences, or null when AI features are off. */
 export function chosenLlm() {
 	const { provider, models } = preferences.get().llm;
 	const definition = getLlmProvider(provider);

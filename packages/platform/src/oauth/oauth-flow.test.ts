@@ -29,7 +29,7 @@ function setup(respond: (authorizationUrl: URL) => string) {
 	const authorize: BrowserAuthorizer = async (url) => new URL(respond(url));
 	const run = () =>
 		connectIntegration({ integration, provider, authorize, connections });
-	return { run, provider, connections };
+	return { run, provider, connections, integration };
 }
 
 const callback = "http://127.0.0.1:47390/oauth/test/callback";
@@ -83,5 +83,71 @@ describe("connectIntegration", () => {
 		vi.mocked(provider.exchangeCode).mockRejectedValue(new Error("boom"));
 		vi.spyOn(console, "error").mockImplementation(() => {});
 		await expect(run()).rejects.toMatchObject({ code: "exchange_failed" });
+	});
+
+	it("rejects a redirect without state, even with a code", async () => {
+		const { run, provider } = setup(() => `${callback}?code=abc`);
+		await expect(run()).rejects.toMatchObject({ code: "invalid_state" });
+		expect(provider.exchangeCode).not.toHaveBeenCalled();
+	});
+
+	it("checks the state before trusting a provider error", async () => {
+		const { run } = setup(
+			() =>
+				`${callback}?error=access_denied&error_description=evil&state=forged`,
+		);
+		await expect(run()).rejects.toMatchObject({ code: "invalid_state" });
+	});
+
+	it("passes other provider errors on with their description", async () => {
+		const { run } = setup(
+			(url) =>
+				`${callback}?error=server_error&error_description=Try+later&state=${stateOf(url)}`,
+		);
+		await expect(run()).rejects.toMatchObject({
+			code: "unknown",
+			message: "Try later",
+		});
+	});
+
+	it("rejects a matching state without a code", async () => {
+		const { run } = setup((url) => `${callback}?state=${stateOf(url)}`);
+		await expect(run()).rejects.toMatchObject({ code: "invalid_state" });
+	});
+
+	it("maps a listener I/O failure to unknown", async () => {
+		const { run } = setup(() => {
+			throw new BrowserAuthError("io", "port busy");
+		});
+		await expect(run()).rejects.toMatchObject({ code: "unknown" });
+	});
+
+	it("saves nothing when the account can't be read", async () => {
+		const { run, connections, integration } = setup(
+			(url) => `${callback}?code=abc&state=${stateOf(url)}`,
+		);
+		vi.mocked(integration.describeAccount).mockRejectedValue(new Error("401"));
+		vi.spyOn(console, "error").mockImplementation(() => {});
+		await expect(run()).rejects.toMatchObject({ code: "exchange_failed" });
+		expect(connections.save).not.toHaveBeenCalled();
+	});
+
+	it("uses a fresh, unguessable state and verifier per attempt", async () => {
+		const states: string[] = [];
+		const verifiers: string[] = [];
+		const { run, provider } = setup(
+			(url) => `${callback}?code=abc&state=${stateOf(url)}`,
+		);
+		await run();
+		await run();
+		for (const call of vi.mocked(provider.createAuthorizationUrl).mock.calls) {
+			states.push(call[0].state);
+			verifiers.push(call[0].codeVerifier);
+		}
+		expect(new Set(states).size).toBe(2);
+		expect(new Set(verifiers).size).toBe(2);
+		expect(states[0]).not.toBe(verifiers[0]);
+		for (const value of [...states, ...verifiers])
+			expect(value.length).toBeGreaterThanOrEqual(32);
 	});
 });

@@ -99,3 +99,12 @@ export const aiSummaries = sqliteTable("ai_summaries", {
 	model: text("model").notNull(),
 	createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
+
+/**
+ * Live stream entries you cleared. An entry is one change of an item
+ * (`<itemId>@<timestamp>`), so a later change of the same item shows again.
+ */
+export const streamDismissals = sqliteTable("stream_dismissals", {
+	eventId: text("event_id").primaryKey(),
+	dismissedAt: integer("dismissed_at", { mode: "timestamp_ms" }).notNull(),
+});

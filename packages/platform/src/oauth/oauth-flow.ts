@@ -61,6 +61,12 @@ export async function connectIntegration(input: {
 		throw cause;
 	}
 
+	// State first: a redirect we didn't start (forged, or a stale tab) is
+	// rejected before anything in it, error messages included, is used.
+	if (redirect.searchParams.get("state") !== state) {
+		throw new ConnectError("invalid_state");
+	}
+
 	const providerError = redirect.searchParams.get("error");
 	if (providerError) {
 		throw new ConnectError(
@@ -70,7 +76,7 @@ export async function connectIntegration(input: {
 	}
 
 	const code = redirect.searchParams.get("code");
-	if (!code || redirect.searchParams.get("state") !== state) {
+	if (!code) {
 		throw new ConnectError("invalid_state");
 	}
 

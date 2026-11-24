@@ -6,6 +6,7 @@ import {
 	LayoutDashboard,
 	ListTodo,
 	PlugZap,
+	Radio,
 	Search,
 	Settings2,
 	Siren,
@@ -19,6 +20,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { UrgentCount } from "./urgent-count";
 
 const MAIN_NAV = [
+	{ to: "/live", label: "Live", icon: Radio },
 	{ to: "/today", label: "Today", icon: Sun },
 	{ to: "/review", label: "Daily review", icon: History },
 	{ to: "/urgent", label: "Urgent", icon: Siren, badge: UrgentCount },
@@ -142,6 +144,7 @@ function NavLink({
 		| "/urgent"
 		| "/waiting"
 		| "/feed"
+		| "/live"
 		| "/insights"
 		| "/settings/integrations"
 		| "/settings/preferences";

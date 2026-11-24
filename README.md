@@ -1,6 +1,6 @@
 # Productivity Dashboard
 
-A personal, local-first **desktop app** that brings work from **GitHub**, **Jira Cloud**, **Gmail**, **Google Calendar**, **Outlook** (mail and calendar, Microsoft 365 or personal) and **Sentry** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists. The **Urgent** view (top of the sidebar, with a live count, also available as a widget) shows only what needs you soon:
+A personal, local-first **desktop app** that brings work from **GitHub**, **Jira Cloud**, **Gmail**, **Google Calendar**, **Outlook** (mail and calendar, Microsoft 365 or personal) and **Sentry** onto one customizable page, plus a unified **My Work** feed. Each source also has its own overview page in the sidebar, with headline numbers, breakdowns and full lists. The **Urgent** view (in the sidebar with a live count, also available as a widget) shows only what needs you soon:
 
 | Source | Urgent when… |
 |---|---|
@@ -11,7 +11,7 @@ A personal, local-first **desktop app** that brings work from **GitHub**, **Jira
 | Outlook | unread inbox mail marked high importance from the last 2 days |
 | Sentry | an unresolved issue assigned to you or your teams is escalating, regressed or fatal; a new one assigned to you personally |
 
-Thresholds live in `ATTENTION_RULES` (`packages/core/src/attention.ts`); each integration's rules are in its `attention.ts`.
+Defaults are in `DEFAULT_ATTENTION_RULES` (`packages/core/src/attention.ts`) and can be changed in **Preferences → Rules**; each integration's rules are in its `attention.ts`.
 
 Built with Tauri 2 (Rust shell), React, TanStack Router + Query, Tailwind v4, shadcn/ui, Drizzle + SQLite, in an npm workspaces + Turborepo monorepo.
 
@@ -64,7 +64,7 @@ The **AI summary** card turns the review into a short standup update: related wo
 
 Summaries are stored (encrypted, kept 14 days), keyed by a hash of exactly what the model would see: provider, model, instructions, the filtered review and your notes. Opening the page again with an unchanged review shows the stored summary **without a new request**. When the review changed (new activity, other notes, another model), the last summary of that period and filter is shown greyed out as outdated, and **Update** asks the model again. Nothing is regenerated automatically, so typing notes costs no tokens.
 
-Choose the provider in **Preferences → AI summary**:
+Choose the provider in **Preferences → AI** (it's used by every AI feature):
 
 | Provider | What you need | Default model |
 |---|---|---|
@@ -73,7 +73,7 @@ Choose the provider in **Preferences → AI summary**:
 | Claude | An API key from the Claude Console | `claude-opus-5-5` |
 | GitHub Copilot (GitHub Models) | A fine-grained GitHub token with **Models: read**. Requests count against your Copilot plan's model quota. | `openai/gpt-4.1` |
 
-Each provider remembers its own model (leave the field empty for the default) and its API key, stored encrypted like OAuth tokens. **Test** sends a one-line request. Only what the filtered review shows, plus your notes, is sent to the provider.
+Each provider remembers its own model (leave the field empty for the default) and its API key, stored encrypted like OAuth tokens. **Test** sends a one-line request. Each feature sends only what its page shows: for this summary, the filtered review and your notes (the other features are described below).
 
 Providers are pluggable: an adapter implements `LlmProviderDefinition` (`packages/core/src/llm.ts`) in `packages/app/src/llm/providers/` and is listed in `packages/app/src/llm/registry.ts`; its host goes into the HTTP allowlist (see Security).
 
@@ -83,7 +83,15 @@ They use the same provider and the same storage: a stored result is shown while 
 
 - **AI weekly report** (top of Insights): a status report for a 1:1 or a status mail, from last week's or this week's activity grouped by project plus your numbers (PRs merged, cycle time, reviews) compared with the weeks before. A finished week is written once.
 - **AI triage** (Urgent and My Work): a bar above the list offers to triage the items; each row then gets a one-line gist, a next step (Reply, Review, Fix, Decide, Delegate, Later, Ignore) and a reason on hover. Only title, sender, status and tags are sent, no mail bodies. Results are stored per item, so a later run sends only new or changed items (up to 40 per request). Meetings aren't triaged. Answers use each provider's structured-output mode (JSON Schema) and are validated; an invalid answer is retried once. Local models are slower here: a 12B model needs about a minute and a half for a handful of items.
-- **AI briefing** (Waiting → Meeting prep): for each meeting in the next 24 hours, **Prepare** writes what it's probably about, what's open with these people and talking points, from the meeting and its related items (see Waiting).
+- **AI briefing** (Waiting → Meeting prep): for each meeting listed there (see Waiting), **Prepare** writes what it's probably about, what's open with these people and talking points, from the meeting and its related items, which are sent to the provider.
+
+## Live
+
+**Live** (sidebar) is a stream of what is happening across your tools, newest on top: new mail, ticket and pull request updates, review requests, errors, security alerts, and what you did yourself (commits, merges, reviews, resolved tickets, sent mail). It covers the last 3 days, grouped by day.
+
+- **Live updates:** the page checks for news every minute while it's open (API responses are cached for about 2 minutes, so news can take up to ~3 minutes). Entries that arrive while you watch slide in on top with a dot. *Pause* stops checking, *Refresh* fetches right away.
+- **Clearing:** the × on a row clears that entry, *Clear all* clears everything shown; both offer *Undo* for 10 seconds. An entry is one change of an item, so when a cleared ticket or PR changes again, it comes back as a new entry.
+- **Sources:** the feed items of every connected integration (`getFeedItems`, at their last update) plus their activity (`getActivity`). Meetings stay out. Cleared entries are stored in the database by id only (`stream_dismissals`) and forgotten after 14 days.
 
 ## Waiting
 
@@ -96,7 +104,7 @@ They use the same provider and the same storage: a stored result is shown while 
 | Jira | issues you reported that are still open and unassigned |
 | Google Calendar, Outlook Calendar | meetings you organize in the next 7 days with invitees who haven't replied |
 
-**Meeting prep:** for your next meetings with other people (next 24h), it shows related recent items: mail with the attendees (Gmail, Outlook), Jira issues with the ticket keys or distinctive title words of the meeting, and your GitHub PRs mentioning those keys. Integrations contribute through `getWaitingItems` and `getRelatedItems` (which gets the attendees, keys and keywords and uses what it can search by); thresholds are in `WAITING_RULES` (`packages/core/src/waiting.ts`).
+**Meeting prep:** for your next 3 meetings with other people in the next 24 hours (all-day events skipped), it shows related items from the last 14 days (*Meeting prep looks back*, in Preferences → Rules): mail with the attendees (Gmail, Outlook), Jira issues with the ticket keys or distinctive title words of the meeting, and your GitHub PRs mentioning those keys. Integrations contribute through `getWaitingItems` and `getRelatedItems` (which gets the attendees, keys and keywords and uses what it can search by); defaults are in `DEFAULT_WAITING_RULES` (`packages/core/src/waiting.ts`) and can be changed in **Preferences → Rules**.
 
 ## Insights
 
@@ -131,7 +139,7 @@ GitHub scopes are hierarchical: the `repo` scope you already granted includes `s
 
 Your pushed commits appear on the GitHub page ("Your commits", last 7 days, grouped by repo and branch), in Insights' Summary and in the Daily review. Standups condense them per branch: "5 commits to acme/web (feature/cart): Fix rounding".
 
-They come from two sources, which together cover **every branch** of all repos you pushed to (feature branches, `test`, `main`…), private ones included: your GitHub activity events, and, because GitHub drops some of those, the push log (`/repos/{repo}/activity`, filtered to you) of the 30 repos you pushed to most recently. A push found in both is counted once. Since October 2025 those events no longer list commits, so each push is expanded with the compare API: up to the 100 most recent pushes, six requests at a time, cached for a day since commits never change. A new branch contributes all its commits that aren't on the default branch. Work that reached several branches (a feature branch merged into `test`, then `main`) is listed once, on the branch you pushed it to first. Commits of other people that arrive in your pushes (e.g. merging main) are left out. GitHub keeps events for 90 days (300 at most) and may list them up to a few hours late.
+They come from two sources, which together cover **every branch** of all repos you pushed to (feature branches, `test`, `main`…), private ones included: your GitHub activity events, and, because GitHub drops some of those, the push log (`/repos/{repo}/activity`, filtered to you) of up to 30 repositories: those you can access that were pushed to (by anyone) in the period, most recent first, plus the ones in your events. A push found in both is counted once. Since October 2025 those events no longer list commits, so each push is expanded with the compare API: up to the 100 most recent pushes, six requests at a time, cached for a day since commits never change. A new branch contributes all its commits that aren't on the default branch. Work that reached several branches (a feature branch merged into `test`, then `main`) is listed once, on the branch you pushed it to first. Commits of other people that arrive in your pushes (e.g. merging main) are left out. GitHub keeps events for 90 days (300 at most) and may list them up to a few hours late.
 
 ## Sync & rate limits
 
@@ -155,7 +163,7 @@ Every API call goes through one cache in the shared HTTP client (`packages/platf
 | Business | Inter, generous rounding, soft layered surfaces, a calm corporate blue |
 | Dot | monochrome with one red signal colour, dot-matrix display type (Doto) for headings and numbers, dotted canvas, chart bars drawn as dots |
 
-Themes are token overrides in `packages/ui/src/themes.css` (`:root[data-theme="…"]` plus `.dark`). Components only opt in through `font-display` (headings and big numbers) and `chart-bar` / `meter-fill`. Fonts are bundled (OFL) because the app works offline. The stored mode and theme are applied before first paint. To add a theme, add its id to `APPEARANCE_IDS`, its tokens to `themes.css` and its preview to `packages/ui/src/appearance/themes.ts`; a test checks the preview colours match the CSS.
+Themes are token overrides in `packages/ui/src/themes.css` (`:root[data-theme="…"]` plus `.dark`). Components only opt in through `font-display` (headings and big numbers) and `chart-bar` / `meter-fill`. Fonts are bundled (OFL) because the app works offline. The stored mode and theme are applied before first paint. To add a theme, add its id to `APPEARANCE_IDS` (`packages/ui/src/appearance/theme-init.ts`), its tokens to `themes.css` and its preview to `packages/ui/src/appearance/themes.ts`; a test checks the preview colours match the CSS.
 
 ## Desktop behaviour
 
@@ -172,7 +180,7 @@ Code: native parts are in `apps/desktop/src-tauri/src/desktop.rs`, the `Host.des
 
 | What | Where |
 |---|---|
-| SQLite DB (connections, OAuth clients, LLM API keys, AI summaries, layout) | App config dir, e.g. `~/Library/Application Support/local.productivity-dashboard/dashboard.db` |
+| SQLite DB (connections, OAuth clients, LLM API keys, AI results: summaries, reports, briefings, triage; layout, Today list, cleared Live entries, cached API responses) | App config dir, e.g. `~/Library/Application Support/local.productivity-dashboard/dashboard.db` |
 | Key that encrypts tokens, client secrets and LLM API keys (AES-256-GCM) | OS credential store (macOS Keychain, Windows Credential Manager, Linux Secret Service) |
 
 Migrations in `packages/platform/drizzle/` are bundled into the app and applied on startup.
@@ -233,21 +241,31 @@ packages/                 Shared code, consumed as TypeScript source (no build s
     src/integrations/               One self-contained folder per provider + two registries;
                                     shared/ holds pure rules any calendar or mail provider reuses
     src/components/                 work-item/, release/, calendar/, mail/, item-detail/,
-                                    widget-kit/, overview-kit/, source-kit/
+                                    widget-kit/, overview-kit/, source-kit/, plus slots features
+                                    fill without importing each other: item-actions/,
+                                    item-insight/ (AI triage line), meeting-extras/ (AI briefing)
     src/features/                   dashboard/, feed/, today/, waiting/, insights/, attention/,
-                                    connections/, preferences/, integration-overview/
+                                    releases/, connections/, preferences/, integration-overview/,
+                                    stream/ (Live list, cleared entries),
+                                    ai-summary/ (LLM calls, stored results, triage, settings)
+    src/llm/                        LLM provider adapters (providers/) + registry.ts
+    src/lib/                        Small shared helpers (time, standup text, source collection)
     src/app/                        Composition: query client, widget catalog, app shell,
-                                    command palette, external links
+                                    command palette, external links, desktop sync, and pages
+                                    that combine features: daily-review/, weekly-report/,
+                                    triage/, meeting-prep/, stream/ (Live: feed + activity)
     src/routes/                     Code-based TanStack Router routes + route-tree.ts
     src/router.tsx                  createAppRouter(): the router the shell mounts
 apps/
   desktop/     @dashboard/desktop   Tauri shell
     src/main.tsx                    Entry: Tauri host, router, external links
     src/host/                       The Tauri adapter for Host (the only code importing @tauri-apps/*)
-    src-tauri/                      Rust: plugins (sql, http, opener), keychain key, OAuth loopback
+    src-tauri/                      Rust: plugins (sql, http, opener, notification, global-shortcut,
+                                    autostart, window-state, single-instance), keychain key,
+                                    OAuth loopback
 ```
 
-**Dependency direction:** `apps → app → (ui, platform) → core`, and inside `@dashboard/app`: `routes → app → features → integrations → components`. Features don't import each other; `app/catalog.ts` wires them together. Inside `@dashboard/app`, `#/…` imports point at its own `src/`; other packages are imported by name (`@dashboard/ui/components/button`).
+**Dependency direction:** `apps → app → (ui, platform) → core`, and inside `@dashboard/app`: `routes → app → features → integrations → components`. Features don't import each other; `app/` combines them (`catalog.ts`, the composed pages) and fills the slots in `components/`. Inside `@dashboard/app`, `#/…` imports point at its own `src/`; other packages are imported by name (`@dashboard/ui/components/button`).
 
 **Shell vs. shared UI:** the desktop app calls `createAppRouter()` from `@dashboard/app/router` and renders the code-based route tree into `index.html`. Its own code is only its `Host` adapter and entry point, so another shell would only need those two. Where a shell can't do something (e.g. no login item), the shared UI reads `Host.desktop.capabilities` instead of forking. Tailwind scans the shared packages through `@source` in their `styles.css`, so apps just import `@dashboard/app/styles.css`.
 
@@ -269,7 +287,16 @@ The Rust side stays thin on purpose, so all product logic is TypeScript and unit
 2. `Host.authorizeInBrowser`: Rust binds `127.0.0.1:47390`, opens the browser and returns the redirect URL.
 3. Check `state`, exchange the code (`oauth2-client.ts`), then save the encrypted tokens.
 
-**Security:** tokens and client secrets are AES-256-GCM encrypted at rest, with a key held in the OS keychain. The window has a strict CSP. HTTP access is limited to the provider URLs in `packages/platform/src/http-allowlist.ts` (integrations, plus the LLM providers: `api.anthropic.com`, `ollama.com`, `models.github.ai` and a local Ollama on port 11434), enforced by `apps/desktop/src-tauri/capabilities/default.json` (a test keeps the two in sync). The loopback listener binds to 127.0.0.1 only, for one flow at a time, and closes when the flow ends. Links to other sites open in the system browser.
+**Security:**
+
+- **Secrets at rest:** OAuth tokens, OAuth client secrets, LLM API keys, cached API responses and AI results are AES-256-GCM encrypted (random IV per value) with a key held in the OS keychain (`apps/desktop/src-tauri/src/secrets.rs`).
+- **Network:** HTTP access is limited to the URLs in `packages/platform/src/http-allowlist.ts` (integrations, plus the LLM providers `api.anthropic.com`, `ollama.com`, `models.github.ai` and a local Ollama on `127.0.0.1:11434`), enforced by `apps/desktop/src-tauri/capabilities/default.json` (a test keeps the two in sync). Redirects are checked against the same list (`plugins.http.scopeRedirects`), so an allowed host can't forward a request, or an API key, elsewhere.
+- **Window:** a strict CSP (no inline or remote scripts, `object-src 'none'`, `form-action 'none'`, frames only from the app). Links to other sites open in the system browser.
+- **OAuth:** random `state` (checked before anything else in the redirect) and PKCE where the provider supports it (Atlassian doesn't). The loopback listener binds to 127.0.0.1 only, for one flow at a time, and closes when the flow ends.
+- **Untrusted input in queries:** attendee addresses from calendar invites must be plain addresses before they go into a Gmail or Outlook search; Jira text is quoted and escaped, ticket keys are validated.
+- **AI:** each feature sends only what its page shows, only when you press its button. Instructions tell the model to treat emails, issues and meetings as data, not instructions; the answer is shown as plain text and never used to build requests. Prompt injection can still make an answer misleading, so check AI text before you share it.
+
+Known limits: the HTTP cache's lookup keys (request URLs, e.g. search terms) and the Daily review notes (in the webview's local storage) aren't encrypted; encrypted values aren't bound to their row; a local process can end a pending login by calling the loopback URL first.
 
 ### Anatomy of an integration
 
@@ -286,7 +313,10 @@ integrations/github/
   queries.ts              TanStack Query options
   overview.tsx            the source's sidebar page (built from overview-kit)
   attention.ts            pure rules: what from this source is urgent
-  *-detail-view.tsx       optional in-app detail modal (Jira issues, Gmail messages)
+  waiting.ts              pure rules: what you're waiting on others for
+  insights.ts             activity + weekly metrics (Insights, Daily review)
+  setup-guide.ts          steps of the Guided setup (creating the OAuth app)
+  detail.ts, *-detail-view.tsx  optional in-app detail modal
   manifest.ts             name, icon, widgets, overview
   *.test.ts               mapper + service tests against fixtures
 ```
@@ -297,13 +327,13 @@ integrations/github/
 2. Add `linearManifest` to `integrations/registry.ts` and `linearBackend` to `integrations/runtime-registry.ts`.
 3. Allow its API and token URLs in `packages/platform/src/http-allowlist.ts` and under `http:default` in `apps/desktop/src-tauri/capabilities/default.json`.
 
-Both apps pick it up; nothing in `apps/` changes.
+The desktop app picks it up; nothing in `apps/` changes.
 
 A calendar or mail provider maps into `CalendarEvent` / `EmailDetail` (`packages/core/src/`) and reuses `integrations/shared/` plus `components/calendar` and `components/mail`, as Google and Outlook do. Providers whose integrations share one OAuth app put its config in `packages/platform/src/oauth/` (see `google.ts`, `microsoft.ts`).
 
-Connection handling, the OAuth flow, the credentials form, the feed, the dashboard and the sidebar pick it up through the registries. To give the source its own sidebar page, set `overview` in its manifest; it's served at `/apps/<id>`. To feed the Urgent view, implement `getAttentionItems` on its backend. To open its items in the detail modal instead of the browser, set `details` in its manifest and a `detailRef` on its items.
+Connection handling, the OAuth flow, the credentials form, the feed, the dashboard and the sidebar pick it up through the registries. To give the source its own sidebar page, set `overview` in its manifest; it's served at `/apps/<id>`. To feed the Urgent view, implement `getAttentionItems` on its backend. To open its items in the detail modal instead of the browser, set `details` in its manifest and a `detailRef` on its items. Other optional backend hooks: `getWaitingItems` (Waiting), `getRelatedItems` (meeting prep), `getActivity` / `getMetrics` (Insights, Daily review), `getAgenda` (calendars) and `getReleases` (the combined Releases widget).
 
-**Detail modal:** clicking a Jira issue or an email (in any list, the Urgent view or ⌘K) opens it in the app. ⌘/Ctrl/Shift/middle-click still opens the browser. Untrusted HTML (email bodies, Jira descriptions and comments) renders in a sandboxed iframe: no scripts, forms or navigation, plus a strict CSP. Remote images in email stay hidden until you click *Show images*, so senders can't track opens. See `packages/app/src/components/item-detail/`.
+**Detail modal:** clicking a PR, issue, error, email or calendar event (in any list, the Urgent view or ⌘K) opens it in the app. ⌘/Ctrl/Shift/middle-click still opens the browser. Untrusted HTML (email bodies, Jira descriptions and comments) renders in a sandboxed iframe: no scripts, forms or navigation, plus a strict CSP. Remote images in email stay hidden until you click *Show images*, so senders can't track opens. See `packages/app/src/components/item-detail/`.
 
 ### Swapping parts
 

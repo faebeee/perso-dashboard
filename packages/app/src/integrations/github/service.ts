@@ -91,7 +91,6 @@ export function createGitHubService(api: GitHubApi) {
 			});
 		},
 
-		/** Raw (with created_at), for the Waiting page. */
 		/** Your PRs (opened, assigned or to review) mentioning these ticket keys. */
 		async related(keys: readonly string[], since: Date): Promise<WorkItem[]> {
 			const q = relatedPrsQuery(keys, since);
@@ -100,6 +99,7 @@ export function createGitHubService(api: GitHubApi) {
 				: [];
 		},
 
+		/** Raw (with created_at), for the Waiting page. */
 		awaitingReview: async () =>
 			(await api.searchIssues(GITHUB_QUERIES.awaitingReview)).items,
 
