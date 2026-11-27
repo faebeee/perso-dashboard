@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
 import {
+	Bell,
 	CalendarPlus,
 	ChartColumn,
 	History,
@@ -19,6 +20,7 @@ import {
 	Search,
 	Settings2,
 	Siren,
+	Sparkles,
 	Sun,
 } from "lucide-react";
 import {
@@ -43,6 +45,7 @@ import { feedQueries } from "#/features/feed/queries";
 import { releaseQueries } from "#/features/releases/queries";
 import { useAddToToday } from "#/features/today/queries";
 import { integrationManifests } from "#/integrations/registry";
+import { integrationBackends } from "#/integrations/runtime-registry";
 
 /**
  * ⌘K / Ctrl+K: jump to any page or search everything already loaded
@@ -72,7 +75,31 @@ const PAGES: {
 		.filter((m) => m.overview)
 		.map((m) => ({ to: `/apps/${m.id}`, label: m.name, icon: m.icon })),
 	{ to: "/settings/integrations", label: "Integrations", icon: PlugZap },
-	{ to: "/settings/preferences", label: "Preferences", icon: Settings2 },
+	{
+		to: "/settings/preferences/general",
+		label: "Preferences",
+		icon: Settings2,
+	},
+	{
+		to: "/settings/preferences/rules",
+		label: "Preferences: Urgent & Waiting",
+		icon: Bell,
+	},
+	{ to: "/settings/preferences/ai", label: "Preferences: AI", icon: Sparkles },
+	...integrationBackends
+		.filter((b) => b.settings?.length)
+		.flatMap((b) => {
+			const manifest = integrationManifests.find((m) => m.id === b.id);
+			return manifest
+				? [
+						{
+							to: `/settings/preferences/${b.id}`,
+							label: `Preferences: ${manifest.name}`,
+							icon: manifest.icon,
+						},
+					]
+				: [];
+		}),
 ];
 
 const MAX_PER_GROUP = 50;

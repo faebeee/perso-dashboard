@@ -21,7 +21,7 @@ const shortcutLabel = isMac
 	? QUICK_CAPTURE_SHORTCUT.replace("Control+", "⌃").replace("Alt+", "⌥")
 	: QUICK_CAPTURE_SHORTCUT.replace("Control", "Ctrl");
 
-export function PreferencesPage() {
+export function GeneralSettings() {
 	const { capabilities } = getHost().desktop;
 	const prefs = useSyncExternalStore(preferences.subscribe, preferences.get);
 	const launchAtLogin = useQuery({

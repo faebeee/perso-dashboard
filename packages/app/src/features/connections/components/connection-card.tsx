@@ -148,8 +148,8 @@ export function ConnectionCard({
 				{connected && status && status.settingLabels.length > 0 && (
 					<Button asChild variant="outline" size="sm">
 						<Link
-							to="/settings/preferences"
-							hash={`integration-${integration.id}`}
+							to="/settings/preferences/$integrationId"
+							params={{ integrationId: integration.id }}
 						>
 							<Settings2 />
 							{status.settingLabels.length === 1

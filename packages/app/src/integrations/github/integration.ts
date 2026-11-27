@@ -1,7 +1,9 @@
 import {
+	type ChoiceListSetting,
 	type IntegrationBackend,
 	type IntegrationContext,
 	rulesOf,
+	stringListSetting,
 } from "@dashboard/core/integration";
 import { createGitHubApi } from "./api/client";
 import {
@@ -21,11 +23,30 @@ import {
 } from "./insights";
 import { createGitHubOAuth, GITHUB_OAUTH_CLIENT } from "./oauth";
 import { createGitHubReleaseService } from "./releases";
+import { loadRepoOptions, withRepoFilter } from "./repo-filter";
 import { createGitHubService } from "./service";
 import { awaitingReviewToWaiting } from "./waiting";
 
-export const githubService = (accessToken: string) =>
-	createGitHubService(createGitHubApi(accessToken));
+/** Which repositories feed the app (Preferences → GitHub). */
+export const REPOSITORIES_SETTING: ChoiceListSetting = {
+	key: "repositories",
+	label: "Repositories",
+	description:
+		"Only PRs, commits, releases and alerts from these repositories appear in the app. Select none to follow all of them.",
+	type: "choice-list",
+	default: [],
+	allWhenEmpty: true,
+};
+
+/** The API, narrowed to the repositories you follow. */
+export const githubApi = (ctx: IntegrationContext) =>
+	withRepoFilter(
+		createGitHubApi(ctx.accessToken),
+		stringListSetting(ctx.settings, REPOSITORIES_SETTING),
+	);
+
+export const githubService = (ctx: IntegrationContext) =>
+	createGitHubService(githubApi(ctx));
 
 /** Your login: stored at connect time, looked up for older connections. */
 async function githubLogin(ctx: IntegrationContext): Promise<string> {
@@ -39,20 +60,28 @@ export async function githubCommits(
 	since: Date,
 	until?: Date,
 ): Promise<CommitInfo[]> {
-	return createGitHubCommitService(createGitHubApi(ctx.accessToken)).recent(
+	return createGitHubCommitService(githubApi(ctx)).recent(
 		await githubLogin(ctx),
 		since,
 		until,
 	);
 }
 
-export const githubReleaseService = (accessToken: string) =>
-	createGitHubReleaseService(createGitHubApi(accessToken));
+export const githubReleaseService = (ctx: IntegrationContext) =>
+	createGitHubReleaseService(githubApi(ctx));
 
 export const githubBackend: IntegrationBackend = {
 	id: GITHUB_ID,
 
 	oauthClient: GITHUB_OAUTH_CLIENT,
+
+	settings: [REPOSITORIES_SETTING],
+
+	/** All your repositories: the picker itself is never filtered. */
+	loadSettingOptions: async (ctx, key) =>
+		key === REPOSITORIES_SETTING.key
+			? loadRepoOptions(createGitHubApi(ctx.accessToken))
+			: [],
 
 	createOAuthProvider: createGitHubOAuth,
 
@@ -61,11 +90,11 @@ export const githubBackend: IntegrationBackend = {
 		return { label: `@${viewer.login}`, meta: { login: viewer.login } };
 	},
 
-	getRelatedItems: ({ accessToken }, { keys, since }) =>
-		githubService(accessToken).related(keys, since),
+	getRelatedItems: (ctx, { keys, since }) =>
+		githubService(ctx).related(keys, since),
 
-	async getFeedItems({ accessToken }) {
-		const service = githubService(accessToken);
+	async getFeedItems(ctx) {
+		const service = githubService(ctx);
 		const [reviews, mine] = await Promise.all([
 			service.reviewRequests(),
 			service.myPullRequests("created"),
@@ -74,12 +103,12 @@ export const githubBackend: IntegrationBackend = {
 	},
 
 	async getAttentionItems(ctx, now) {
-		const service = githubService(ctx.accessToken);
+		const service = githubService(ctx);
 		const [reviews, mine, alerts] = await Promise.all([
 			service.reviewRequests(),
 			service.prsNeedingAction(),
 			// A bonus: missing scope or API trouble must not hide your PRs.
-			createDependabotService(createGitHubApi(ctx.accessToken))
+			createDependabotService(githubApi(ctx))
 				.openAlerts(ctx.scopes)
 				.then((r) => r.items)
 				.catch(() => []),
@@ -92,7 +121,7 @@ export const githubBackend: IntegrationBackend = {
 	},
 
 	async getActivity(ctx, { from, to }) {
-		const api = createGitHubApi(ctx.accessToken);
+		const api = githubApi(ctx);
 		const search = async (q: string) =>
 			(await api.searchIssues(q, INSIGHTS_PAGE_SIZE)).items;
 		const [merged, opened, reviewed, commits] = await Promise.all([
@@ -108,8 +137,8 @@ export const githubBackend: IntegrationBackend = {
 		];
 	},
 
-	async getMetrics({ accessToken }, weeks, now) {
-		const api = createGitHubApi(accessToken);
+	async getMetrics(ctx, weeks, now) {
+		const api = githubApi(ctx);
 		const from = weeks[0]?.start ?? now;
 		const search = async (q: string) =>
 			(await api.searchIssues(q, INSIGHTS_PAGE_SIZE)).items;
@@ -120,12 +149,8 @@ export const githubBackend: IntegrationBackend = {
 		return prMetrics({ merged, reviewed }, weeks);
 	},
 
-	getWaitingItems: async ({ accessToken }, now) =>
-		awaitingReviewToWaiting(
-			await githubService(accessToken).awaitingReview(),
-			now,
-		),
+	getWaitingItems: async (ctx, now) =>
+		awaitingReviewToWaiting(await githubService(ctx).awaitingReview(), now),
 
-	getReleases: ({ accessToken }, query) =>
-		githubReleaseService(accessToken).releases(query),
+	getReleases: (ctx, query) => githubReleaseService(ctx).releases(query),
 };

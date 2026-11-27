@@ -150,6 +150,8 @@ export interface ChoiceListSetting extends SettingBase {
 	type: "choice-list";
 	/** At least this many must stay selected. */
 	minSelected?: number;
+	/** Nothing selected means every option (e.g. all repositories). */
+	allWhenEmpty?: boolean;
 }
 
 /** A user-editable, integration-specific setting (shown in Preferences). */

@@ -188,6 +188,7 @@ export type GitHubCommit = z.infer<typeof githubCommitSchema>;
 export const githubRepoListSchema = z.array(
 	z.object({
 		full_name: z.string(),
+		private: z.boolean().optional(),
 		archived: z.boolean().default(false),
 		pushed_at: z.string().nullable().optional(),
 		permissions: z

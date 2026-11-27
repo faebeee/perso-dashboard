@@ -1,9 +1,9 @@
 import { recentReleaseQuery, sortReleases } from "@dashboard/core/release";
 import type { WorkScope } from "@dashboard/core/work-scope";
 import { withIntegration } from "@dashboard/platform/integration-runner";
-import { createGitHubApi } from "./api/client";
 import { createDependabotService } from "./dependabot";
 import {
+	githubApi,
 	githubBackend,
 	githubCommits,
 	githubReleaseService,
@@ -13,18 +13,16 @@ import {
 /** Entry points for the UI. They run in-process and return a Result. */
 
 export const fetchGitHubReviewRequests = () =>
-	withIntegration(githubBackend, (ctx) =>
-		githubService(ctx.accessToken).reviewRequests(),
-	);
+	withIntegration(githubBackend, (ctx) => githubService(ctx).reviewRequests());
 
 export const fetchGitHubMyPullRequests = (scope: WorkScope) =>
 	withIntegration(githubBackend, (ctx) =>
-		githubService(ctx.accessToken).myPullRequests(scope),
+		githubService(ctx).myPullRequests(scope),
 	);
 
 export const fetchGitHubPullRequest = (ref: string) =>
 	withIntegration(githubBackend, (ctx) =>
-		githubService(ctx.accessToken).pullRequestDetail(ref),
+		githubService(ctx).pullRequestDetail(ref),
 	);
 
 /** Days of commits shown on the GitHub page. */
@@ -37,16 +35,12 @@ export const fetchGitHubCommits = () =>
 
 export const fetchDependabotAlerts = () =>
 	withIntegration(githubBackend, (ctx) =>
-		createDependabotService(createGitHubApi(ctx.accessToken)).openAlerts(
-			ctx.scopes,
-		),
+		createDependabotService(githubApi(ctx)).openAlerts(ctx.scopes),
 	);
 
 export const fetchGitHubReleases = () =>
 	withIntegration(githubBackend, async (ctx) =>
 		sortReleases(
-			await githubReleaseService(ctx.accessToken).releases(
-				recentReleaseQuery(),
-			),
+			await githubReleaseService(ctx).releases(recentReleaseQuery()),
 		),
 	);

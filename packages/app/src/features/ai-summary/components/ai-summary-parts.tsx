@@ -78,7 +78,7 @@ export function AiSummaryBody({
 		return (
 			<p className="text-sm text-muted-foreground">
 				{pitch}{" "}
-				<Link to="/settings/preferences" className="underline">
+				<Link to="/settings/preferences/ai" className="underline">
 					Choose a provider in Preferences
 				</Link>
 				.

@@ -5,7 +5,7 @@ import { feedRoute } from "./feed";
 import { insightsRoute } from "./insights";
 import { reviewRoute } from "./review";
 import { integrationsRoute } from "./settings/integrations";
-import { preferencesRoute } from "./settings/preferences";
+import { preferencesRouteTree } from "./settings/preferences";
 import { streamRoute } from "./stream";
 import { todayRoute } from "./today";
 import { urgentRoute } from "./urgent";
@@ -26,5 +26,5 @@ export const routeTree = rootRoute.addChildren([
 	insightsRoute,
 	appRoute,
 	integrationsRoute,
-	preferencesRoute,
+	preferencesRouteTree,
 ]);

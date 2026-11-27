@@ -96,7 +96,7 @@ export function TriageBar({
 					{!chosen ? (
 						<span>
 							AI triage: a gist and a next step per item.{" "}
-							<Link to="/settings/preferences" className="underline">
+							<Link to="/settings/preferences/ai" className="underline">
 								Choose a provider in Preferences
 							</Link>
 							.
